@@ -97,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="ModelController.cpp" />
     <ClCompile Include="SDF.cpp" />
     <ClCompile Include="src\AssimpFileHandler\Assimp.cpp" />
     <ClCompile Include="src\Helper\StringHelper.cpp" />

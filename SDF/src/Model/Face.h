@@ -10,13 +10,18 @@ namespace Model
 	{
 	public:
 		Face();
-		Face(Vertex* v1, Vertex* v2, Vertex* v3, Vertex* normala, vector<Face*> sused);
+		Face(Vertex* v1, Vertex* v2, Vertex* v3);
 		~Face();
 
+		void ComputeNormal();
+		void AddSused(Face* sused);
+		void SetColor(unsigned int color);
+
 		Vertex*					v[3];
-		Vertex*					normal;
+		Vector4*				normal;
+		Vector4*				center;
 		vector<Face*>			susedia;					// susedia
-		int						farba;						// pre picking
+		unsigned int			farba;						// pre picking
 		//SDF					value;
 	};
 }

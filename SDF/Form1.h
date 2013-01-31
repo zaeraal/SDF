@@ -1,8 +1,6 @@
 #pragma once
 
-#include "StringHelper.h"
-#include "Octree.h"
-#include "Assimp.h"
+#include "ModelController.h"
 #include "OpenGL.h"
 
 namespace SDF {
@@ -11,7 +9,7 @@ namespace SDF {
 	using namespace System::Collections;
 	using namespace System::Windows::Forms;
 	using namespace OpenGLForm;
-	using namespace AssimpFileHandler;
+	using namespace Controller;
 
 	/// <summary>
 	/// Summary for Form1
@@ -21,12 +19,12 @@ namespace SDF {
 	public:
 		Form1(void)
 		{
-			Assimp = new CAssimp();
+			MController = new ModelController();
 			InitializeComponent();
-			OpenGL = gcnew COpenGL(this->panel1, Assimp);
+			OpenGL = gcnew COpenGL(this->panel1, MController);
 
 			this->timer1->Enabled = true;
-			Assimp->logInfo("Form Fully Loaded");
+			MController->logInfo("Form Fully Loaded");
 		}
 
 	protected:
@@ -39,7 +37,7 @@ namespace SDF {
 			{
 				delete components;
 				delete OpenGL;
-				delete Assimp;
+				delete MController;
 			}
 		}
 
@@ -47,8 +45,9 @@ namespace SDF {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		CAssimp* Assimp;
+		ModelController* MController;
 		COpenGL^ OpenGL;
+
 	private: System::Windows::Forms::MenuStrip^  menuStrip1;
 	private: System::Windows::Forms::ToolStripMenuItem^  souborToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  novýToolStripMenuItem;
@@ -81,6 +80,13 @@ namespace SDF {
 	private: System::Windows::Forms::ToolStripMenuItem^  oproduktuToolStripMenuItem;
 	private: System::Windows::Forms::Timer^  timer1;
 	private: System::Windows::Forms::Panel^  panel1;
+	private: System::Windows::Forms::Panel^  panel2;
+	private: System::Windows::Forms::TextBox^  TB_Filename;
+	private: System::Windows::Forms::Label^  LBL_Filename;
+	private: System::Windows::Forms::TextBox^  textBox1;
+	private: System::Windows::Forms::Label^  LBL_SDF;
+	private: System::Windows::Forms::TextBox^  TB_Triangle;
+	private: System::Windows::Forms::Label^  LBL_Triangle;
 	private: System::ComponentModel::IContainer^  components;
 
 
@@ -122,7 +128,15 @@ namespace SDF {
 			this->oproduktuToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->panel2 = (gcnew System::Windows::Forms::Panel());
+			this->TB_Filename = (gcnew System::Windows::Forms::TextBox());
+			this->LBL_Filename = (gcnew System::Windows::Forms::Label());
+			this->TB_Triangle = (gcnew System::Windows::Forms::TextBox());
+			this->LBL_Triangle = (gcnew System::Windows::Forms::Label());
+			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
+			this->LBL_SDF = (gcnew System::Windows::Forms::Label());
 			this->menuStrip1->SuspendLayout();
+			this->panel2->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// menuStrip1
@@ -329,17 +343,84 @@ namespace SDF {
 				| System::Windows::Forms::AnchorStyles::Left) 
 				| System::Windows::Forms::AnchorStyles::Right));
 			this->panel1->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
-			this->panel1->Location = System::Drawing::Point(0, 27);
+			this->panel1->Location = System::Drawing::Point(180, 27);
 			this->panel1->Name = L"panel1";
-			this->panel1->Size = System::Drawing::Size(784, 535);
+			this->panel1->Size = System::Drawing::Size(604, 535);
 			this->panel1->TabIndex = 1;
 			this->panel1->Resize += gcnew System::EventHandler(this, &Form1::panel1_Resize);
+			// 
+			// panel2
+			// 
+			this->panel2->Controls->Add(this->textBox1);
+			this->panel2->Controls->Add(this->LBL_SDF);
+			this->panel2->Controls->Add(this->TB_Triangle);
+			this->panel2->Controls->Add(this->LBL_Triangle);
+			this->panel2->Controls->Add(this->TB_Filename);
+			this->panel2->Controls->Add(this->LBL_Filename);
+			this->panel2->Location = System::Drawing::Point(0, 27);
+			this->panel2->Name = L"panel2";
+			this->panel2->Size = System::Drawing::Size(174, 535);
+			this->panel2->TabIndex = 2;
+			// 
+			// TB_Filename
+			// 
+			this->TB_Filename->Location = System::Drawing::Point(21, 36);
+			this->TB_Filename->Name = L"TB_Filename";
+			this->TB_Filename->ReadOnly = true;
+			this->TB_Filename->Size = System::Drawing::Size(150, 20);
+			this->TB_Filename->TabIndex = 1;
+			// 
+			// LBL_Filename
+			// 
+			this->LBL_Filename->AutoSize = true;
+			this->LBL_Filename->Location = System::Drawing::Point(18, 19);
+			this->LBL_Filename->Name = L"LBL_Filename";
+			this->LBL_Filename->Size = System::Drawing::Size(49, 13);
+			this->LBL_Filename->TabIndex = 0;
+			this->LBL_Filename->Text = L"Filename";
+			// 
+			// TB_Triangle
+			// 
+			this->TB_Triangle->Location = System::Drawing::Point(21, 76);
+			this->TB_Triangle->Name = L"TB_Triangle";
+			this->TB_Triangle->ReadOnly = true;
+			this->TB_Triangle->Size = System::Drawing::Size(150, 20);
+			this->TB_Triangle->TabIndex = 3;
+			this->TB_Triangle->Text = L"-1";
+			// 
+			// LBL_Triangle
+			// 
+			this->LBL_Triangle->AutoSize = true;
+			this->LBL_Triangle->Location = System::Drawing::Point(18, 59);
+			this->LBL_Triangle->Name = L"LBL_Triangle";
+			this->LBL_Triangle->Size = System::Drawing::Size(104, 13);
+			this->LBL_Triangle->TabIndex = 2;
+			this->LBL_Triangle->Text = L"Selected Triangle ID";
+			// 
+			// textBox1
+			// 
+			this->textBox1->Location = System::Drawing::Point(21, 116);
+			this->textBox1->Name = L"textBox1";
+			this->textBox1->ReadOnly = true;
+			this->textBox1->Size = System::Drawing::Size(150, 20);
+			this->textBox1->TabIndex = 5;
+			this->textBox1->Text = L"0";
+			// 
+			// LBL_SDF
+			// 
+			this->LBL_SDF->AutoSize = true;
+			this->LBL_SDF->Location = System::Drawing::Point(18, 99);
+			this->LBL_SDF->Name = L"LBL_SDF";
+			this->LBL_SDF->Size = System::Drawing::Size(58, 13);
+			this->LBL_SDF->TabIndex = 4;
+			this->LBL_SDF->Text = L"SDF Value";
 			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(784, 562);
+			this->Controls->Add(this->panel2);
 			this->Controls->Add(this->panel1);
 			this->Controls->Add(this->menuStrip1);
 			this->MainMenuStrip = this->menuStrip1;
@@ -347,6 +428,8 @@ namespace SDF {
 			this->Text = L"Shape Diameter Function";
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
+			this->panel2->ResumeLayout(false);
+			this->panel2->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -397,10 +480,11 @@ namespace SDF {
 		// a .xml file was selected, open it.
 		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{
-			//OpenGL->SetFileName(openFileDialog1->FileName);
-			//OpenGL->LoadFromFile();
-			//this->Text = gcnew System::String(OpenGL->GetPanoName().c_str());
-			Assimp->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
+			MController->LoadFile(MarshalString(openFileDialog1->FileName));
+			OpenGL->ReloadBoundary();
+			this->TB_Filename->Text = openFileDialog1->FileName;
+
+			MController->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
 		}
 	}
 	private: System::Void ukonèitToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)

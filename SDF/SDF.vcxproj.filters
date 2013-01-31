@@ -87,6 +87,9 @@
     <ClCompile Include="src\AssimpFileHandler\Assimp.cpp">
       <Filter>Source Files\Controller\AssimpFileHandler</Filter>
     </ClCompile>
+    <ClCompile Include="ModelController.cpp">
+      <Filter>Source Files\Controller</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

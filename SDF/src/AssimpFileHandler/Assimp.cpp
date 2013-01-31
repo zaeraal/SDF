@@ -1,7 +1,6 @@
 // Assimp.cpp : subor pre nacitanie / ulozenie modelov
 
 #include "stdafx.h"
-#include "StringHelper.h"
 #include "Assimp.h"
 
 namespace AssimpFileHandler
@@ -65,7 +64,112 @@ namespace AssimpFileHandler
 		Assimp::DefaultLogger::get()->debug(logString.c_str());
 	}
 
-	void CAssimp::recursive_render (const struct aiScene *sc, const struct aiNode* nd, float scale)	{ }
+	void CAssimp::LoadData(vector<Face*>& fc, vector<Vertex*>& pts)
+	{
+		glLoadIdentity();
+		/*Vertex* v1 = new Vertex(10.0,20.0,0.0);
+		Vertex* v2 = new Vertex(-10.0,20.0,0.0);
+		Vertex* v3 = new Vertex(0.0,0.0,0.0);
+		Face* fc = new Face(v1, v2, v3);
+		points.push_back(v1);
+		points.push_back(v2);
+		points.push_back(v3);
+		faces.push_back(fc);*/
+		faces.clear();
+		points.clear();
+		RecursiveLoad(scene, scene->mRootNode);
+
+		fc = faces;
+		pts = points;
+	}
+
+	void CAssimp::RecursiveLoad(const struct aiScene *sc, const struct aiNode* nd)
+	{
+		// mozno prerobit cez Matrix4f class a nie cez Opengl?
+		glPushMatrix();
+			aiMatrix4x4 matica = nd->mTransformation;
+			matica.Transpose();
+			glMultMatrixf((float*)&matica);
+
+			GLfloat* m = new GLfloat;
+			glGetFloatv(GL_MODELVIEW_MATRIX, m);
+
+			// for all meshes assigned to this node
+			for (unsigned int n = 0; n < nd->mNumMeshes; ++n)
+			{
+				const struct aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
+				const unsigned int n_faces = mesh->mNumFaces;
+				const unsigned int n_vertices = mesh->mNumVertices;
+
+				// tmp struktura z ktorej skopirujem pouzite meshe
+				vector<Face*> tmp_faces;
+				vector<Vertex*> tmp_points;
+
+				for(unsigned int i = 0; i < n_faces; i++)
+					tmp_faces.push_back(NULL);
+
+				for(unsigned int i = 0; i < n_vertices; i++)
+					tmp_points.push_back(NULL);
+
+
+				for (unsigned int t = 0; t < mesh->mNumFaces; ++t)
+				{
+					const struct aiFace* face = &mesh->mFaces[t];
+
+					// ignoruj to co neni trojuholnik - nema to normalu a neda sa z toho pocitat SDF
+					if(face->mNumIndices != 3)
+						continue;
+
+					for(unsigned int i = 0; i < 3; i++)			// go through all vertices in face
+					{
+						int vertexIndex = face->mIndices[i];	// get index for current vertex
+						if(tmp_points[vertexIndex] == NULL)
+						{
+							// aplikuj maticu transformacie
+							double a = mesh->mVertices[vertexIndex].x;
+							double b = mesh->mVertices[vertexIndex].y;
+							double c = mesh->mVertices[vertexIndex].z;
+
+							double x = a*m[0] + b*m[4] + c*m[8] + m[12];
+							double y = a*m[1] + b*m[5] + c*m[9] + m[13];
+							double z = a*m[2] + b*m[6] + c*m[10] + m[14];
+
+							tmp_points[vertexIndex] = new Vertex(a, b, c);
+						}
+					}
+
+					if(tmp_faces[t] == NULL)
+						tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
+				}
+
+				for(unsigned int i = 0; i < n_faces; i++)
+				{
+					if(tmp_faces[i] != NULL)
+					{
+						faces.push_back(tmp_faces[i]);
+						tmp_faces[i] = NULL;
+					}
+				}
+
+				for(unsigned int i = 0; i < n_vertices; i++)
+				{
+					if(tmp_points[i] != NULL)
+					{
+						points.push_back(tmp_points[i]);
+						tmp_points[i] = NULL;
+					}
+				}
+				tmp_faces.clear();
+				tmp_points.clear();
+			}
+
+			// for all children
+			for (unsigned int n = 0; n < nd->mNumChildren; ++n)
+			{
+				RecursiveLoad(sc, nd->mChildren[n]);
+			}
+		glPopMatrix();
+	}
 
 	// Shutdown
 	CAssimp::~CAssimp()

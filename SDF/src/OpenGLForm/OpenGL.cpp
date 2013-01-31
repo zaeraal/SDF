@@ -1,8 +1,5 @@
 // OpenGL.cpp : subor pre OpenGL manipulaciu a vykreslenie
-
 #include "stdafx.h"
-#include "StringHelper.h"
-#include "Assimp.h"
 #include "OpenGL.h"
 
 namespace OpenGLForm
@@ -13,7 +10,7 @@ namespace OpenGLForm
 	GLfloat LightPosition[] = { 0.0f, 0.0f, 15.0f, 1.0f };
 
 	// inicializacia OpenGL, vytvorenie handle pre okno a zavolanie vsetkeho potrebneho
-	COpenGL::COpenGL(System::Windows::Forms::Panel ^ parentForm, AssimpFileHandler::CAssimp* assimp)
+	COpenGL::COpenGL(System::Windows::Forms::Panel ^ parentForm, Controller::ModelController* MController)
 	{
 		Width = parentForm->Size.Width;
 		Height = parentForm->Size.Height;
@@ -24,7 +21,7 @@ namespace OpenGLForm
 		c_Z = 0.0f;
 		c_h = 45.0f;
 		c_w = 45.0f;
-		Assimp = assimp;
+		control = MController;
 		CreateParams^ cp = gcnew CreateParams;
 
 		// Set the position on the form
@@ -73,7 +70,7 @@ namespace OpenGLForm
 	{      
 		if(m.Msg == WM_MOUSEMOVE)
 		{
-			//Assimp->logInfo("zavolany WM_MOUSEMOVE");
+			//control->logInfo("zavolany WM_MOUSEMOVE");
 			int tmpx = LOWORD(m.LParam.ToInt32());
 			int tmpy = HIWORD(m.LParam.ToInt32());
 
@@ -88,7 +85,7 @@ namespace OpenGLForm
 		// ak klikol lavym tlacitkom - oznac nejaky facet (alebo ziaden)
 		if(m.Msg == WM_LBUTTONDOWN)
 		{
-			//Assimp->logInfo("zavolany WM_LBUTTONDOWN");
+			//control->logInfo("zavolany WM_LBUTTONDOWN");
 
 		}
 		if(m.Msg == WM_MOUSEWHEEL)
@@ -96,7 +93,7 @@ namespace OpenGLForm
             if ( (int)m.WParam >0)
             {
                 // Zoom in
-				//Assimp->logDebug("zavolany WM_MOUSEWHEEL in");
+				//control->logDebug("zavolany WM_MOUSEWHEEL in");
 				c_Zoom -= 3;
 				if(c_Zoom < 5)
 					c_Zoom = 5;
@@ -104,7 +101,7 @@ namespace OpenGLForm
 			else
             {
                 // Zoom out
-				//Assimp->logDebug("zavolany WM_MOUSEWHEEL out");
+				//control->logDebug("zavolany WM_MOUSEWHEEL out");
 				c_Zoom += 3;
 				if(c_Zoom > 90)
 					c_Zoom = 90;
@@ -123,11 +120,35 @@ namespace OpenGLForm
 
 		ZoomAndRotate();									// otoc scenu tak jak ma byt
 
-		// nieco default
-		glColor3f(1.0f,1.0f,1.0f);							// biela farba
-		GLUquadricObj *p = gluNewQuadric();
-		gluQuadricDrawStyle(p, GLU_LINE);
-		gluSphere(p, 1.0f, 20, 20);
+		if(control->loaded == false)
+		{
+			// nieco default
+			glColor3f(1.0f,1.0f,1.0f);							// biela farba
+			GLUquadricObj *p = gluNewQuadric();
+			gluQuadricDrawStyle(p, GLU_LINE);
+			gluSphere(p, 1.0f, 20, 20);
+		}
+		else
+			control->DrawModel();
+	}
+
+	// nacitaj si suradnice objektu
+	void COpenGL::ReloadBoundary()
+	{
+		double rad = 0.0;
+		double xx = 0.0;
+		double yy = 0.0;
+		double zz = 0.0;
+		control->GetBoundary(rad, xx, yy, zz);
+		radius = (GLfloat)rad;
+		c_X = (GLfloat)xx;
+		c_Y = (GLfloat)yy;
+		c_Z = (GLfloat)zz;
+
+		// reset camera;
+		c_Zoom = 45.0f;
+		c_h = 45.0f;
+		c_w = 45.0f;
 	}
 
 	// Prerobi uhle na radiany
@@ -151,7 +172,7 @@ namespace OpenGLForm
 		// rotacia Z, Y, X
 		double CameraFi = c_w;				// je to (0) - (360)
 		double CameraTheta = c_h;			// je to (0) - (180)
-		//Assimp->logDebug(str_format("X: %f, Y: %f", CameraFi, CameraTheta));			// vypis na overenie pokial treba
+		//control->logDebug(str_format("X: %f, Y: %f", CameraFi, CameraTheta));			// vypis na overenie pokial treba
 
 		// uhol na radian
 		GetSphereCoordinates(CameraFi, CameraTheta);
@@ -181,8 +202,8 @@ namespace OpenGLForm
 		if(y > 179.5f) y = 179.5f;
 		if(y < 0.5f) y = 0.5f;
 
-		c_w = x;
-		c_h = y;
+		c_w = (GLfloat)x;
+		c_h = (GLfloat)y;
 	}
 
 	// malo by zmazat vsetky objekty ktore ostali vpameti OpenGL
@@ -221,7 +242,7 @@ namespace OpenGLForm
 		if((iPixelFormat = ChoosePixelFormat(hdc, &pfd)) == 0)
 		{
 			MessageBox::Show("ChoosePixelFormat Failed");
-			Assimp->logInfo("ChoosePixelFormat Failed");
+			control->logInfo("ChoosePixelFormat Failed");
 			return 0;
 		}
 			 
@@ -229,21 +250,21 @@ namespace OpenGLForm
 		if(SetPixelFormat(hdc, iPixelFormat, &pfd) == FALSE)
 		{
 			MessageBox::Show("SetPixelFormat Failed");
-			Assimp->logInfo("SetPixelFormat Failed");
+			control->logInfo("SetPixelFormat Failed");
 			return 0;
 		}
 
 		if((m_hglrc = wglCreateContext(m_hDC)) == NULL)
 		{
 			MessageBox::Show("wglCreateContext Failed");
-			Assimp->logInfo("wglCreateContext Failed");
+			control->logInfo("wglCreateContext Failed");
 			return 0;
 		}
 			
 		if((wglMakeCurrent(m_hDC, m_hglrc)) == NULL)
 		{
 			MessageBox::Show("wglMakeCurrent Failed");
-			Assimp->logInfo("wglCreateContext Failed");
+			control->logInfo("wglCreateContext Failed");
 			return 0;
 		}
 
@@ -264,7 +285,7 @@ namespace OpenGLForm
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really nice perspective calculations
 
 		// lighting
-		glEnable(GL_LIGHTING);
+		/*glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);    // Uses default lighting parameters
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 		glEnable(GL_NORMALIZE);
@@ -272,7 +293,7 @@ namespace OpenGLForm
 		glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
 		glLightfv(GL_LIGHT1, GL_POSITION, LightPosition);
-		glEnable(GL_LIGHT1);
+		glEnable(GL_LIGHT1);*/
 		//glEnable(GL_COLOR_MATERIAL);
 	}
 
@@ -290,6 +311,6 @@ namespace OpenGLForm
 		glViewport(0,0,width,height);						// Reset The Current Viewport
 
 		ZoomAndRotate();
-		Assimp->logDebug(str_format("ReSizeGLScene width: %d, height: %d",width,height));
-	}		
+		control->logDebug(str_format("ReSizeGLScene width: %d, height: %d",width,height));
+	}	
 }

@@ -1,5 +1,46 @@
-Info,  T4956: this is my info-call
-Info,  T4956: App started!
-Debug, T4956: ReSizeGLScene width: 784, height: 535
-Info,  T4956: Form Fully Loaded
-Info,  T4956: App ended!
+Info,  T6136: this is my info-call
+Info,  T6136: App started!
+Debug, T6136: ReSizeGLScene width: 604, height: 535
+Info,  T6136: Form Fully Loaded
+Info,  T6136: Load C:\Users\rastikzzz\Documents\SDF\test models\Leaf.obj
+Debug, T6136: Assimp 3.0.1262 x86 msvc shared singlethreaded
+Info,  T6136: Found a matching importer for this file format
+Info,  T6136: Import root directory is 'C:\Users\rastikzzz\Documents\SDF\test models\'
+Error, T6136: OBJ: Unable to locate material file Leaf.mtl
+Error, T6136: OBJ: failed to locate material Leaf_untitled.003, skipping
+Info,  T6136: Entering post processing pipeline
+Debug, T6136: RemoveRedundantMatsProcess begin
+Debug, T6136: RemoveRedundantMatsProcess finished 
+Debug, T6136: FindDegeneratesProcess begin
+Debug, T6136: FindDegeneratesProcess finished
+Debug, T6136: GenUVCoordsProcess begin
+Debug, T6136: GenUVCoordsProcess finished
+Debug, T6136: TriangulateProcess begin
+Debug, T6136: TriangulateProcess finished. There was nothing to be done.
+Debug, T6136: SortByPTypeProcess begin
+Info,  T6136: Points: 0, Lines: 0, Triangles: 1, Polygons: 0 (Meshes, X = removed)
+Debug, T6136: SortByPTypeProcess finished
+Debug, T6136: FindInvalidDataProcess begin
+Debug, T6136: FindInvalidDataProcess finished. Everything seems to be OK.
+Debug, T6136: SplitLargeMeshesProcess_Triangle begin
+Debug, T6136: SplitLargeMeshesProcess_Triangle finished. There was nothing to do
+Debug, T6136: Generate spatially-sorted vertex cache
+Debug, T6136: GenVertexNormalsProcess begin
+Debug, T6136: GenVertexNormalsProcess finished. Normals are already there
+Debug, T6136: CalcTangentsProcess begin
+Info,  T6136: CalcTangentsProcess finished. Tangents have been calculated
+Debug, T6136: JoinVerticesProcess begin
+Debug, T6136: Mesh 0 (unnamed) | Verts in: 149184 out: 28075 | ~81.181%
+Info,  T6136: JoinVerticesProcess finished | Verts in: 149184 out: 28075 | ~81.2%
+Debug, T6136: SplitLargeMeshesProcess_Vertex begin
+Debug, T6136: SplitLargeMeshesProcess_Vertex finished. There was nothing to do
+Debug, T6136: LimitBoneWeightsProcess begin
+Debug, T6136: LimitBoneWeightsProcess end
+Debug, T6136: ImproveCacheLocalityProcess begin
+Debug, T6136: Mesh 0 | ACMR in: 1.719755 out: 0.754283 | ~56.1%
+Info,  T6136: Cache relevant are 1 meshes (49728 faces). Average output ACMR is 0.754283
+Debug, T6136: ImproveCacheLocalityProcess finished. 
+Info,  T6136: Leaving post processing pipeline
+Info,  T6136: Import of scene C:\Users\rastikzzz\Documents\SDF\test models\Leaf.obj succeeded.
+Info,  T6136: File: C:\Users\rastikzzz\Documents\SDF\test models\Leaf.obj Loaded
+Info,  T6136: App ended!

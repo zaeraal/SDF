@@ -33,6 +33,9 @@ namespace Model
 
 	void Octree::Build(vector<Face*> tria)
 	{
+		if(tria.size() == 0)
+			return;
+
 		if((depth == max_depth) || (tria.size() <= min_count))
 		{
 			for(unsigned int i = 0; i < tria.size(); i++)
@@ -45,7 +48,7 @@ namespace Model
 			int new_depth = depth + 1;
 			double new_size = size / 2.0;
 			vector<Face*> son_tria[8];
-
+			bool leaf = true;
 
 			// zisti kam patria trojuholniky
 			for(unsigned int i = 0; i < tria.size(); i++)
@@ -59,9 +62,15 @@ namespace Model
 					code = code1;
 
 				if(code != 8)
+				{
 					son_tria[code].push_back(tria[i]);
+					leaf = false;
+				}
 				else
+				{
 					triangles.push_back(tria[i]);
+					return;
+				}
 			}
 
 			// tabulka offsetov
@@ -77,10 +86,17 @@ namespace Model
                     {+1.0, +1.0, +1.0}
             };
 
-			// vytvor octree a uloz ich tam
-			for(int i = 0; i < 8; i++)
+			if(leaf == true)
 			{
-				if(son_tria[i].size() > 0)
+				for(unsigned int i = 0; i < tria.size(); i++)
+				{
+					triangles.push_back(tria[i]);
+				}
+			}
+			else
+			{
+				// vytvor octree a uloz ich tam
+				for(int i = 0; i < 8; i++)
 				{
 					son[i] = new Octree(new_depth,
 										new_size,
@@ -105,4 +121,19 @@ namespace Model
 		return result;
 	}
 
+	bool Octree::isLeaf()
+	{
+		if(son[0] == NULL)
+			return true;
+
+		return false;
+	}
+
+	void Octree::GetBoundary(double &siz, double &x, double &y, double &z)
+	{
+		siz = size;
+		x = origin->X;
+		y = origin->Y;
+		z = origin->Z;
+	}
 }

@@ -1,6 +1,5 @@
 // Octree.h : subor obsahujuci zakladnu octree strukturu
 #pragma once
-#include "Vector4.h"
 #include "Face.h"
 
 namespace Model
@@ -19,6 +18,8 @@ namespace Model
 
 		void Build(vector<Face*> tria);
 		int GetCode(Vector4* pt);
+		bool isLeaf();
+		void GetBoundary(double &siz, double &x, double &y, double &z);
 	private:
 		int depth;							// ako hlboko sme v octree, max je max_depth
 		double size;						// hranica kocky
