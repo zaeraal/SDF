@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D72AD58B-6B0E-4A30-9248-2093AE629A3C}</ProjectGuid>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>SDF</RootNamespace>
   </PropertyGroup>
@@ -20,14 +20,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CLRSupport>Pure</CLRSupport>
+    <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <CLRSupport>Pure</CLRSupport>
+    <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -41,9 +43,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <LibraryPath>lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <LibraryPath>lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -51,11 +61,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
+      <AdditionalIncludeDirectories>src\AssimpFileHandler;src\Mathematics;src\OpenGLForm;src\Main;src\Model;src\Helper;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -65,11 +75,11 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
+      <AdditionalIncludeDirectories>src\AssimpFileHandler;src\Mathematics;src\OpenGLForm;src\Main;src\Model;src\Helper;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -88,6 +98,13 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SDF.cpp" />
+    <ClCompile Include="src\AssimpFileHandler\Assimp.cpp" />
+    <ClCompile Include="src\Helper\StringHelper.cpp" />
+    <ClCompile Include="src\Mathematics\Vector4.cpp" />
+    <ClCompile Include="src\Model\Face.cpp" />
+    <ClCompile Include="src\Model\Octree.cpp" />
+    <ClCompile Include="src\Model\Vertex.cpp" />
+    <ClCompile Include="src\OpenGLForm\OpenGL.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -98,6 +115,14 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="src\AssimpFileHandler\Assimp.h" />
+    <ClInclude Include="src\Helper\StringHelper.h" />
+    <ClInclude Include="src\Mathematics\Matrix4.h" />
+    <ClInclude Include="src\Mathematics\Vector4.h" />
+    <ClInclude Include="src\Model\Face.h" />
+    <ClInclude Include="src\Model\Octree.h" />
+    <ClInclude Include="src\Model\Vertex.h" />
+    <ClInclude Include="src\OpenGLForm\OpenGL.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
