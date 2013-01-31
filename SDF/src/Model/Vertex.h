@@ -1,4 +1,5 @@
 // Vertex.h : subor pre manipulaciu s 3D bodom
+#pragma once
 #include "Vector4.h"
 
 namespace Model
@@ -11,8 +12,7 @@ namespace Model
 		Vertex();
 		Vertex(double x, double y, double z);
 		~Vertex();
-	private:
+
 		Vector4 *P;
-	protected:
 	};
 }

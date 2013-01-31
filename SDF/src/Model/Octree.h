@@ -1,19 +1,30 @@
 // Octree.h : subor obsahujuci zakladnu octree strukturu
+#pragma once
+#include "Vector4.h"
+#include "Face.h"
+
 namespace Model
 {
 	using namespace std;
+	using namespace Mathematics;
+
+	const int max_depth = 6;
+	const int min_count = 2;
 
 	public class Octree
 	{
-	/*public:
-		Octree();
-		Octree(Vertex* v1, Vertex* v2, Vertex* v3, Vertex* normala, vector<Face*> sused);
+	public:
+		Octree(int dep, double siz, Vector4* ori, Octree* par = NULL);
 		~Octree();
 
-		Vertex*					v[3];
-		Vertex*					normal;
-		vector<Face*>			susedia;					// susedia
-		int						farba;						// pre picking
-		//SDF					value;*/
+		void Build(vector<Face*> tria);
+		int GetCode(Vector4* pt);
+	private:
+		int depth;							// ako hlboko sme v octree, max je max_depth
+		double size;						// hranica kocky
+		Vector4* origin;					// stred kocky
+		Octree* son[8];						// synovia
+		Octree* parent;						// otec, NULL ak sme hlavny vrchol
+		vector<Face*> triangles;			// nase trojuholnicky
 	};
 }

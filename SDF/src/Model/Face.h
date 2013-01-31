@@ -1,4 +1,6 @@
 // Face.h : subor pre pracu s facetmi
+#pragma once
+#include "Vertex.h"
 
 namespace Model
 {

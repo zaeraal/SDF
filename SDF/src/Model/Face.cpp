@@ -1,6 +1,5 @@
 // Face.cpp : subor pre pracu s facetmi
 #include "stdafx.h"
-#include "Vertex.h"
 #include "Face.h"
 
 namespace Model

@@ -114,6 +114,7 @@
     <ClInclude Include="Form1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="ModelController.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\AssimpFileHandler\Assimp.h" />
     <ClInclude Include="src\Helper\StringHelper.h" />

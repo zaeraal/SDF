@@ -1,4 +1,6 @@
 // Vector4.h : 3D vektor/bos
+#pragma once
+
 namespace Mathematics
 {
     class Vector4
