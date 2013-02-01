@@ -9,27 +9,33 @@ namespace Controller
 	using namespace Model;
 	using namespace AssimpFileHandler;
 
+	const unsigned int color_step = 4;
+
 	public class ModelController
 	{
 	public:
 		ModelController();
 		~ModelController();
 
-		void logInfo(std::string logString);
-		void logDebug(std::string logString);
+		void logInfo(string logString);
+		void logDebug(string logString);
 
-		void LoadFile(std::string Filename);
+		void LoadFile(string Filename);
 		void CreateOctree();
 		void SetColors();
 		void GetBoundary(double &siz, double &x, double &y, double &z);
 		void DrawModel();
+		void ColorToRGB(unsigned int color, int &R, int &G, int &B);
+		void setDrawMode(int mode);
 
 		bool loaded;
+		bool show_octree;
 
 	private:
 		CAssimp* Assimp;
-		vector<Face*> triangles;
-		vector<Vertex*> points;
+		LinkedList<Face>* triangles;
+		LinkedList<Vertex>* points;
 		Octree* m_root;
+		int draw_mode;						// 0 picking (default), 1 selected triangle, 2 SDF, 3 wireframe
 	};
 }

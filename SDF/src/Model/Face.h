@@ -1,15 +1,16 @@
 // Face.h : subor pre pracu s facetmi
 #pragma once
 #include "Vertex.h"
+#include "LinkedList.h"
 
 namespace Model
 {
 	using namespace std;
+	using namespace Controller;
 
 	public class Face
 	{
 	public:
-		Face();
 		Face(Vertex* v1, Vertex* v2, Vertex* v3);
 		~Face();
 
@@ -20,7 +21,7 @@ namespace Model
 		Vertex*					v[3];
 		Vector4*				normal;
 		Vector4*				center;
-		vector<Face*>			susedia;					// susedia
+		LinkedList<Face>*		susedia;					// susedia
 		unsigned int			farba;						// pre picking
 		//SDF					value;
 	};

@@ -13,19 +13,21 @@ namespace Model
 	public class Octree
 	{
 	public:
-		Octree(int dep, double siz, Vector4* ori, Octree* par = NULL);
+		Octree(const int dep, const double siz, Vector4* ori, Octree* par = NULL);
 		~Octree();
 
-		void Build(vector<Face*> tria);
-		int GetCode(Vector4* pt);
-		bool isLeaf();
+		void Build(Face** tria, unsigned int length);
+		int GetCode(const Vector4* pt);
+		bool isLeaf;
 		void GetBoundary(double &siz, double &x, double &y, double &z);
+		void DrawOctree();
 	private:
 		int depth;							// ako hlboko sme v octree, max je max_depth
 		double size;						// hranica kocky
 		Vector4* origin;					// stred kocky
-		Octree* son[8];						// synovia
+		Octree** son;						// synovia
 		Octree* parent;						// otec, NULL ak sme hlavny vrchol
-		vector<Face*> triangles;			// nase trojuholnicky
+		Face** triangles;					// nase trojuholnicky
+		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je min_count
 	};
 }

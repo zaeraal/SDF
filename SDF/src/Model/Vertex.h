@@ -9,7 +9,6 @@ namespace Model
 	public class Vertex
 	{
 	public:
-		Vertex();
 		Vertex(double x, double y, double z);
 		~Vertex();
 

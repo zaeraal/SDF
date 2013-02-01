@@ -4,16 +4,6 @@
 
 namespace Model
 {
-	// default konstruktor
-	Face::Face()
-	{
-		v[0] = NULL;
-		v[1] = NULL;
-		v[2] = NULL;
-		normal = NULL;
-		farba = 0;
-	}
-
 	// konstruktor
 	Face::Face(Vertex* v1, Vertex* v2, Vertex* v3)
 	{
@@ -21,24 +11,19 @@ namespace Model
 		v[1] = v2;
 		v[2] = v3;
 		farba = 0;
+		susedia = NULL;
 		ComputeNormal();
 	}
 
 	//destruktor
 	Face::~Face()
 	{
-		for(int i = 0; i<3; i++)
-		{
-			v[i] = NULL;
-		}
-		if(normal != NULL)
-			delete normal;
+		// mnou alokovane (new) premenne
+		delete normal;
+		delete center;
 
-		// malo by byt OK kedze odkladam pointer, nemalo by zmazat samotne data
-		for(unsigned int i = 0; i < susedia.size(); i++)
-			susedia[i] = NULL;
-
-		susedia.clear();
+		// osetrene v LinkdListe ze sa zmaze cely
+		delete susedia;
 	}
 
 	void Face::ComputeNormal()
@@ -47,24 +32,23 @@ namespace Model
 							 (v[0]->P->Y + v[1]->P->Y + v[2]->P->Y) / 3.0,
 							 (v[0]->P->Z + v[1]->P->Z + v[2]->P->Z) / 3.0);
 
-		Vector4* U = new Vector4(v[1]->P->X - v[0]->P->X, v[1]->P->Y - v[0]->P->Y, v[1]->P->Z - v[0]->P->Z);
-		Vector4* V = new Vector4(v[2]->P->X - v[0]->P->X, v[2]->P->Y - v[0]->P->Y, v[2]->P->Z - v[0]->P->Z);
+		// cross product
+		Vector4 U = Vector4(v[1]->P->X - v[0]->P->X, v[1]->P->Y - v[0]->P->Y, v[1]->P->Z - v[0]->P->Z);
+		Vector4 V = Vector4(v[2]->P->X - v[0]->P->X, v[2]->P->Y - v[0]->P->Y, v[2]->P->Z - v[0]->P->Z);
+		double x = (U.Y * V.Z) - (U.Z * V.Y);
+		double y = (U.Z * V.X) - (U.X * V.Z);
+		double z = (U.X * V.Y) - (U.Y * V.X);
 
-		(*U) %= (*V);
-		normal = new Vector4(U->X, U->Y, U->Z);
-
-		delete U;
-		delete V;
+		normal = new Vector4(x, y, z);
 	}
 
 	void Face::AddSused(Face* sused)
 	{
-		for(unsigned int i = 0; i < susedia.size(); i++)
-		{
-			if(susedia[i] == sused)
-				return;
-		}
-		susedia.push_back(sused);
+		LinkedList<Face>* tmp = new LinkedList<Face>(sused);
+		if(susedia == NULL)
+			susedia = tmp;
+		else
+			susedia->InsertToEnd(tmp);
 	}
 
 	void Face::SetColor(unsigned int color)

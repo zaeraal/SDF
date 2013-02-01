@@ -34,7 +34,7 @@ namespace AssimpFileHandler
 			return false;
 		}
 
-		scene = importer.ReadFile( pFile, aiProcessPreset_TargetRealtime_Quality);
+		scene = importer.ReadFile( pFile, aiProcessPreset_TargetRealtime_Fast);
 
 		// If the import failed, report it
 		if( !scene)
@@ -64,7 +64,7 @@ namespace AssimpFileHandler
 		Assimp::DefaultLogger::get()->debug(logString.c_str());
 	}
 
-	void CAssimp::LoadData(vector<Face*>& fc, vector<Vertex*>& pts)
+	void CAssimp::LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		glLoadIdentity();
 		/*Vertex* v1 = new Vertex(10.0,20.0,0.0);
@@ -75,15 +75,12 @@ namespace AssimpFileHandler
 		points.push_back(v2);
 		points.push_back(v3);
 		faces.push_back(fc);*/
-		faces.clear();
-		points.clear();
-		RecursiveLoad(scene, scene->mRootNode);
-
-		fc = faces;
-		pts = points;
+		//faces.clear();
+		//points.clear();
+		RecursiveLoad(scene, scene->mRootNode, fc, pts);
 	}
 
-	void CAssimp::RecursiveLoad(const struct aiScene *sc, const struct aiNode* nd)
+	void CAssimp::RecursiveLoad (const struct aiScene *sc, const struct aiNode* nd, LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		// mozno prerobit cez Matrix4f class a nie cez Opengl?
 		glPushMatrix();
@@ -91,7 +88,7 @@ namespace AssimpFileHandler
 			matica.Transpose();
 			glMultMatrixf((float*)&matica);
 
-			GLfloat* m = new GLfloat;
+			GLfloat m[16]; 
 			glGetFloatv(GL_MODELVIEW_MATRIX, m);
 
 			// for all meshes assigned to this node
@@ -102,17 +99,17 @@ namespace AssimpFileHandler
 				const unsigned int n_vertices = mesh->mNumVertices;
 
 				// tmp struktura z ktorej skopirujem pouzite meshe
-				vector<Face*> tmp_faces;
-				vector<Vertex*> tmp_points;
+				Face** tmp_faces = new Face* [n_faces];
+				Vertex** tmp_points = new Vertex* [n_vertices];
 
 				for(unsigned int i = 0; i < n_faces; i++)
-					tmp_faces.push_back(NULL);
+					tmp_faces[i] = NULL;
 
 				for(unsigned int i = 0; i < n_vertices; i++)
-					tmp_points.push_back(NULL);
+					tmp_points[i] = NULL;
 
 
-				for (unsigned int t = 0; t < mesh->mNumFaces; ++t)
+				for (unsigned int t = 0; t < n_faces; ++t)
 				{
 					const struct aiFace* face = &mesh->mFaces[t];
 
@@ -137,36 +134,33 @@ namespace AssimpFileHandler
 							tmp_points[vertexIndex] = new Vertex(a, b, c);
 						}
 					}
-
-					if(tmp_faces[t] == NULL)
-						tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
+					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
 				}
 
 				for(unsigned int i = 0; i < n_faces; i++)
 				{
-					if(tmp_faces[i] != NULL)
-					{
-						faces.push_back(tmp_faces[i]);
-						tmp_faces[i] = NULL;
-					}
+					LinkedList<Face>* u = new LinkedList<Face>(tmp_faces[i]);
+					fc->InsertToEnd(u);
+					tmp_faces[i] = NULL;
 				}
+				delete [] tmp_faces;
 
 				for(unsigned int i = 0; i < n_vertices; i++)
 				{
 					if(tmp_points[i] != NULL)
 					{
-						points.push_back(tmp_points[i]);
+						LinkedList<Vertex>* u = new LinkedList<Vertex>(tmp_points[i]);
+						pts->InsertToEnd(u);
 						tmp_points[i] = NULL;
 					}
 				}
-				tmp_faces.clear();
-				tmp_points.clear();
+				delete [] tmp_points;
 			}
 
 			// for all children
 			for (unsigned int n = 0; n < nd->mNumChildren; ++n)
 			{
-				RecursiveLoad(sc, nd->mChildren[n]);
+				RecursiveLoad(sc, nd->mChildren[n], fc, pts);
 			}
 		glPopMatrix();
 	}

@@ -2,98 +2,112 @@
 #include "stdafx.h"
 #include "Octree.h"
 
+/*		int **ptr;
+		ptr = new int*[n_faces];*/
+
 namespace Model
 {
-	Octree::Octree(int dep, double siz, Vector4* ori, Octree* par)
+	Octree::Octree(const int dep, const double siz, Vector4* ori, Octree* par)
 	{
+		isLeaf = true;
 		depth = dep;
 		size = siz;
 		origin = ori;
 		parent = par;
+		triangles = NULL;
+		count = 0;
 
-		for(int i = 0; i < 8; i++)
-		{
-			son[i] = NULL;
-		}
+		son = new Octree* [8];
 	}
 
 	Octree::~Octree()
 	{
-		parent = NULL;
 		delete origin;
-		origin = NULL;
-		for(int i = 0; i < 8; i++)
+		if(count > 0)
+			delete [] triangles;
+
+		if(!isLeaf)
 		{
-			if(son[i] != NULL)
-				delete son[i];
-			son[i] = NULL;
+			for(int i = 0; i < 8; i++)
+			{
+					delete son[i];
+			}
 		}
-		triangles.clear();
+		delete [] son;
 	}
 
-	void Octree::Build(vector<Face*> tria)
+	void Octree::Build(Face** tria, unsigned int length)
 	{
-		if(tria.size() == 0)
+		if(length == 0)
 			return;
 
-		if((depth == max_depth) || (tria.size() <= min_count))
+		if((depth >= max_depth) || (length <= min_count))
 		{
-			for(unsigned int i = 0; i < tria.size(); i++)
+			for(unsigned int i = 0; i < length; i++)
 			{
-				triangles.push_back(tria[i]);
+				count = length;
+				triangles = tria;
 			}
 		}
 		else
 		{
 			int new_depth = depth + 1;
 			double new_size = size / 2.0;
-			vector<Face*> son_tria[8];
-			bool leaf = true;
+
+			LinkedList<Face>** son_tria = new LinkedList<Face>* [9];
+			for(unsigned int i = 0; i < 9; i++)
+				son_tria[i] = NULL; // preistotu
 
 			// zisti kam patria trojuholniky
-			for(unsigned int i = 0; i < tria.size(); i++)
+			for(unsigned int i = 0; i < length; i++)
 			{
 				int code1 = GetCode(tria[i]->v[0]->P);
-				int code2 = GetCode(tria[i]->v[0]->P);
-				int code3 = GetCode(tria[i]->v[0]->P);
+				int code2 = GetCode(tria[i]->v[1]->P);
+				int code3 = GetCode(tria[i]->v[2]->P);
 				int code = 8;
 
 				if(code1 == code2 == code3)
+				{
+					isLeaf = false;
 					code = code1;
+				}
 
-				if(code != 8)
-				{
-					son_tria[code].push_back(tria[i]);
-					leaf = false;
-				}
+				LinkedList<Face>* tmp = new LinkedList<Face>(tria[i]);
+
+				if(son_tria[code] == NULL)
+					son_tria[code] = tmp;
 				else
-				{
-					triangles.push_back(tria[i]);
-					return;
-				}
+					son_tria[code]->InsertToEnd(tmp);
+
 			}
 
 			// tabulka offsetov
 			double Table[8][3] =
             {
-                    {-1.0, -1.0, -1.0},
-                    {+1.0, -1.0, -1.0},
-                    {-1.0, +1.0, -1.0},
-                    {+1.0, +1.0, -1.0},
-                    {-1.0, -1.0, +1.0},
-                    {+1.0, -1.0, +1.0},
-                    {-1.0, +1.0, +1.0},
-                    {+1.0, +1.0, +1.0}
+                {-1.0, -1.0, -1.0},
+                {+1.0, -1.0, -1.0},
+                {-1.0, +1.0, -1.0},
+                {+1.0, +1.0, -1.0},
+                {-1.0, -1.0, +1.0},
+                {+1.0, -1.0, +1.0},
+                {-1.0, +1.0, +1.0},
+                {+1.0, +1.0, +1.0}
             };
 
-			if(leaf == true)
+			count = (son_tria[8] == NULL ? 0 : son_tria[8]->GetSize());
+			if(count > 0)
 			{
-				for(unsigned int i = 0; i < tria.size(); i++)
+				triangles = new Face* [count];
+
+				LinkedList<Face>* tmp = son_tria[8];
+				for(unsigned int i = 0; i < count; i++)
 				{
-					triangles.push_back(tria[i]);
+					triangles[i] = tmp->data;
+					tmp = tmp->next;
 				}
 			}
-			else
+
+			if(isLeaf != true)
 			{
 				// vytvor octree a uloz ich tam
 				for(int i = 0; i < 8; i++)
@@ -104,14 +118,39 @@ namespace Model
 													origin->Y + new_size*Table[i][1],
 													origin->Z + new_size*Table[i][2]),
 										this);
-					son[i]->Build(son_tria[i]);
+
+					unsigned int velkost = (son_tria[i] == NULL ? 0 : son_tria[i]->GetSize());
+					Face** tmp_zoznam = NULL;
+					if(velkost > 0)
+					{
+						tmp_zoznam = new Face* [velkost];
+
+						LinkedList<Face>* tmp = son_tria[i];
+						for(unsigned int j = 0; j < velkost; j++)
+						{
+							tmp_zoznam[j] = tmp->data;
+							tmp = tmp->next;
+						}
+					}
+					son[i]->Build(tmp_zoznam, velkost);
 				}
 			}
+
+			// zmazanie pola, kedze vytvaram vlastne
+			delete [] tria;
+
+			// zmazanie pomocnych poli kedze som urobil vlastne
+			for(unsigned int i = 0; i < 9; i++)
+			{
+				DeleteList(son_tria[i]);
+				son_tria[i] = NULL;
+			}
+			delete [] son_tria;
 		}
 	}
 
 	// vrati poziciu v octree
-	int Octree::GetCode(Vector4* pt)
+	int Octree::GetCode(const Vector4* pt)
 	{
 		int result = 0;
 		if (pt->X > origin->X) result |= 1;
@@ -121,19 +160,70 @@ namespace Model
 		return result;
 	}
 
-	bool Octree::isLeaf()
-	{
-		if(son[0] == NULL)
-			return true;
-
-		return false;
-	}
-
 	void Octree::GetBoundary(double &siz, double &x, double &y, double &z)
 	{
 		siz = size;
 		x = origin->X;
 		y = origin->Y;
 		z = origin->Z;
+	}
+	void Octree::DrawOctree()
+	{
+		glBegin(GL_LINES);
+			double Table[8][3] =
+            {
+                {-1.0, -1.0, -1.0},
+                {+1.0, -1.0, -1.0},
+                {-1.0, +1.0, -1.0},
+                {+1.0, +1.0, -1.0},
+                {-1.0, -1.0, +1.0},
+                {+1.0, -1.0, +1.0},
+                {-1.0, +1.0, +1.0},
+                {+1.0, +1.0, +1.0}
+            };
+			glVertex3d(origin->X + size*Table[0][0], origin->Y + size*Table[0][1], origin->Z + size*Table[0][2]);
+			glVertex3d(origin->X + size*Table[1][0], origin->Y + size*Table[1][1], origin->Z + size*Table[1][2]);
+
+			glVertex3d(origin->X + size*Table[0][0], origin->Y + size*Table[0][1], origin->Z + size*Table[0][2]);
+			glVertex3d(origin->X + size*Table[2][0], origin->Y + size*Table[2][1], origin->Z + size*Table[2][2]);
+
+			glVertex3d(origin->X + size*Table[0][0], origin->Y + size*Table[0][1], origin->Z + size*Table[0][2]);
+			glVertex3d(origin->X + size*Table[4][0], origin->Y + size*Table[4][1], origin->Z + size*Table[4][2]);
+
+			glVertex3d(origin->X + size*Table[3][0], origin->Y + size*Table[3][1], origin->Z + size*Table[3][2]);
+			glVertex3d(origin->X + size*Table[7][0], origin->Y + size*Table[7][1], origin->Z + size*Table[7][2]);
+			
+			glVertex3d(origin->X + size*Table[3][0], origin->Y + size*Table[3][1], origin->Z + size*Table[3][2]);
+			glVertex3d(origin->X + size*Table[2][0], origin->Y + size*Table[2][1], origin->Z + size*Table[2][2]);
+
+			glVertex3d(origin->X + size*Table[3][0], origin->Y + size*Table[3][1], origin->Z + size*Table[3][2]);
+			glVertex3d(origin->X + size*Table[1][0], origin->Y + size*Table[1][1], origin->Z + size*Table[1][2]);
+
+			glVertex3d(origin->X + size*Table[6][0], origin->Y + size*Table[6][1], origin->Z + size*Table[6][2]);
+			glVertex3d(origin->X + size*Table[7][0], origin->Y + size*Table[7][1], origin->Z + size*Table[7][2]);
+
+			glVertex3d(origin->X + size*Table[6][0], origin->Y + size*Table[6][1], origin->Z + size*Table[6][2]);
+			glVertex3d(origin->X + size*Table[2][0], origin->Y + size*Table[2][1], origin->Z + size*Table[2][2]);
+
+			glVertex3d(origin->X + size*Table[6][0], origin->Y + size*Table[6][1], origin->Z + size*Table[6][2]);
+			glVertex3d(origin->X + size*Table[4][0], origin->Y + size*Table[4][1], origin->Z + size*Table[4][2]);
+
+			glVertex3d(origin->X + size*Table[5][0], origin->Y + size*Table[5][1], origin->Z + size*Table[5][2]);
+			glVertex3d(origin->X + size*Table[7][0], origin->Y + size*Table[7][1], origin->Z + size*Table[7][2]);
+
+			glVertex3d(origin->X + size*Table[5][0], origin->Y + size*Table[5][1], origin->Z + size*Table[5][2]);
+			glVertex3d(origin->X + size*Table[1][0], origin->Y + size*Table[1][1], origin->Z + size*Table[1][2]);
+
+			glVertex3d(origin->X + size*Table[5][0], origin->Y + size*Table[5][1], origin->Z + size*Table[5][2]);
+			glVertex3d(origin->X + size*Table[4][0], origin->Y + size*Table[4][1], origin->Z + size*Table[4][2]);
+		glEnd();
+
+		if(isLeaf != true)
+		{
+			for(int i = 0; i < 8; i++)
+			{
+				son[i]->DrawOctree();
+			}
+		}
 	}
 }

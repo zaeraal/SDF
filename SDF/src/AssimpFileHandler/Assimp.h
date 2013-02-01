@@ -7,6 +7,7 @@ namespace AssimpFileHandler
 {
 	using namespace std;
 	using namespace Model;
+	using namespace Controller;
 
 	public class CAssimp
 	{
@@ -15,12 +16,10 @@ namespace AssimpFileHandler
 		bool Import3DFromFile( const string& pFile);
 		void logInfo(std::string logString);
 		void logDebug(std::string logString);
-		void LoadData(vector<Face*>& fc, vector<Vertex*>& pts);
+		void LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts);
 		~CAssimp();
 	private:
-		void RecursiveLoad (const struct aiScene *sc, const struct aiNode* nd);
-		vector<Face*> faces;
-		vector<Vertex*> points;
+		void RecursiveLoad (const struct aiScene *sc, const struct aiNode* nd, LinkedList<Face>* fc, LinkedList<Vertex>* pts);
 	protected:
 		void createAILogger();
 		void destroyAILogger();
