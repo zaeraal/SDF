@@ -118,9 +118,12 @@ namespace SDF {
 			this->toolStripSeparator2 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->ukonËitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->upravitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->octreeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->sDFHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->normalToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->wireframeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->sDFHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->pickingHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolStripSeparator1 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->octreeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->n·strojeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->vypoËÌtajSDFToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->moûnostiToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -137,9 +140,6 @@ namespace SDF {
 			this->LBL_Triangle = (gcnew System::Windows::Forms::Label());
 			this->TB_Filename = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Filename = (gcnew System::Windows::Forms::Label());
-			this->toolStripSeparator1 = (gcnew System::Windows::Forms::ToolStripSeparator());
-			this->normalToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->pickingHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->SuspendLayout();
@@ -213,12 +213,19 @@ namespace SDF {
 			this->upravitToolStripMenuItem->Size = System::Drawing::Size(63, 20);
 			this->upravitToolStripMenuItem->Text = L"Zobraziù";
 			// 
-			// octreeToolStripMenuItem
+			// normalToolStripMenuItem
 			// 
-			this->octreeToolStripMenuItem->Name = L"octreeToolStripMenuItem";
-			this->octreeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->octreeToolStripMenuItem->Text = L"Octree";
-			this->octreeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::octreeToolStripMenuItem_Click);
+			this->normalToolStripMenuItem->Name = L"normalToolStripMenuItem";
+			this->normalToolStripMenuItem->Size = System::Drawing::Size(161, 22);
+			this->normalToolStripMenuItem->Text = L"Normal";
+			this->normalToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem_Click);
+			// 
+			// wireframeToolStripMenuItem
+			// 
+			this->wireframeToolStripMenuItem->Name = L"wireframeToolStripMenuItem";
+			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
+			this->wireframeToolStripMenuItem->Text = L"Wireframe";
+			this->wireframeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::wireframeToolStripMenuItem_Click);
 			// 
 			// sDFHodnotyToolStripMenuItem
 			// 
@@ -227,12 +234,24 @@ namespace SDF {
 			this->sDFHodnotyToolStripMenuItem->Text = L"SDF hodnoty";
 			this->sDFHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::sDFHodnotyToolStripMenuItem_Click);
 			// 
-			// wireframeToolStripMenuItem
+			// pickingHodnotyToolStripMenuItem
 			// 
-			this->wireframeToolStripMenuItem->Name = L"wireframeToolStripMenuItem";
-			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->wireframeToolStripMenuItem->Text = L"Wireframe";
-			this->wireframeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::wireframeToolStripMenuItem_Click);
+			this->pickingHodnotyToolStripMenuItem->Name = L"pickingHodnotyToolStripMenuItem";
+			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(161, 22);
+			this->pickingHodnotyToolStripMenuItem->Text = L"Picking hodnoty";
+			this->pickingHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::pickingHodnotyToolStripMenuItem_Click);
+			// 
+			// toolStripSeparator1
+			// 
+			this->toolStripSeparator1->Name = L"toolStripSeparator1";
+			this->toolStripSeparator1->Size = System::Drawing::Size(158, 6);
+			// 
+			// octreeToolStripMenuItem
+			// 
+			this->octreeToolStripMenuItem->Name = L"octreeToolStripMenuItem";
+			this->octreeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
+			this->octreeToolStripMenuItem->Text = L"Octree";
+			this->octreeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::octreeToolStripMenuItem_Click);
 			// 
 			// n·strojeToolStripMenuItem
 			// 
@@ -301,7 +320,7 @@ namespace SDF {
 			// 
 			// TB_Total
 			// 
-			this->TB_Total->Location = System::Drawing::Point(21, 60);
+			this->TB_Total->Location = System::Drawing::Point(21, 75);
 			this->TB_Total->Name = L"TB_Total";
 			this->TB_Total->ReadOnly = true;
 			this->TB_Total->Size = System::Drawing::Size(150, 20);
@@ -311,7 +330,7 @@ namespace SDF {
 			// LBL_Total
 			// 
 			this->LBL_Total->AutoSize = true;
-			this->LBL_Total->Location = System::Drawing::Point(18, 43);
+			this->LBL_Total->Location = System::Drawing::Point(18, 58);
 			this->LBL_Total->Name = L"LBL_Total";
 			this->LBL_Total->Size = System::Drawing::Size(77, 13);
 			this->LBL_Total->TabIndex = 6;
@@ -319,7 +338,7 @@ namespace SDF {
 			// 
 			// textBox1
 			// 
-			this->textBox1->Location = System::Drawing::Point(21, 140);
+			this->textBox1->Location = System::Drawing::Point(21, 155);
 			this->textBox1->Name = L"textBox1";
 			this->textBox1->ReadOnly = true;
 			this->textBox1->Size = System::Drawing::Size(150, 20);
@@ -329,7 +348,7 @@ namespace SDF {
 			// LBL_SDF
 			// 
 			this->LBL_SDF->AutoSize = true;
-			this->LBL_SDF->Location = System::Drawing::Point(18, 123);
+			this->LBL_SDF->Location = System::Drawing::Point(18, 138);
 			this->LBL_SDF->Name = L"LBL_SDF";
 			this->LBL_SDF->Size = System::Drawing::Size(58, 13);
 			this->LBL_SDF->TabIndex = 4;
@@ -337,7 +356,7 @@ namespace SDF {
 			// 
 			// TB_Triangle
 			// 
-			this->TB_Triangle->Location = System::Drawing::Point(21, 100);
+			this->TB_Triangle->Location = System::Drawing::Point(21, 115);
 			this->TB_Triangle->Name = L"TB_Triangle";
 			this->TB_Triangle->ReadOnly = true;
 			this->TB_Triangle->Size = System::Drawing::Size(150, 20);
@@ -347,7 +366,7 @@ namespace SDF {
 			// LBL_Triangle
 			// 
 			this->LBL_Triangle->AutoSize = true;
-			this->LBL_Triangle->Location = System::Drawing::Point(18, 83);
+			this->LBL_Triangle->Location = System::Drawing::Point(18, 98);
 			this->LBL_Triangle->Name = L"LBL_Triangle";
 			this->LBL_Triangle->Size = System::Drawing::Size(104, 13);
 			this->LBL_Triangle->TabIndex = 2;
@@ -355,7 +374,7 @@ namespace SDF {
 			// 
 			// TB_Filename
 			// 
-			this->TB_Filename->Location = System::Drawing::Point(21, 36);
+			this->TB_Filename->Location = System::Drawing::Point(21, 35);
 			this->TB_Filename->Name = L"TB_Filename";
 			this->TB_Filename->ReadOnly = true;
 			this->TB_Filename->Size = System::Drawing::Size(150, 20);
@@ -369,25 +388,6 @@ namespace SDF {
 			this->LBL_Filename->Size = System::Drawing::Size(49, 13);
 			this->LBL_Filename->TabIndex = 0;
 			this->LBL_Filename->Text = L"Filename";
-			// 
-			// toolStripSeparator1
-			// 
-			this->toolStripSeparator1->Name = L"toolStripSeparator1";
-			this->toolStripSeparator1->Size = System::Drawing::Size(158, 6);
-			// 
-			// normalToolStripMenuItem
-			// 
-			this->normalToolStripMenuItem->Name = L"normalToolStripMenuItem";
-			this->normalToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->normalToolStripMenuItem->Text = L"Normal";
-			this->normalToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem_Click);
-			// 
-			// pickingHodnotyToolStripMenuItem
-			// 
-			this->pickingHodnotyToolStripMenuItem->Name = L"pickingHodnotyToolStripMenuItem";
-			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->pickingHodnotyToolStripMenuItem->Text = L"Picking hodnoty";
-			this->pickingHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::pickingHodnotyToolStripMenuItem_Click);
 			// 
 			// Form1
 			// 
@@ -457,6 +457,7 @@ namespace SDF {
 			MController->LoadFile(MarshalString(openFileDialog1->FileName));
 			OpenGL->ReloadBoundary();
 			this->TB_Filename->Text = openFileDialog1->FileName;
+			this->TB_Total->Text = ""+MController->GetTriangleCount();
 
 			MController->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
 		}
@@ -467,7 +468,7 @@ namespace SDF {
 	}
 	private: System::Void octreeToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
-		MController->show_octree = ~(MController->show_octree);
+		MController->show_octree = (MController->show_octree == true ? false : true);
 		MController->logInfo("Zobraziù Octree");
 	}
 	private: System::Void wireframeToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)

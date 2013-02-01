@@ -66,7 +66,7 @@ namespace Model
 				int code3 = GetCode(tria[i]->v[2]->P);
 				int code = 8;
 
-				if(code1 == code2 == code3)
+				if((code1 == code2) && (code1 == code3))
 				{
 					isLeaf = false;
 					code = code1;
@@ -155,7 +155,7 @@ namespace Model
 		int result = 0;
 		if (pt->X > origin->X) result |= 1;
 		if (pt->Y > origin->Y) result |= 2;
-		if (pt->Z > origin->Y) result |= 4;
+		if (pt->Z > origin->Z) result |= 4;
 
 		return result;
 	}

@@ -33,3 +33,4 @@
 *.opensdf
 *.manifest
 ipch/
+log.txt

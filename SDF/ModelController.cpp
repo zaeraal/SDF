@@ -202,7 +202,7 @@ namespace Controller
 				{
 					int r = 0, g = 0, b = 0;
 					ColorToRGB(tmp->data->farba, r,g,b);
-					glColor3f(r / 256.0, g / 256.0, b / 256.0);
+					glColor3d(r / 256.0, g / 256.0, b / 256.0);
 				}
 
 				//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
@@ -228,8 +228,14 @@ namespace Controller
 			G = G % 256;
 		}
 	}
+
 	void ModelController::setDrawMode(int mode)
 	{
 		draw_mode = mode;
+	}
+
+	int ModelController::GetTriangleCount()
+	{
+		return triangles->GetSize() - 1;
 	}
 }

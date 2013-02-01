@@ -27,6 +27,7 @@ namespace Controller
 		void DrawModel();
 		void ColorToRGB(unsigned int color, int &R, int &G, int &B);
 		void setDrawMode(int mode);
+		int GetTriangleCount();
 
 		bool loaded;
 		bool show_octree;
