@@ -107,8 +107,8 @@ namespace Controller
 	// vytvori Octree strukturu
 	void ModelController::CreateOctree()
 	{
-		double minx = 9999.0, miny = 9999.0, minz = 9999.0;
-		double maxx = -9999.0, maxy = -9999.0, maxz = -9999.0;
+		double minx = 99999.0, miny = 99999.0, minz = 99999.0;
+		double maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
 
 		LinkedList<Vertex>* tmp = points->next;
 		while(tmp != NULL)
@@ -140,15 +140,15 @@ namespace Controller
 		else
 			sizex = abs(minx-maxx) / 2.0;
 
-		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
-			sizey = abs(minx+maxx) / 2.0;
+		if(((miny<=0.0)&&(maxy<=0.0)) || ((miny>=0.0)&&(maxy>=0.0)))
+			sizey = abs(miny+maxy) / 2.0;
 		else
-			sizey = abs(minx-maxx) / 2.0;
+			sizey = abs(miny-maxy) / 2.0;
 
-		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
-			sizez = abs(minx+maxx) / 2.0;
+		if(((minz<=0.0)&&(maxz<=0.0)) || ((minz>=0.0)&&(maxz>=0.0)))
+			sizez = abs(minz+maxz) / 2.0;
 		else
-			sizez = abs(minx-maxx) / 2.0;
+			sizez = abs(minz-maxz) / 2.0;
 		double size = max(max(sizex, sizey), sizez);
 
 		m_root = new Octree(0, size, center, NULL);

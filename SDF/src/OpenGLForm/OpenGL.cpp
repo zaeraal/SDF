@@ -15,7 +15,7 @@ namespace OpenGLForm
 		c_Y = 0.0f;
 		c_Z = 0.0f;
 		c_h = 45.0f;
-		c_w = 45.0f;
+		c_w = 0.0f;
 		control = MController;
 		CreateParams^ cp = gcnew CreateParams;
 
@@ -127,6 +127,7 @@ namespace OpenGLForm
 		if(control->loaded == false)
 		{
 			// nieco default
+			glRotatef(90,1.0f,0.0f,0.0f);
 			glColor3f(1.0f,1.0f,1.0f);							// biela farba
 			GLUquadricObj *p = gluNewQuadric();
 			gluQuadricDrawStyle(p, GLU_LINE);
@@ -152,7 +153,7 @@ namespace OpenGLForm
 		// reset camera;
 		c_Zoom = 45.0f;
 		c_h = 45.0f;
-		c_w = 45.0f;
+		c_w = 0.0f;
 	}
 
 	// Prerobi uhle na radiany
@@ -174,20 +175,25 @@ namespace OpenGLForm
 		glLoadIdentity();
 
 		// rotacia Z, Y, X
-		double CameraFi = c_w;				// je to (0) - (360)
-		double CameraTheta = c_h;			// je to (0) - (180)
+		double CameraX = c_w;				// je to (0) - (360)
+		double CameraY = c_h-90;				// je to (0) - (180)
 		//control->logDebug(str_format("X: %f, Y: %f", CameraFi, CameraTheta));			// vypis na overenie pokial treba
 
 		// uhol na radian
-		GetSphereCoordinates(CameraFi, CameraTheta);
+		GetSphereCoordinates(CameraX, CameraY);
 
-		GLdouble X = c_X + sin(CameraTheta) * sin(CameraFi) * radius * 5.0f;
-        GLdouble Y = c_Y - sin(CameraTheta) * cos(CameraFi) * radius * 5.0f;
-        GLdouble Z = c_Z + cos(CameraTheta) * radius * 5.0f;
-		
+		// aka rotacia je kua spravna
+		/*GLdouble X = c_X + sin(CameraY) * sin(CameraX) * radius * 5.0f;
+        GLdouble Y = c_Y - sin(CameraY) * cos(CameraX) * radius * 5.0f;
+        GLdouble Z = c_Z + cos(CameraY) * radius * 5.0f;*/
+
+		GLdouble X = c_X + cos(CameraY) * cos(CameraX) * radius * 5.0f;
+        GLdouble Y = c_Y - sin(CameraY) * radius * 5.0f;
+        GLdouble Z = c_Z + cos(CameraY) * sin(CameraX) *radius * 5.0f;
+
 		// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 		//gluLookAt (cos(tmpx)*sin(tmpy), cos(tmpy), sin(tmpx)*sin(tmpy), 0.0f, 0.0f, 0.0f, 0.0, 1.0, 0.0);
-		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 0.0, 1.0);
+		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 1.0, 0.0);
 
 		//GLfloat LightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 		//glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);

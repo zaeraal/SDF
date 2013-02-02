@@ -131,7 +131,7 @@ namespace AssimpFileHandler
 							double y = a*m[1] + b*m[5] + c*m[9] + m[13];
 							double z = a*m[2] + b*m[6] + c*m[10] + m[14];
 
-							tmp_points[vertexIndex] = new Vertex(a, b, c);
+							tmp_points[vertexIndex] = new Vertex(x, y, z);
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);

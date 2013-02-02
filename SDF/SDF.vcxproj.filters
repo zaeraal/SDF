@@ -113,9 +113,6 @@
     <ClInclude Include="src\Helper\StringHelper.h">
       <Filter>Header Files\Helper</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mathematics\Matrix4.h">
-      <Filter>Header Files\Mathematics</Filter>
-    </ClInclude>
     <ClInclude Include="src\Mathematics\Vector4.h">
       <Filter>Header Files\Mathematics</Filter>
     </ClInclude>
