@@ -4,11 +4,6 @@
 
 namespace OpenGLForm
 {
-	// light settings
-	GLfloat LightAmbient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	GLfloat LightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	GLfloat LightPosition[] = { 0.0f, 0.0f, 15.0f, 1.0f };
-
 	// inicializacia OpenGL, vytvorenie handle pre okno a zavolanie vsetkeho potrebneho
 	COpenGL::COpenGL(System::Windows::Forms::Panel ^ parentForm, Controller::ModelController* MController)
 	{
@@ -86,7 +81,16 @@ namespace OpenGLForm
 		if(m.Msg == WM_LBUTTONDOWN)
 		{
 			//control->logInfo("zavolany WM_LBUTTONDOWN");
+			if(control->loaded == true)
+			{
+				int tmpx = LOWORD(m.LParam.ToInt32());
+				int tmpy = HIWORD(m.LParam.ToInt32());
 
+				control->setDrawMode(4);
+				Render();
+				control->ProcessPick(tmpx, tmpy);
+				control->setDrawMode(1);
+			}
 		}
 		if(m.Msg == WM_MOUSEWHEEL)
         {
@@ -180,10 +184,13 @@ namespace OpenGLForm
 		GLdouble X = c_X + sin(CameraTheta) * sin(CameraFi) * radius * 5.0f;
         GLdouble Y = c_Y - sin(CameraTheta) * cos(CameraFi) * radius * 5.0f;
         GLdouble Z = c_Z + cos(CameraTheta) * radius * 5.0f;
-		//
+		
 		// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 		//gluLookAt (cos(tmpx)*sin(tmpy), cos(tmpy), sin(tmpx)*sin(tmpy), 0.0f, 0.0f, 0.0f, 0.0, 1.0, 0.0);
 		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 0.0, 1.0);
+
+		//GLfloat LightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f };
+		//glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 	}
 
 	// nastav predosly pohyb mysky
@@ -275,6 +282,12 @@ namespace OpenGLForm
 	// nastavi vlastnosti pre scenu
 	GLvoid COpenGL::InitGL()
 	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
 		glShadeModel(GL_SMOOTH);							// Enable smooth shading
 		glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Background
 		glClearDepth(1.0f);									// Depth buffer setup
@@ -285,16 +298,22 @@ namespace OpenGLForm
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really nice perspective calculations
 
 		// lighting
-		/*glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);    // Uses default lighting parameters
-		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-		glEnable(GL_NORMALIZE);
 
-		glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
-		glLightfv(GL_LIGHT1, GL_POSITION, LightPosition);
-		glEnable(GL_LIGHT1);*/
-		//glEnable(GL_COLOR_MATERIAL);
+		// light settings
+		GLfloat LightAmbient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		GLfloat LightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat LightPosition[] = { 0.0f, 1.0f, 1.0f, 0.0f };
+
+		glEnable(GL_LIGHTING);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);
+		glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
+		glEnable(GL_LIGHT0);
+
+		glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE ) ;
+		glEnable(GL_COLOR_MATERIAL);
 	}
 
 	// zmenila sa velkost, tak resizuj objekty

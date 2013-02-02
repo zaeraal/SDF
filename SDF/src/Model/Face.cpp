@@ -39,7 +39,9 @@ namespace Model
 		double y = (U.Z * V.X) - (U.X * V.Z);
 		double z = (U.X * V.Y) - (U.Y * V.X);
 
-		normal = new Vector4(x, y, z);
+		double length = sqrt(x * x + y * y + z * z);
+
+		normal = new Vector4(x / length, y / length, z / length);
 	}
 
 	void Face::AddSused(Face* sused)
@@ -51,7 +53,7 @@ namespace Model
 			susedia->InsertToEnd(tmp);
 	}
 
-	void Face::SetColor(unsigned int color)
+	void Face::SetColor(int color)
 	{
 		farba = color;
 	}

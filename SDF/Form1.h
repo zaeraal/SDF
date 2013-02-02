@@ -434,6 +434,9 @@ namespace SDF {
 		//timer
 		OpenGL->Render();
 		OpenGL->SwapOpenGLBuffers();
+
+		int tmp = int(static_cast<void*>(MController->selected));
+		this->TB_Triangle->Text = "0 x" + tmp;
 	}
 	private: System::Void panel1_Resize(System::Object^  sender, System::EventArgs^  e)
 	{

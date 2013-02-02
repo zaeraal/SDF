@@ -13,11 +13,18 @@ namespace Controller
 		loaded = false;
 		draw_mode = 0;
 		show_octree = false;
+		selected = NULL;
 	}
 
 	ModelController::~ModelController()
 	{
 		delete Assimp;
+
+		/*
+		/// -------------------------------------
+		/// STRASNE DLHO TRVA ZATVORENIE PROGRAMU
+		/// DOCASNE ZAKOMENTOVANE
+		/// -------------------------------------
 
 		// bacha na deletovanie v spravnom poradi
 		if(m_root != NULL)
@@ -40,7 +47,7 @@ namespace Controller
 				delete tmp2->data;
 			tmp2 = tmp2->next;
 		}
-		DeleteList(points);
+		DeleteList(points);*/
 	}
 
 	// zapis info log do suboru
@@ -61,6 +68,7 @@ namespace Controller
 		loaded = false;
 		draw_mode = 0;
 		show_octree = false;
+		selected = NULL;
 		// ak znovu nacitavame, premaz povodne udaje
 		if(m_root != NULL)
 			delete m_root;
@@ -166,14 +174,21 @@ namespace Controller
 	// nastavi farby pre picking
 	void ModelController::SetColors()
 	{
-		unsigned int col = color_step;
+		int col;
+		int r = 0, g = 0, b = 0;
 		LinkedList<Face>* tmp = triangles;
 		while(tmp != NULL)
 		{
+			r = r + color_step;
+			if(r >= 256) { r = r % 256; g = g + color_step;}
+			if(g >= 256) { g = g % 256; b = b + color_step;}
+			if(b >= 256) { b = b % 256; logInfo("MAXIMUM FARIEB PRE PICKING DOSIAHNUTE!!");}
+
+			col = r + 256 * g + 256 * 256 * b;
 			if(tmp->data != NULL)
 				tmp->data->SetColor(col);
-			//logInfo(MarshalString("farba: "+col));
-			col += color_step;
+			logInfo(MarshalString("farba: "+col+", RGB: " + r+" "+g+" "+b));
+
 			tmp = tmp->next;
 		}
 	}
@@ -187,8 +202,18 @@ namespace Controller
 	// vykresli model
 	void ModelController::DrawModel()
 	{
+		if((draw_mode == 1) || (draw_mode == 3))
+			glEnable(GL_LIGHTING);
+		else
+			glDisable(GL_LIGHTING);
+
+		if(draw_mode == 4)
+			glDisable(GL_DITHER);
+		else
+			glEnable(GL_DITHER);
+
 		glColor3f(1.0f,1.0f,1.0f);							// biela farba
-		glBegin(draw_mode == 3 ? GL_LINE_LOOP : GL_TRIANGLES);
+		{
 			LinkedList<Face>* tmp = triangles;
 			while(tmp != NULL)
 			{
@@ -197,45 +222,96 @@ namespace Controller
 					tmp = tmp->next;
 					continue;
 				}
-				
-				if(draw_mode == 0)
+
+				// nech vykresli selectnuty trojuholnik
+				if(draw_mode == 1)
 				{
-					int r = 0, g = 0, b = 0;
+					if(tmp->data == selected)
+						glColor3f(1.0f,0.5f,0.0f);		// orange
+					else
+						glColor3f(1.0f,1.0f,1.0f);		// white
+				}
+				// nech zorbazi picking hodnoty
+				if((draw_mode == 0) || (draw_mode == 4))
+				{
+					GLubyte r = 0, g = 0, b = 0;
 					ColorToRGB(tmp->data->farba, r,g,b);
-					glColor3d(r / 256.0, g / 256.0, b / 256.0);
+					glColor3ub(r, g, b);
+					//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
 				}
 
-				//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
-				for(unsigned int i = 0; i < 3; i++)
-				{
-					glVertex3d(tmp->data->v[i]->P->X, tmp->data->v[i]->P->Y, tmp->data->v[i]->P->Z);
-				}
+				glBegin(draw_mode == 3 ? GL_LINE_LOOP : GL_TRIANGLES);
+					glNormal3d(tmp->data->normal->X, tmp->data->normal->Y, tmp->data->normal->Z);
+					for(unsigned int i = 0; i < 3; i++)
+					{
+						glVertex3d(tmp->data->v[i]->P->X, tmp->data->v[i]->P->Y, tmp->data->v[i]->P->Z);
+					}
+				glEnd();
+
 				tmp = tmp->next;
 			}
-		glEnd();
-		glColor3f(1.0f,1.0f,1.0f);							// biela farba
-		if(show_octree == true)
-			m_root->DrawOctree();
+		}
+		if(draw_mode != 4)
+		{
+			glDisable(GL_LIGHTING);
+			glColor3f(0.5f,0.5f,0.5f);							// seda farba
+			if(show_octree == true)
+				m_root->DrawOctree();
+		}
 	}
 
-	void ModelController::ColorToRGB(unsigned int color, int &R, int &G, int &B)
+	void ModelController::ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B)
 	{
 		R = color % 256;
-		G = int(color / 256) * color_step;
-		if(G >= 256)
+		int g = int((color - R) / 256);
+		if(g >= 256)
 		{
-			B = int(G / 256) * color_step;
-			G = G % 256;
+			G = g % 256;
+			B = int((g - G) / 256);
 		}
+		else G = g;
 	}
 
 	void ModelController::setDrawMode(int mode)
 	{
 		draw_mode = mode;
 	}
+	int ModelController::getDrawMode()
+	{
+		return draw_mode;
+	}
 
 	int ModelController::GetTriangleCount()
 	{
 		return triangles->GetSize() - 1;
+	}
+
+	void ModelController::ProcessPick(int x, int y)
+	{
+		GLint viewport[4];
+		GLubyte pixel[3];
+
+		glGetIntegerv(GL_VIEWPORT,viewport);
+
+		glReadPixels(x,viewport[3]-y,1,1,GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
+
+		logInfo(MarshalString("Selected Pixel at x: " + x + ", y: "+y+" is: " + pixel[0]+" "+pixel[1]+" "+pixel[2]));
+		
+		selected = NULL;
+		int color = pixel[0] + 256 * int(pixel[1]) + 256 * 256 * int(pixel[2]);
+		logInfo(MarshalString("farba: "+color));
+		if(color > 0)
+		{
+			LinkedList<Face>* tmp = triangles->next;
+			while(tmp != NULL)
+			{
+				if(color == tmp->data->farba)
+				{
+					selected = tmp->data;
+					break;
+				}
+				tmp = tmp->next;
+			}
+		}
 	}
 }

@@ -16,13 +16,13 @@ namespace Model
 
 		void ComputeNormal();
 		void AddSused(Face* sused);
-		void SetColor(unsigned int color);
+		void SetColor(int color);
 
 		Vertex*					v[3];
 		Vector4*				normal;
 		Vector4*				center;
 		LinkedList<Face>*		susedia;					// susedia
-		unsigned int			farba;						// pre picking
+		int						farba;						// pre picking
 		//SDF					value;
 	};
 }
