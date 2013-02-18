@@ -7,7 +7,7 @@ namespace AssimpFileHandler
 {
 	using namespace std;
 	using namespace Model;
-	using namespace Controller;
+	using namespace Structures;
 
 	public class CAssimp
 	{

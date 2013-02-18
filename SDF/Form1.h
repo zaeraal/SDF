@@ -2,6 +2,7 @@
 
 #include "ModelController.h"
 #include "OpenGL.h"
+#include "SettingsForm.h"
 
 namespace SDF {
 
@@ -49,18 +50,25 @@ namespace SDF {
 		COpenGL^ OpenGL;
 
 	private: System::Windows::Forms::MenuStrip^  menuStrip1;
-	private: System::Windows::Forms::ToolStripMenuItem^  souborToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  fileToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  openToolStripMenuItem;
 
-	private: System::Windows::Forms::ToolStripMenuItem^  otevøítToolStripMenuItem;
+
+
 	private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator;
-	private: System::Windows::Forms::ToolStripMenuItem^  uložitToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  uložitjakoToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  saveToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  saveasToolStripMenuItem;
+
+
 
 
 
 	private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator2;
-	private: System::Windows::Forms::ToolStripMenuItem^  ukonèitToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  upravitToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  exitToolStripMenuItem;
+
+	private: System::Windows::Forms::ToolStripMenuItem^  showToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  toolsToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  optionsToolStripMenuItem;
 
 
 
@@ -69,15 +77,18 @@ namespace SDF {
 
 
 
-	private: System::Windows::Forms::ToolStripMenuItem^  nástrojeToolStripMenuItem;
-
-	private: System::Windows::Forms::ToolStripMenuItem^  možnostiToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  nápovìdaToolStripMenuItem;
 
 
 
 
-	private: System::Windows::Forms::ToolStripMenuItem^  oproduktuToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  helpToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  aboutToolStripMenuItem;
+
+
+
+
+
+
 	private: System::Windows::Forms::Timer^  timer1;
 	private: System::Windows::Forms::Panel^  panel1;
 	private: System::Windows::Forms::Panel^  panel2;
@@ -89,14 +100,21 @@ namespace SDF {
 	private: System::Windows::Forms::Label^  LBL_Triangle;
 	private: System::Windows::Forms::TextBox^  TB_Total;
 	private: System::Windows::Forms::Label^  LBL_Total;
+	private: System::Windows::Forms::ToolStripMenuItem^  computeSDFToolStripMenuItem;
 
-	private: System::Windows::Forms::ToolStripMenuItem^  vypoèítajSDFToolStripMenuItem;
+
 	private: System::Windows::Forms::ToolStripMenuItem^  octreeToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  sDFHodnotyToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  wireframeToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  normalToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  defaultToolStripMenuItem;
+
 	private: System::Windows::Forms::ToolStripMenuItem^  pickingHodnotyToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator1;
+	private: System::Windows::Forms::TextBox^  TB_Status;
+	private: System::Windows::Forms::Label^  LBL_Status;
+	private: System::Windows::Forms::ToolStripMenuItem^  normalsToolStripMenuItem;
+
+
 	private: System::ComponentModel::IContainer^  components;
 
 
@@ -110,28 +128,31 @@ namespace SDF {
 			this->components = (gcnew System::ComponentModel::Container());
 			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(Form1::typeid));
 			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
-			this->souborToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->otevøítToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->openToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator = (gcnew System::Windows::Forms::ToolStripSeparator());
-			this->uložitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->uložitjakoToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->saveToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->saveasToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator2 = (gcnew System::Windows::Forms::ToolStripSeparator());
-			this->ukonèitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->upravitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->normalToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->exitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->showToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->defaultToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->wireframeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->sDFHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->pickingHodnotyToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator1 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->octreeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->nástrojeToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->vypoèítajSDFToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->možnostiToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->nápovìdaToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->oproduktuToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->normalsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->computeSDFToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->optionsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->helpToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->aboutToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
 			this->panel2 = (gcnew System::Windows::Forms::Panel());
+			this->TB_Status = (gcnew System::Windows::Forms::TextBox());
+			this->LBL_Status = (gcnew System::Windows::Forms::Label());
 			this->TB_Total = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Total = (gcnew System::Windows::Forms::Label());
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
@@ -146,145 +167,155 @@ namespace SDF {
 			// 
 			// menuStrip1
 			// 
-			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->souborToolStripMenuItem, 
-				this->upravitToolStripMenuItem, this->nástrojeToolStripMenuItem, this->nápovìdaToolStripMenuItem});
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->fileToolStripMenuItem, 
+				this->showToolStripMenuItem, this->toolsToolStripMenuItem, this->helpToolStripMenuItem});
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
 			this->menuStrip1->Size = System::Drawing::Size(784, 24);
 			this->menuStrip1->TabIndex = 0;
 			this->menuStrip1->Text = L"menuStrip1";
 			// 
-			// souborToolStripMenuItem
+			// fileToolStripMenuItem
 			// 
-			this->souborToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->otevøítToolStripMenuItem, 
-				this->toolStripSeparator, this->uložitToolStripMenuItem, this->uložitjakoToolStripMenuItem, this->toolStripSeparator2, this->ukonèitToolStripMenuItem});
-			this->souborToolStripMenuItem->Name = L"souborToolStripMenuItem";
-			this->souborToolStripMenuItem->Size = System::Drawing::Size(57, 20);
-			this->souborToolStripMenuItem->Text = L"&Soubor";
+			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->openToolStripMenuItem, 
+				this->toolStripSeparator, this->saveToolStripMenuItem, this->saveasToolStripMenuItem, this->toolStripSeparator2, this->exitToolStripMenuItem});
+			this->fileToolStripMenuItem->Name = L"fileToolStripMenuItem";
+			this->fileToolStripMenuItem->Size = System::Drawing::Size(37, 20);
+			this->fileToolStripMenuItem->Text = L"&File";
 			// 
-			// otevøítToolStripMenuItem
+			// openToolStripMenuItem
 			// 
-			this->otevøítToolStripMenuItem->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"otevøítToolStripMenuItem.Image")));
-			this->otevøítToolStripMenuItem->ImageTransparentColor = System::Drawing::Color::Magenta;
-			this->otevøítToolStripMenuItem->Name = L"otevøítToolStripMenuItem";
-			this->otevøítToolStripMenuItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::O));
-			this->otevøítToolStripMenuItem->Size = System::Drawing::Size(153, 22);
-			this->otevøítToolStripMenuItem->Text = L"&Otevøít";
-			this->otevøítToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::otevøítToolStripMenuItem_Click);
+			this->openToolStripMenuItem->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"openToolStripMenuItem.Image")));
+			this->openToolStripMenuItem->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->openToolStripMenuItem->Name = L"openToolStripMenuItem";
+			this->openToolStripMenuItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::O));
+			this->openToolStripMenuItem->Size = System::Drawing::Size(146, 22);
+			this->openToolStripMenuItem->Text = L"&Open";
+			this->openToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::otevøítToolStripMenuItem_Click);
 			// 
 			// toolStripSeparator
 			// 
 			this->toolStripSeparator->Name = L"toolStripSeparator";
-			this->toolStripSeparator->Size = System::Drawing::Size(150, 6);
+			this->toolStripSeparator->Size = System::Drawing::Size(143, 6);
 			// 
-			// uložitToolStripMenuItem
+			// saveToolStripMenuItem
 			// 
-			this->uložitToolStripMenuItem->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"uložitToolStripMenuItem.Image")));
-			this->uložitToolStripMenuItem->ImageTransparentColor = System::Drawing::Color::Magenta;
-			this->uložitToolStripMenuItem->Name = L"uložitToolStripMenuItem";
-			this->uložitToolStripMenuItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::S));
-			this->uložitToolStripMenuItem->Size = System::Drawing::Size(153, 22);
-			this->uložitToolStripMenuItem->Text = L"&Uložit";
+			this->saveToolStripMenuItem->Image = (cli::safe_cast<System::Drawing::Image^  >(resources->GetObject(L"saveToolStripMenuItem.Image")));
+			this->saveToolStripMenuItem->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->saveToolStripMenuItem->Name = L"saveToolStripMenuItem";
+			this->saveToolStripMenuItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::S));
+			this->saveToolStripMenuItem->Size = System::Drawing::Size(146, 22);
+			this->saveToolStripMenuItem->Text = L"&Save";
 			// 
-			// uložitjakoToolStripMenuItem
+			// saveasToolStripMenuItem
 			// 
-			this->uložitjakoToolStripMenuItem->Name = L"uložitjakoToolStripMenuItem";
-			this->uložitjakoToolStripMenuItem->Size = System::Drawing::Size(153, 22);
-			this->uložitjakoToolStripMenuItem->Text = L"Uložit j&ako";
+			this->saveasToolStripMenuItem->Name = L"saveasToolStripMenuItem";
+			this->saveasToolStripMenuItem->Size = System::Drawing::Size(146, 22);
+			this->saveasToolStripMenuItem->Text = L"Save &as";
 			// 
 			// toolStripSeparator2
 			// 
 			this->toolStripSeparator2->Name = L"toolStripSeparator2";
-			this->toolStripSeparator2->Size = System::Drawing::Size(150, 6);
+			this->toolStripSeparator2->Size = System::Drawing::Size(143, 6);
 			// 
-			// ukonèitToolStripMenuItem
+			// exitToolStripMenuItem
 			// 
-			this->ukonèitToolStripMenuItem->Name = L"ukonèitToolStripMenuItem";
-			this->ukonèitToolStripMenuItem->Size = System::Drawing::Size(153, 22);
-			this->ukonèitToolStripMenuItem->Text = L"U&konèit";
-			this->ukonèitToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::ukonèitToolStripMenuItem_Click);
+			this->exitToolStripMenuItem->Name = L"exitToolStripMenuItem";
+			this->exitToolStripMenuItem->Size = System::Drawing::Size(146, 22);
+			this->exitToolStripMenuItem->Text = L"E&xit";
+			this->exitToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::ukonèitToolStripMenuItem_Click);
 			// 
-			// upravitToolStripMenuItem
+			// showToolStripMenuItem
 			// 
-			this->upravitToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->normalToolStripMenuItem, 
+			this->showToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(7) {this->defaultToolStripMenuItem, 
 				this->wireframeToolStripMenuItem, this->sDFHodnotyToolStripMenuItem, this->pickingHodnotyToolStripMenuItem, this->toolStripSeparator1, 
-				this->octreeToolStripMenuItem});
-			this->upravitToolStripMenuItem->Name = L"upravitToolStripMenuItem";
-			this->upravitToolStripMenuItem->Size = System::Drawing::Size(63, 20);
-			this->upravitToolStripMenuItem->Text = L"Zobrazi";
+				this->octreeToolStripMenuItem, this->normalsToolStripMenuItem});
+			this->showToolStripMenuItem->Enabled = false;
+			this->showToolStripMenuItem->Name = L"showToolStripMenuItem";
+			this->showToolStripMenuItem->Size = System::Drawing::Size(48, 20);
+			this->showToolStripMenuItem->Text = L"Show";
 			// 
-			// normalToolStripMenuItem
+			// defaultToolStripMenuItem
 			// 
-			this->normalToolStripMenuItem->Name = L"normalToolStripMenuItem";
-			this->normalToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->normalToolStripMenuItem->Text = L"Normal";
-			this->normalToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem_Click);
+			this->defaultToolStripMenuItem->Name = L"defaultToolStripMenuItem";
+			this->defaultToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->defaultToolStripMenuItem->Text = L"&Default";
+			this->defaultToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem_Click);
 			// 
 			// wireframeToolStripMenuItem
 			// 
 			this->wireframeToolStripMenuItem->Name = L"wireframeToolStripMenuItem";
-			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->wireframeToolStripMenuItem->Text = L"Wireframe";
+			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->wireframeToolStripMenuItem->Text = L"&Wireframe";
 			this->wireframeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::wireframeToolStripMenuItem_Click);
 			// 
 			// sDFHodnotyToolStripMenuItem
 			// 
 			this->sDFHodnotyToolStripMenuItem->Name = L"sDFHodnotyToolStripMenuItem";
-			this->sDFHodnotyToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->sDFHodnotyToolStripMenuItem->Text = L"SDF hodnoty";
+			this->sDFHodnotyToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->sDFHodnotyToolStripMenuItem->Text = L"&SDF values";
 			this->sDFHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::sDFHodnotyToolStripMenuItem_Click);
 			// 
 			// pickingHodnotyToolStripMenuItem
 			// 
 			this->pickingHodnotyToolStripMenuItem->Name = L"pickingHodnotyToolStripMenuItem";
-			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->pickingHodnotyToolStripMenuItem->Text = L"Picking hodnoty";
+			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->pickingHodnotyToolStripMenuItem->Text = L"&Picking values";
 			this->pickingHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::pickingHodnotyToolStripMenuItem_Click);
 			// 
 			// toolStripSeparator1
 			// 
 			this->toolStripSeparator1->Name = L"toolStripSeparator1";
-			this->toolStripSeparator1->Size = System::Drawing::Size(158, 6);
+			this->toolStripSeparator1->Size = System::Drawing::Size(149, 6);
 			// 
 			// octreeToolStripMenuItem
 			// 
 			this->octreeToolStripMenuItem->Name = L"octreeToolStripMenuItem";
-			this->octreeToolStripMenuItem->Size = System::Drawing::Size(161, 22);
-			this->octreeToolStripMenuItem->Text = L"Octree";
+			this->octreeToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->octreeToolStripMenuItem->Text = L"&Octree";
 			this->octreeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::octreeToolStripMenuItem_Click);
 			// 
-			// nástrojeToolStripMenuItem
+			// normalsToolStripMenuItem
 			// 
-			this->nástrojeToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->vypoèítajSDFToolStripMenuItem, 
-				this->možnostiToolStripMenuItem});
-			this->nástrojeToolStripMenuItem->Name = L"nástrojeToolStripMenuItem";
-			this->nástrojeToolStripMenuItem->Size = System::Drawing::Size(63, 20);
-			this->nástrojeToolStripMenuItem->Text = L"&Nástroje";
+			this->normalsToolStripMenuItem->Name = L"normalsToolStripMenuItem";
+			this->normalsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->normalsToolStripMenuItem->Text = L"&Normals";
+			this->normalsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem1_Click);
 			// 
-			// vypoèítajSDFToolStripMenuItem
+			// toolsToolStripMenuItem
 			// 
-			this->vypoèítajSDFToolStripMenuItem->Name = L"vypoèítajSDFToolStripMenuItem";
-			this->vypoèítajSDFToolStripMenuItem->Size = System::Drawing::Size(146, 22);
-			this->vypoèítajSDFToolStripMenuItem->Text = L"Vypoèítaj SDF";
+			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->computeSDFToolStripMenuItem, 
+				this->optionsToolStripMenuItem});
+			this->toolsToolStripMenuItem->Enabled = false;
+			this->toolsToolStripMenuItem->Name = L"toolsToolStripMenuItem";
+			this->toolsToolStripMenuItem->Size = System::Drawing::Size(48, 20);
+			this->toolsToolStripMenuItem->Text = L"&Tools";
 			// 
-			// možnostiToolStripMenuItem
+			// computeSDFToolStripMenuItem
 			// 
-			this->možnostiToolStripMenuItem->Name = L"možnostiToolStripMenuItem";
-			this->možnostiToolStripMenuItem->Size = System::Drawing::Size(146, 22);
-			this->možnostiToolStripMenuItem->Text = L"&Možnosti";
+			this->computeSDFToolStripMenuItem->Name = L"computeSDFToolStripMenuItem";
+			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->computeSDFToolStripMenuItem->Text = L"&Compute SDF";
 			// 
-			// nápovìdaToolStripMenuItem
+			// optionsToolStripMenuItem
 			// 
-			this->nápovìdaToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->oproduktuToolStripMenuItem});
-			this->nápovìdaToolStripMenuItem->Name = L"nápovìdaToolStripMenuItem";
-			this->nápovìdaToolStripMenuItem->Size = System::Drawing::Size(73, 20);
-			this->nápovìdaToolStripMenuItem->Text = L"&Nápovìda";
+			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
+			this->optionsToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->optionsToolStripMenuItem->Text = L"&Options";
+			this->optionsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::optionsToolStripMenuItem_Click);
 			// 
-			// oproduktuToolStripMenuItem
+			// helpToolStripMenuItem
 			// 
-			this->oproduktuToolStripMenuItem->Name = L"oproduktuToolStripMenuItem";
-			this->oproduktuToolStripMenuItem->Size = System::Drawing::Size(144, 22);
-			this->oproduktuToolStripMenuItem->Text = L"&O produktu...";
+			this->helpToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->aboutToolStripMenuItem});
+			this->helpToolStripMenuItem->Name = L"helpToolStripMenuItem";
+			this->helpToolStripMenuItem->Size = System::Drawing::Size(44, 20);
+			this->helpToolStripMenuItem->Text = L"&Help";
+			// 
+			// aboutToolStripMenuItem
+			// 
+			this->aboutToolStripMenuItem->Name = L"aboutToolStripMenuItem";
+			this->aboutToolStripMenuItem->Size = System::Drawing::Size(116, 22);
+			this->aboutToolStripMenuItem->Text = L"&About...";
 			// 
 			// timer1
 			// 
@@ -305,6 +336,8 @@ namespace SDF {
 			// 
 			// panel2
 			// 
+			this->panel2->Controls->Add(this->TB_Status);
+			this->panel2->Controls->Add(this->LBL_Status);
 			this->panel2->Controls->Add(this->TB_Total);
 			this->panel2->Controls->Add(this->LBL_Total);
 			this->panel2->Controls->Add(this->textBox1);
@@ -317,6 +350,25 @@ namespace SDF {
 			this->panel2->Name = L"panel2";
 			this->panel2->Size = System::Drawing::Size(174, 535);
 			this->panel2->TabIndex = 2;
+			// 
+			// TB_Status
+			// 
+			this->TB_Status->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->TB_Status->Location = System::Drawing::Point(21, 509);
+			this->TB_Status->Name = L"TB_Status";
+			this->TB_Status->ReadOnly = true;
+			this->TB_Status->Size = System::Drawing::Size(150, 20);
+			this->TB_Status->TabIndex = 9;
+			// 
+			// LBL_Status
+			// 
+			this->LBL_Status->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((System::Windows::Forms::AnchorStyles::Bottom | System::Windows::Forms::AnchorStyles::Left));
+			this->LBL_Status->AutoSize = true;
+			this->LBL_Status->Location = System::Drawing::Point(18, 492);
+			this->LBL_Status->Name = L"LBL_Status";
+			this->LBL_Status->Size = System::Drawing::Size(37, 13);
+			this->LBL_Status->TabIndex = 8;
+			this->LBL_Status->Text = L"Status";
 			// 
 			// TB_Total
 			// 
@@ -427,6 +479,21 @@ namespace SDF {
 		System::Windows::Forms::Form::WndProc(m);  
 	}
 
+	private: void SetCheckedDrawMode(int d_mode)
+	{
+		defaultToolStripMenuItem->Checked = false;
+		wireframeToolStripMenuItem->Checked = false;
+		sDFHodnotyToolStripMenuItem->Checked = false;
+		pickingHodnotyToolStripMenuItem->Checked = false;
+		switch(d_mode)
+		{
+			case 0: pickingHodnotyToolStripMenuItem->Checked = true; break;
+			case 1: defaultToolStripMenuItem->Checked = true; break;
+			case 2: sDFHodnotyToolStripMenuItem->Checked = true; break;
+			case 3: wireframeToolStripMenuItem->Checked = true; break;
+			default: break;
+		}
+	}
 #pragma endregion
 
 	private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e)
@@ -447,6 +514,9 @@ namespace SDF {
 	}
 	private: System::Void otevøítToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		timer1->Enabled = false;
+		TB_Status->Text = "Opening File";
+
 		// Displays an OpenFileDialog so the user can select a model.
 		OpenFileDialog ^openFileDialog1 = gcnew OpenFileDialog();
 		openFileDialog1->Filter = "3D Model Files(*.OBJ)|*.OBJ|All files (*.*)|*.*";
@@ -457,13 +527,24 @@ namespace SDF {
 		// a .xml file was selected, open it.
 		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{
+			TB_Status->Text = "Loading File";
 			MController->LoadFile(MarshalString(openFileDialog1->FileName));
 			OpenGL->ReloadBoundary();
-			this->TB_Filename->Text = openFileDialog1->FileName;
+			this->TB_Filename->Text = System::IO::Path::GetFileName(openFileDialog1->FileName);
 			this->TB_Total->Text = ""+MController->GetTriangleCount();
 
 			MController->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
+			TB_Status->Text = "File Loaded";
 		}
+
+		showToolStripMenuItem->Enabled = true;
+		toolsToolStripMenuItem->Enabled = true;
+
+		octreeToolStripMenuItem->Checked = false;
+		normalsToolStripMenuItem->Checked = false;
+
+		SetCheckedDrawMode(1);
+		timer1->Enabled = true;
 	}
 	private: System::Void ukonèitToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
@@ -472,28 +553,45 @@ namespace SDF {
 	private: System::Void octreeToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
 		MController->show_octree = (MController->show_octree == true ? false : true);
+		octreeToolStripMenuItem->Checked = MController->show_octree;
 		MController->logInfo("Zobrazi Octree");
+	}
+	private: System::Void normalToolStripMenuItem1_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		MController->show_normals = (MController->show_normals == true ? false : true);
+		normalsToolStripMenuItem->Checked = MController->show_normals;
+		MController->logInfo("Zobrazi Normaly");
 	}
 	private: System::Void wireframeToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		SetCheckedDrawMode(3);
 		MController->setDrawMode(3);
 		MController->logInfo("Zobrazi Wireframe");
 	}
 	private: System::Void normalToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		SetCheckedDrawMode(1);
 		MController->setDrawMode(1);
-		MController->logInfo("Zobrazi Normal");
+		MController->logInfo("Zobrazi Default");
 	}
 	private: System::Void sDFHodnotyToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		SetCheckedDrawMode(2);
 		MController->setDrawMode(2);
 		MController->logInfo("Zobrazi SDF hodnoty");
 	}
 	private: System::Void pickingHodnotyToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		SetCheckedDrawMode(0);
 		MController->setDrawMode(0);
 		MController->logInfo("Zobrazi Picking hodnoty");
 	}
+	private: System::Void optionsToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		SettingsForm^ form2=gcnew SettingsForm();
+		form2->ShowDialog();
+	}
+
 };
 }
 

@@ -21,6 +21,7 @@ namespace Controller
 		void logDebug(string logString);
 
 		void LoadFile(string Filename);
+		void ResetSettings();
 		void CreateOctree();
 		void SetColors();
 		void GetBoundary(double &siz, double &x, double &y, double &z);
@@ -33,6 +34,7 @@ namespace Controller
 
 		bool loaded;
 		bool show_octree;
+		bool show_normals;
 		Face* selected;
 
 	private:

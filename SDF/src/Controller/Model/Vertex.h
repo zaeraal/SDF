@@ -4,7 +4,7 @@
 
 namespace Model
 {
-	using namespace Mathematics;
+	using namespace Structures;
 
 	public class Vertex
 	{
@@ -12,6 +12,6 @@ namespace Model
 		Vertex(double x, double y, double z);
 		~Vertex();
 
-		Vector4 *P;
+		Vector4 P;
 	};
 }

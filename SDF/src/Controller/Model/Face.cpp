@@ -19,8 +19,8 @@ namespace Model
 	Face::~Face()
 	{
 		// mnou alokovane (new) premenne
-		delete normal;
-		delete center;
+		//delete normal;
+		//delete center;
 
 		// osetrene v LinkdListe ze sa zmaze cely
 		delete susedia;
@@ -28,29 +28,28 @@ namespace Model
 
 	void Face::ComputeNormal()
 	{
-		center = new Vector4((v[0]->P->X + v[1]->P->X + v[2]->P->X) / 3.0,
-							 (v[0]->P->Y + v[1]->P->Y + v[2]->P->Y) / 3.0,
-							 (v[0]->P->Z + v[1]->P->Z + v[2]->P->Z) / 3.0);
+		center = Vector4((v[0]->P.X + v[1]->P.X + v[2]->P.X) / 3.0,
+							 (v[0]->P.Y + v[1]->P.Y + v[2]->P.Y) / 3.0,
+							 (v[0]->P.Z + v[1]->P.Z + v[2]->P.Z) / 3.0);
 
 		// cross product
-		Vector4 U = Vector4(v[1]->P->X - v[0]->P->X, v[1]->P->Y - v[0]->P->Y, v[1]->P->Z - v[0]->P->Z);
-		Vector4 V = Vector4(v[2]->P->X - v[0]->P->X, v[2]->P->Y - v[0]->P->Y, v[2]->P->Z - v[0]->P->Z);
+		Vector4 U = Vector4(v[1]->P.X - v[0]->P.X, v[1]->P.Y - v[0]->P.Y, v[1]->P.Z - v[0]->P.Z);
+		Vector4 V = Vector4(v[2]->P.X - v[0]->P.X, v[2]->P.Y - v[0]->P.Y, v[2]->P.Z - v[0]->P.Z);
 		double x = (U.Y * V.Z) - (U.Z * V.Y);
 		double y = (U.Z * V.X) - (U.X * V.Z);
 		double z = (U.X * V.Y) - (U.Y * V.X);
 
 		double length = sqrt(x * x + y * y + z * z);
 
-		normal = new Vector4(x / length, y / length, z / length);
+		normal = Vector4(x / length, y / length, z / length);
 	}
 
 	void Face::AddSused(Face* sused)
 	{
-		LinkedList<Face>* tmp = new LinkedList<Face>(sused);
 		if(susedia == NULL)
-			susedia = tmp;
+			susedia = new LinkedList<Face>(sused);
 		else
-			susedia->InsertToEnd(tmp);
+			susedia->InsertToEnd(sused);
 	}
 
 	void Face::SetColor(int color)

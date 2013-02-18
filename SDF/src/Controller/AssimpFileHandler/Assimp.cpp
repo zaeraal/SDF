@@ -139,9 +139,12 @@ namespace AssimpFileHandler
 
 				for(unsigned int i = 0; i < n_faces; i++)
 				{
-					LinkedList<Face>* u = new LinkedList<Face>(tmp_faces[i]);
-					fc->InsertToEnd(u);
-					tmp_faces[i] = NULL;
+					// ciary a body
+					if(tmp_faces[i] != NULL)
+					{
+						fc->InsertToEnd(tmp_faces[i]);
+						tmp_faces[i] = NULL;
+					}
 				}
 				delete [] tmp_faces;
 
@@ -149,8 +152,7 @@ namespace AssimpFileHandler
 				{
 					if(tmp_points[i] != NULL)
 					{
-						LinkedList<Vertex>* u = new LinkedList<Vertex>(tmp_points[i]);
-						pts->InsertToEnd(u);
+						pts->InsertToEnd(tmp_points[i]);
 						tmp_points[i] = NULL;
 					}
 				}

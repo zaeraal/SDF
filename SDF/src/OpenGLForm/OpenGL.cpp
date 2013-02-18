@@ -72,7 +72,7 @@ namespace OpenGLForm
 			// ak taha pravym tlacitkom
 			if(m.WParam.ToInt32() & MK_RBUTTON)
 			{
-				SetRotation(c_w+(double)(tmpx-Last_X)/(double)Width*600.0f, c_h+(double)(tmpy-Last_Y)/(double)Height*300.0f);
+				SetRotation(c_w-(360.0/(double)Width)*(double)(tmpx-Last_X), c_h-(180.0/(double)Height)*(double)(tmpy-Last_Y));
 			}
 			SetLastMouse(tmpx, tmpy);
 				 
@@ -127,11 +127,36 @@ namespace OpenGLForm
 		if(control->loaded == false)
 		{
 			// nieco default
-			glRotatef(90,1.0f,0.0f,0.0f);
+			glRotatef(90,-1.0f,0.0f,0.0f);
+
+			// debug kod ak chcem sledovat vektor
+			/*double x = 1.0;
+			double y = -1.0;
+			double z = 0.5;
+
+			double r = sqrt(x*x + y*y + z*z);
+			double wx = atan2(z, x);
+			double wy = acos(y / r);
+
+			double CameraX = wx * (180.0/M_PI);
+			double CameraY = wy * (180.0/M_PI);;
+
+			// uhol na radian
+			GetSphereCoordinates(CameraX, CameraY);
+
+			GLdouble X = sin(CameraY) * sin(CameraX);
+			GLdouble Y = cos(CameraY);
+			GLdouble Z = sin(CameraY) * cos(CameraX);
+
+			// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
+			gluLookAt (X, Y, Z, 0, 0, 0, 0.0, 1.0, 0.0);*/
+
 			glColor3f(1.0f,1.0f,1.0f);							// biela farba
 			GLUquadricObj *p = gluNewQuadric();
 			gluQuadricDrawStyle(p, GLU_LINE);
 			gluSphere(p, 1.0f, 20, 20);
+			//gluCylinder(p, 0.5, 0.1, 1.0, 20, 20);
+			//delete p;
 		}
 		else
 			control->DrawModel();
@@ -175,24 +200,18 @@ namespace OpenGLForm
 		glLoadIdentity();
 
 		// rotacia Z, Y, X
-		double CameraX = c_w;				// je to (0) - (360)
-		double CameraY = c_h-90;				// je to (0) - (180)
+		double CameraX = c_w;					// je to (0) - (360)
+		double CameraY = c_h;					// je to (0) - (180)
 		//control->logDebug(str_format("X: %f, Y: %f", CameraFi, CameraTheta));			// vypis na overenie pokial treba
 
 		// uhol na radian
 		GetSphereCoordinates(CameraX, CameraY);
 
-		// aka rotacia je kua spravna
-		/*GLdouble X = c_X + sin(CameraY) * sin(CameraX) * radius * 5.0f;
-        GLdouble Y = c_Y - sin(CameraY) * cos(CameraX) * radius * 5.0f;
-        GLdouble Z = c_Z + cos(CameraY) * radius * 5.0f;*/
-
-		GLdouble X = c_X + cos(CameraY) * cos(CameraX) * radius * 5.0f;
-        GLdouble Y = c_Y - sin(CameraY) * radius * 5.0f;
-        GLdouble Z = c_Z + cos(CameraY) * sin(CameraX) *radius * 5.0f;
+		GLdouble X = c_X + sin(CameraY) * sin(CameraX) * radius * 5.0f;
+        GLdouble Y = c_Y + cos(CameraY) * radius * 5.0f;
+        GLdouble Z = c_Z + sin(CameraY) * cos(CameraX) *radius * 5.0f;
 
 		// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
-		//gluLookAt (cos(tmpx)*sin(tmpy), cos(tmpy), sin(tmpx)*sin(tmpy), 0.0f, 0.0f, 0.0f, 0.0, 1.0, 0.0);
 		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 1.0, 0.0);
 
 		//GLfloat LightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f };
@@ -211,7 +230,7 @@ namespace OpenGLForm
 	{
 		if(x > 360.0f) x -= 360.0f;
 		if(x < 0.0f) x += 360.0f;
-		
+
 		if(y > 179.5f) y = 179.5f;
 		if(y < 0.5f) y = 0.5f;
 

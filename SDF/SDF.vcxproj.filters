@@ -16,9 +16,6 @@
     <Filter Include="Header Files\Helper">
       <UniqueIdentifier>{9c13564c-16d6-4a91-9430-987f4316a593}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Mathematics">
-      <UniqueIdentifier>{9e2063f4-e96c-403c-8e1b-940a7ec7ce7a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\OpenGLForm">
       <UniqueIdentifier>{c7d860fc-295a-4434-90f8-8557b497a55d}</UniqueIdentifier>
     </Filter>
@@ -43,11 +40,14 @@
     <Filter Include="Source Files\Helper">
       <UniqueIdentifier>{96771b9c-bdab-4b11-ae8d-a69b116a77a2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Mathematics">
-      <UniqueIdentifier>{575ec41c-ce5a-462d-ac9a-ecf75a3beccf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\OpenGLForm">
       <UniqueIdentifier>{2ba86172-6c26-4645-9bc2-52480f70cf65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Controller\Structures">
+      <UniqueIdentifier>{d20a0860-4d49-43b6-aee9-fd58a712b2a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Controller\Structures">
+      <UniqueIdentifier>{f346fc19-dc54-41c9-ad43-c3f0e582eb62}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,25 +69,25 @@
     <ClCompile Include="src\OpenGLForm\OpenGL.cpp">
       <Filter>Source Files\OpenGLForm</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mathematics\Vector4.cpp">
-      <Filter>Source Files\Mathematics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Helper\StringHelper.cpp">
       <Filter>Source Files\Helper</Filter>
     </ClCompile>
-    <ClCompile Include="src\Model\Face.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
+    <ClCompile Include="SettingsForm.cpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Model\Octree.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Model\Vertex.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AssimpFileHandler\Assimp.cpp">
+    <ClCompile Include="src\Controller\AssimpFileHandler\Assimp.cpp">
       <Filter>Source Files\Controller\AssimpFileHandler</Filter>
     </ClCompile>
-    <ClCompile Include="ModelController.cpp">
+    <ClCompile Include="src\Controller\Model\Face.cpp">
+      <Filter>Source Files\Controller\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controller\Model\Octree.cpp">
+      <Filter>Source Files\Controller\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controller\Model\Vertex.cpp">
+      <Filter>Source Files\Controller\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Controller\ModelController.cpp">
       <Filter>Source Files\Controller</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,23 +98,8 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\AssimpFileHandler\Assimp.h">
-      <Filter>Header Files\Controller\AssimpFileHandler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Model\Face.h">
-      <Filter>Header Files\Controller\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Model\Octree.h">
-      <Filter>Header Files\Controller\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Model\Vertex.h">
-      <Filter>Header Files\Controller\Model</Filter>
-    </ClInclude>
     <ClInclude Include="src\Helper\StringHelper.h">
       <Filter>Header Files\Helper</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mathematics\Vector4.h">
-      <Filter>Header Files\Mathematics</Filter>
     </ClInclude>
     <ClInclude Include="src\OpenGLForm\OpenGL.h">
       <Filter>Header Files\OpenGLForm</Filter>
@@ -122,10 +107,28 @@
     <ClInclude Include="Form1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModelController.h">
-      <Filter>Header Files\Controller</Filter>
+    <ClInclude Include="SettingsForm.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LinkedList.h">
+    <ClInclude Include="src\Controller\AssimpFileHandler\Assimp.h">
+      <Filter>Header Files\Controller\AssimpFileHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\Model\Face.h">
+      <Filter>Header Files\Controller\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\Model\Vertex.h">
+      <Filter>Header Files\Controller\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\Model\Octree.h">
+      <Filter>Header Files\Controller\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\Structures\Vector4.h">
+      <Filter>Header Files\Controller\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\Structures\LinkedList.h">
+      <Filter>Header Files\Controller\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Controller\ModelController.h">
       <Filter>Header Files\Controller</Filter>
     </ClInclude>
   </ItemGroup>
@@ -136,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resX">
+      <Filter>Resource Files</Filter>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SettingsForm.resx">
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
   </ItemGroup>

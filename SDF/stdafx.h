@@ -19,13 +19,15 @@
 #include <cmath>
 
 // manipulacia s datami
-#include <vector>
+//#include <vector>
 //#include <string.h>
 //#include <map>
 
+// mathematics - vector, matrices and operations
+//#include <Eigen/Core>
 
 // assimp include files. These three are usually needed.
-#include "assimp/Importer.hpp"	//OO version Header!
+#include "assimp/Importer.hpp"
 #include "assimp/PostProcess.h"
 #include "assimp/Scene.h"
 #include "assimp/DefaultLogger.hpp"

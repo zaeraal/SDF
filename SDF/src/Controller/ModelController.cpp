@@ -8,12 +8,9 @@ namespace Controller
 	{
 		Assimp = new CAssimp();
 		m_root = NULL;
-		triangles = new LinkedList<Face>(NULL);
-		points = new LinkedList<Vertex>(NULL);
-		loaded = false;
-		draw_mode = 0;
-		show_octree = false;
-		selected = NULL;
+		triangles = new LinkedList<Face>();
+		points = new LinkedList<Vertex>();
+		ResetSettings();
 	}
 
 	ModelController::~ModelController()
@@ -31,23 +28,11 @@ namespace Controller
 			delete m_root;
 
 		// delete actual faces and vertices
-		LinkedList<Face>* tmp1 = triangles;
-		while(tmp1 != NULL)
-		{
-			if(tmp1->data != NULL)
-				delete tmp1->data;
-			tmp1 = tmp1->next;
-		}
-		DeleteList(triangles);
+		triangles->CompleteDelete();
+		delete triangles;
 
-		LinkedList<Vertex>* tmp2 = points;
-		while(tmp2 != NULL)
-		{
-			if(tmp2->data != NULL)
-				delete tmp2->data;
-			tmp2 = tmp2->next;
-		}
-		DeleteList(points);*/
+		points->CompleteDelete();
+		delete points;*/
 	}
 
 	// zapis info log do suboru
@@ -65,36 +50,22 @@ namespace Controller
 	// nacita subor
 	void ModelController::LoadFile(std::string Filename)
 	{
-		loaded = false;
-		draw_mode = 0;
-		show_octree = false;
-		selected = NULL;
+		ResetSettings();
+
 		// ak znovu nacitavame, premaz povodne udaje
 		if(m_root != NULL)
 			delete m_root;
 
 		// delete actual faces and vertices
-		LinkedList<Face>* tmp1 = triangles;
-		while(tmp1 != NULL)
-		{
-			if(tmp1->data != NULL)
-				delete tmp1->data;
-			tmp1 = tmp1->next;
-		}
-		DeleteList(triangles);
+		triangles->CompleteDelete();
+		delete triangles;
 
-		LinkedList<Vertex>* tmp2 = points;
-		while(tmp2 != NULL)
-		{
-			if(tmp2->data != NULL)
-				delete tmp2->data;
-			tmp2 = tmp2->next;
-		}
-		DeleteList(points);
+		points->CompleteDelete();
+		delete points;
 
 		m_root = NULL;
-		triangles = new LinkedList<Face>(NULL);
-		points = new LinkedList<Vertex>(NULL);
+		triangles = new LinkedList<Face>();
+		points = new LinkedList<Vertex>();
 
 		Assimp->Import3DFromFile(Filename);
 		Assimp->LoadData(triangles, points);
@@ -104,33 +75,43 @@ namespace Controller
 		SetColors();
 	}
 
+	// resetuje "show" nastavenia
+	void ModelController::ResetSettings()
+	{
+		loaded = false;
+		draw_mode = 1;
+		show_octree = false;
+		show_normals = false;
+		selected = NULL;
+	}
+
 	// vytvori Octree strukturu
 	void ModelController::CreateOctree()
 	{
 		double minx = 99999.0, miny = 99999.0, minz = 99999.0;
 		double maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
 
-		LinkedList<Vertex>* tmp = points->next;
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
 		while(tmp != NULL)
 		{
-			if(tmp->data->P->X < minx)
-				minx = tmp->data->P->X;
-			if(tmp->data->P->Y < miny)
-				miny = tmp->data->P->Y;
-			if(tmp->data->P->Z < minz)
-				minz = tmp->data->P->Z;
+			if(tmp->data->P.X < minx)
+				minx = tmp->data->P.X;
+			if(tmp->data->P.Y < miny)
+				miny = tmp->data->P.Y;
+			if(tmp->data->P.Z < minz)
+				minz = tmp->data->P.Z;
 
-			if(tmp->data->P->X > maxx)
-				maxx = tmp->data->P->X;
-			if(tmp->data->P->Y > maxy)
-				maxy = tmp->data->P->Y;
-			if(tmp->data->P->Z > maxz)
-				maxz = tmp->data->P->Z;
+			if(tmp->data->P.X > maxx)
+				maxx = tmp->data->P.X;
+			if(tmp->data->P.Y > maxy)
+				maxy = tmp->data->P.Y;
+			if(tmp->data->P.Z > maxz)
+				maxz = tmp->data->P.Z;
 
 			tmp = tmp->next;
 		}
 
-		Vector4* center = new Vector4((minx+maxx) / 2.0, (miny+maxy) / 2.0, (minz+maxz) / 2.0);
+		Vector4 center = Vector4((minx+maxx) / 2.0, (miny+maxy) / 2.0, (minz+maxz) / 2.0);
 		double sizex = 0;
 		double sizey = 0;
 		double sizez = 0;
@@ -154,10 +135,10 @@ namespace Controller
 		m_root = new Octree(0, size, center, NULL);
 
 		unsigned int siz = triangles->GetSize();
-		if(siz > 1)
+		if(siz > 0)
 		{
 			Face** tria = new Face* [siz];
-			LinkedList<Face>* tmp2 = triangles->next;
+			LinkedList<Face>::Cell<Face>* tmp2 = triangles->start;
 			int i = 0;
 			while(tmp2 != NULL)
 			{
@@ -165,7 +146,7 @@ namespace Controller
 				tmp2 = tmp2->next;
 				i++;
 			}
-			m_root->Build(tria, siz-1);
+			m_root->Build(tria, siz);
 		}
 		else
 			m_root->Build(NULL, 0);
@@ -176,7 +157,7 @@ namespace Controller
 	{
 		int col;
 		int r = 0, g = 0, b = 0;
-		LinkedList<Face>* tmp = triangles;
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
 		{
 			r = r + color_step;
@@ -214,7 +195,7 @@ namespace Controller
 
 		glColor3f(1.0f,1.0f,1.0f);							// biela farba
 		{
-			LinkedList<Face>* tmp = triangles;
+			LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 			while(tmp != NULL)
 			{
 				if(tmp->data == NULL)
@@ -241,13 +222,23 @@ namespace Controller
 				}
 
 				glBegin(draw_mode == 3 ? GL_LINE_LOOP : GL_TRIANGLES);
-					glNormal3d(tmp->data->normal->X, tmp->data->normal->Y, tmp->data->normal->Z);
+					glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
 					for(unsigned int i = 0; i < 3; i++)
 					{
-						glVertex3d(tmp->data->v[i]->P->X, tmp->data->v[i]->P->Y, tmp->data->v[i]->P->Z);
+						glVertex3d(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
 					}
 				glEnd();
-
+				if((show_normals == true) && (draw_mode != 4))
+				{
+					glColor3f(1.0f,0.0f,0.0f);		// orange
+					glBegin(GL_LINES);
+						//glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
+						glVertex3d(tmp->data->center.X, tmp->data->center.Y, tmp->data->center.Z);
+						glVertex3d( tmp->data->normal.X + tmp->data->center.X,
+									tmp->data->normal.Y + tmp->data->center.Y,
+									tmp->data->normal.Z + tmp->data->center.Z);
+					glEnd();
+				}
 				tmp = tmp->next;
 			}
 		}
@@ -302,7 +293,7 @@ namespace Controller
 		logInfo(MarshalString("farba: "+color));
 		if(color > 0)
 		{
-			LinkedList<Face>* tmp = triangles->next;
+			LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 			while(tmp != NULL)
 			{
 				if(color == tmp->data->farba)

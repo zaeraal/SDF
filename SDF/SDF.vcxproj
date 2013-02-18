@@ -61,7 +61,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\AssimpFileHandler;src\Mathematics;src\OpenGLForm;src\Main;src\Model;src\Helper;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controller;src\Controller\AssimpFileHandler;src\Controller\Model;src\Controller\Structures;src\OpenGLForm;src\Helper;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\AssimpFileHandler;src\Mathematics;src\OpenGLForm;src\Main;src\Model;src\Helper;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controller;src\Controller\AssimpFileHandler;src\Controller\Model;src\Controller\Structures;src\OpenGLForm;src\Helper;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -97,14 +97,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="ModelController.cpp" />
     <ClCompile Include="SDF.cpp" />
-    <ClCompile Include="src\AssimpFileHandler\Assimp.cpp" />
+    <ClCompile Include="SettingsForm.cpp" />
+    <ClCompile Include="src\Controller\AssimpFileHandler\Assimp.cpp" />
+    <ClCompile Include="src\Controller\ModelController.cpp" />
+    <ClCompile Include="src\Controller\Model\Face.cpp" />
+    <ClCompile Include="src\Controller\Model\Octree.cpp" />
+    <ClCompile Include="src\Controller\Model\Vertex.cpp" />
     <ClCompile Include="src\Helper\StringHelper.cpp" />
-    <ClCompile Include="src\Mathematics\Vector4.cpp" />
-    <ClCompile Include="src\Model\Face.cpp" />
-    <ClCompile Include="src\Model\Octree.cpp" />
-    <ClCompile Include="src\Model\Vertex.cpp" />
     <ClCompile Include="src\OpenGLForm\OpenGL.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -115,15 +115,18 @@
     <ClInclude Include="Form1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
-    <ClInclude Include="LinkedList.h" />
-    <ClInclude Include="ModelController.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\AssimpFileHandler\Assimp.h" />
+    <ClInclude Include="SettingsForm.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
+    <ClInclude Include="src\Controller\AssimpFileHandler\Assimp.h" />
+    <ClInclude Include="src\Controller\ModelController.h" />
+    <ClInclude Include="src\Controller\Model\Face.h" />
+    <ClInclude Include="src\Controller\Model\Octree.h" />
+    <ClInclude Include="src\Controller\Model\Vertex.h" />
+    <ClInclude Include="src\Controller\Structures\LinkedList.h" />
+    <ClInclude Include="src\Controller\Structures\Vector4.h" />
     <ClInclude Include="src\Helper\StringHelper.h" />
-    <ClInclude Include="src\Mathematics\Vector4.h" />
-    <ClInclude Include="src\Model\Face.h" />
-    <ClInclude Include="src\Model\Octree.h" />
-    <ClInclude Include="src\Model\Vertex.h" />
     <ClInclude Include="src\OpenGLForm\OpenGL.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
@@ -134,6 +137,9 @@
     <EmbeddedResource Include="Form1.resX">
       <DependentUpon>Form1.h</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SettingsForm.resx">
+      <DependentUpon>SettingsForm.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

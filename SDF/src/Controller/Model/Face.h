@@ -6,7 +6,7 @@
 namespace Model
 {
 	using namespace std;
-	using namespace Controller;
+	using namespace Structures;
 
 	public class Face
 	{
@@ -19,8 +19,8 @@ namespace Model
 		void SetColor(int color);
 
 		Vertex*					v[3];
-		Vector4*				normal;
-		Vector4*				center;
+		Vector4					normal;
+		Vector4					center;
 		LinkedList<Face>*		susedia;					// susedia
 		int						farba;						// pre picking
 		//SDF					value;
