@@ -10,6 +10,11 @@ namespace Model
 		P.Init(x, y, z);
 	}
 
+	Vertex::Vertex(Vector4 position)
+	{
+		P = position;
+	}
+
 	// destruktor
 	Vertex::~Vertex()
 	{

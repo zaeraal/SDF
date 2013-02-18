@@ -1,4 +1,4 @@
-// Vector4.h : 3D vektor/bos
+// Vector4.h : 3D vektor
 #pragma once
 #include <cmath>
 

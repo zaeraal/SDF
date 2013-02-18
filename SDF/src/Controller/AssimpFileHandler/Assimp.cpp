@@ -67,9 +67,9 @@ namespace AssimpFileHandler
 	void CAssimp::LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		glLoadIdentity();
-		/*Vertex* v1 = new Vertex(10.0,20.0,0.0);
-		Vertex* v2 = new Vertex(-10.0,20.0,0.0);
-		Vertex* v3 = new Vertex(0.0,0.0,0.0);
+		/*Vertex* v1 = new Vertex(10.0,20.0,0.0,1.0);
+		Vertex* v2 = new Vertex(-10.0,20.0,0.0,1.0);
+		Vertex* v3 = new Vertex(0.0,0.0,0.0,1.0);
 		Face* fc = new Face(v1, v2, v3);
 		points.push_back(v1);
 		points.push_back(v2);
@@ -90,6 +90,7 @@ namespace AssimpFileHandler
 
 			GLfloat m[16]; 
 			glGetFloatv(GL_MODELVIEW_MATRIX, m);
+			Mat4 mat = Mat4(m);
 
 			// for all meshes assigned to this node
 			for (unsigned int n = 0; n < nd->mNumMeshes; ++n)
@@ -123,15 +124,13 @@ namespace AssimpFileHandler
 						if(tmp_points[vertexIndex] == NULL)
 						{
 							// aplikuj maticu transformacie
-							double a = mesh->mVertices[vertexIndex].x;
-							double b = mesh->mVertices[vertexIndex].y;
-							double c = mesh->mVertices[vertexIndex].z;
+							Vector4 original = Vector4(mesh->mVertices[vertexIndex].x,
+													   mesh->mVertices[vertexIndex].y,
+													   mesh->mVertices[vertexIndex].z,
+													   1.0);							// ide o bod a teda ma W = 1, vtedy pouzije aj posunutie ak existuje v matici
+							Vector4 transformed = original * mat;
 
-							double x = a*m[0] + b*m[4] + c*m[8] + m[12];
-							double y = a*m[1] + b*m[5] + c*m[9] + m[13];
-							double z = a*m[2] + b*m[6] + c*m[10] + m[14];
-
-							tmp_points[vertexIndex] = new Vertex(x, y, z);
+							tmp_points[vertexIndex] = new Vertex(transformed);
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
@@ -139,7 +138,7 @@ namespace AssimpFileHandler
 
 				for(unsigned int i = 0; i < n_faces; i++)
 				{
-					// ciary a body
+					// ciary a body nechcem
 					if(tmp_faces[i] != NULL)
 					{
 						fc->InsertToEnd(tmp_faces[i]);

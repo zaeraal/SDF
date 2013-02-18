@@ -2,6 +2,7 @@
 #pragma once
 #include "StringHelper.h"
 #include "Face.h"
+#include "Mat4.h"
 
 namespace AssimpFileHandler
 {

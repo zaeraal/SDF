@@ -131,6 +131,9 @@
     <ClInclude Include="src\Controller\ModelController.h">
       <Filter>Header Files\Controller</Filter>
     </ClInclude>
+    <ClInclude Include="src\Controller\Structures\Mat4.h">
+      <Filter>Header Files\Controller\Structures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc">

@@ -10,6 +10,7 @@ namespace Model
 	{
 	public:
 		Vertex(double x, double y, double z);
+		Vertex(Vector4 position);
 		~Vertex();
 
 		Vector4 P;

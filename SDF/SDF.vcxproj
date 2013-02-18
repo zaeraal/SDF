@@ -125,6 +125,7 @@
     <ClInclude Include="src\Controller\Model\Octree.h" />
     <ClInclude Include="src\Controller\Model\Vertex.h" />
     <ClInclude Include="src\Controller\Structures\LinkedList.h" />
+    <ClInclude Include="src\Controller\Structures\Mat4.h" />
     <ClInclude Include="src\Controller\Structures\Vector4.h" />
     <ClInclude Include="src\Helper\StringHelper.h" />
     <ClInclude Include="src\OpenGLForm\OpenGL.h" />

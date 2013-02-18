@@ -18,10 +18,6 @@ namespace Model
 	//destruktor
 	Face::~Face()
 	{
-		// mnou alokovane (new) premenne
-		//delete normal;
-		//delete center;
-
 		// osetrene v LinkdListe ze sa zmaze cely
 		delete susedia;
 	}
@@ -30,18 +26,14 @@ namespace Model
 	{
 		center = Vector4((v[0]->P.X + v[1]->P.X + v[2]->P.X) / 3.0,
 							 (v[0]->P.Y + v[1]->P.Y + v[2]->P.Y) / 3.0,
-							 (v[0]->P.Z + v[1]->P.Z + v[2]->P.Z) / 3.0);
+							 (v[0]->P.Z + v[1]->P.Z + v[2]->P.Z) / 3.0,
+							 1.0);
 
 		// cross product
 		Vector4 U = Vector4(v[1]->P.X - v[0]->P.X, v[1]->P.Y - v[0]->P.Y, v[1]->P.Z - v[0]->P.Z);
 		Vector4 V = Vector4(v[2]->P.X - v[0]->P.X, v[2]->P.Y - v[0]->P.Y, v[2]->P.Z - v[0]->P.Z);
-		double x = (U.Y * V.Z) - (U.Z * V.Y);
-		double y = (U.Z * V.X) - (U.X * V.Z);
-		double z = (U.X * V.Y) - (U.Y * V.X);
-
-		double length = sqrt(x * x + y * y + z * z);
-
-		normal = Vector4(x / length, y / length, z / length);
+		normal = U % V;
+		normal.Normalize();
 	}
 
 	void Face::AddSused(Face* sused)
