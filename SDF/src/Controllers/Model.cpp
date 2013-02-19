@@ -334,7 +334,7 @@ namespace ModelController
 		R = GetRValue(rgbColor);
 		G = GetGValue(rgbColor);
 		B = GetBValue(rgbColor);
-		logInfo(MarshalString("value: " + SDF_value + ", R: " + R + ", G: "+G+", B: "+B));
+		//logInfo(MarshalString("value: " + SDF_value + ", R: " + R + ", G: "+G+", B: "+B));
 	}
 
 	void CModel::setDrawMode(int mode)

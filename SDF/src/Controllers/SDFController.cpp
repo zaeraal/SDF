@@ -45,8 +45,8 @@ namespace SDFController
 			{
 				double rndy = rand()%int(angle / 2);
 				double rndx = rand()%(360);
-				if(rndy == 180.0)
-					rndy = 179.5;
+				if(rndy == 0.0)
+					rndy = 0.5;
 				//Vector4 ray = (t_mat * CalcRayFromAngle(rndx, rndy));
 				Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
 				ray.Normalize();
