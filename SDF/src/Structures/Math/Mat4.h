@@ -11,7 +11,7 @@ namespace MathStructures
         double M[16];
 
 		Mat4 () { Mat4(Identity); }
-		Mat4 (float m[16])	// wtf to nezobere proste double?
+		Mat4 (float m[16])	// wtf, to nezobere proste double?
 		{
 			for (int i = 0; i < 16; i++)
 				M[i] = m[i];
@@ -30,6 +30,13 @@ namespace MathStructures
 			M[4] = b0;		M[5] = b1;		M[6] = b2;		M[7] = b3;
 			M[8] = c0;		M[9] = c1;		M[10] = c2;		M[11] = c3;
 			M[12] = d0;		M[13] = d1;		M[14] = d2;		M[15] = d3;
+		}
+		Mat4 (Vector4& a, Vector4& b, Vector4& c)
+		{
+			M[0] = a.X;		M[1] = a.Y;		M[2] = a.Z;		M[3] = a.W;
+			M[4] = b.X;		M[5] = b.Y;		M[6] = b.Z;		M[7] = b.W;
+			M[8] = c.X;		M[9] = c.Y;		M[10] = c.Z;	M[11] = c.W;
+			M[12] = 0.0;	M[13] = 0.0;	M[14] = 0.0;	M[15] = 1.0;
 		}
 
 		void Transpose ()

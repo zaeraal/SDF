@@ -65,7 +65,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -79,7 +79,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -103,6 +103,7 @@
     <ClCompile Include="src\Controllers\Model.cpp" />
     <ClCompile Include="src\Controllers\OpenGL.cpp" />
     <ClCompile Include="src\Controllers\SDFController.cpp" />
+    <ClCompile Include="src\Helpers\MathHelper.cpp" />
     <ClCompile Include="src\Helpers\StringHelper.cpp" />
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
@@ -125,6 +126,7 @@
     <ClInclude Include="src\Controllers\Model.h" />
     <ClInclude Include="src\Controllers\OpenGL.h" />
     <ClInclude Include="src\Controllers\SDFController.h" />
+    <ClInclude Include="src\Helpers\MathHelper.h" />
     <ClInclude Include="src\Helpers\StringHelper.h" />
     <ClInclude Include="src\Structures\Generic\LinkedList.h" />
     <ClInclude Include="src\Structures\Math\Mat4.h" />

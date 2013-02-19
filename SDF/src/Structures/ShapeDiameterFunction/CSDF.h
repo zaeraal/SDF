@@ -9,7 +9,12 @@ namespace SDFStructures
 		CSDF();
 		~CSDF();
 
-		void ComputeValue(double* hodnoty, unsigned int size);
+		void ComputeValue(const std::vector<double> values, const std::vector<double> inverse_Yangles);
+		double CalcMedian(const std::vector<double> values, unsigned int size);
+		double CalcMean(const std::vector<double> values, unsigned int size);
+		double CalcStandardDeviation(const std::vector<double> values, unsigned int size);
+
+
 		void Normalize(double min, double max, double alfa);
 
 

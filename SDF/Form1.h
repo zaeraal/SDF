@@ -238,47 +238,47 @@ namespace SDF {
 			// defaultToolStripMenuItem
 			// 
 			this->defaultToolStripMenuItem->Name = L"defaultToolStripMenuItem";
-			this->defaultToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->defaultToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->defaultToolStripMenuItem->Text = L"&Default";
 			this->defaultToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem_Click);
 			// 
 			// wireframeToolStripMenuItem
 			// 
 			this->wireframeToolStripMenuItem->Name = L"wireframeToolStripMenuItem";
-			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->wireframeToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->wireframeToolStripMenuItem->Text = L"&Wireframe";
 			this->wireframeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::wireframeToolStripMenuItem_Click);
 			// 
 			// sDFHodnotyToolStripMenuItem
 			// 
 			this->sDFHodnotyToolStripMenuItem->Name = L"sDFHodnotyToolStripMenuItem";
-			this->sDFHodnotyToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->sDFHodnotyToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->sDFHodnotyToolStripMenuItem->Text = L"&SDF values";
 			this->sDFHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::sDFHodnotyToolStripMenuItem_Click);
 			// 
 			// pickingHodnotyToolStripMenuItem
 			// 
 			this->pickingHodnotyToolStripMenuItem->Name = L"pickingHodnotyToolStripMenuItem";
-			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->pickingHodnotyToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->pickingHodnotyToolStripMenuItem->Text = L"&Picking values";
 			this->pickingHodnotyToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::pickingHodnotyToolStripMenuItem_Click);
 			// 
 			// toolStripSeparator1
 			// 
 			this->toolStripSeparator1->Name = L"toolStripSeparator1";
-			this->toolStripSeparator1->Size = System::Drawing::Size(149, 6);
+			this->toolStripSeparator1->Size = System::Drawing::Size(146, 6);
 			// 
 			// octreeToolStripMenuItem
 			// 
 			this->octreeToolStripMenuItem->Name = L"octreeToolStripMenuItem";
-			this->octreeToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->octreeToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->octreeToolStripMenuItem->Text = L"&Octree";
 			this->octreeToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::octreeToolStripMenuItem_Click);
 			// 
 			// normalsToolStripMenuItem
 			// 
 			this->normalsToolStripMenuItem->Name = L"normalsToolStripMenuItem";
-			this->normalsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->normalsToolStripMenuItem->Size = System::Drawing::Size(149, 22);
 			this->normalsToolStripMenuItem->Text = L"&Normals";
 			this->normalsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::normalToolStripMenuItem1_Click);
 			// 
@@ -294,13 +294,14 @@ namespace SDF {
 			// computeSDFToolStripMenuItem
 			// 
 			this->computeSDFToolStripMenuItem->Name = L"computeSDFToolStripMenuItem";
-			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->computeSDFToolStripMenuItem->Text = L"&Compute SDF";
+			this->computeSDFToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::computeSDFToolStripMenuItem_Click);
 			// 
 			// optionsToolStripMenuItem
 			// 
 			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
-			this->optionsToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->optionsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->optionsToolStripMenuItem->Text = L"&Options";
 			this->optionsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::optionsToolStripMenuItem_Click);
 			// 
@@ -592,6 +593,17 @@ namespace SDF {
 		form2->ShowDialog();
 	}
 
+	private: System::Void computeSDFToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		timer1->Enabled = false;
+
+		SetCheckedDrawMode(2);
+		MController->setDrawMode(2);
+		MController->logInfo("Compute SDF");
+		MController->ComputeSDF();
+
+		timer1->Enabled = true;
+	}
 };
 }
 

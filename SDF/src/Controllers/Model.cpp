@@ -7,6 +7,7 @@ namespace ModelController
 	CModel::CModel()
 	{
 		Assimp = new CAssimp();
+		SDF_control = new CSDFController();
 		m_root = NULL;
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
@@ -16,6 +17,7 @@ namespace ModelController
 	CModel::~CModel()
 	{
 		delete Assimp;
+		delete SDF_control;
 
 		/*
 		/// -------------------------------------
@@ -213,12 +215,19 @@ namespace ModelController
 						glColor3f(1.0f,1.0f,1.0f);		// white
 				}
 				// nech zorbazi picking hodnoty
-				if((draw_mode == 0) || (draw_mode == 4))
+				else if((draw_mode == 0) || (draw_mode == 4))
 				{
 					GLubyte r = 0, g = 0, b = 0;
 					ColorToRGB(tmp->data->farba, r,g,b);
 					glColor3ub(r, g, b);
 					//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
+				}
+				// nech vykresli hodnoty SDF funkcie
+				else if(draw_mode == 2)
+				{
+					GLubyte r = 0, g = 0, b = 0;
+					HLSToRGB(tmp->data->diameter->normalized, r, g, b);
+					glColor3ub(r, g, b);
 				}
 
 				glBegin(draw_mode == 3 ? GL_LINE_LOOP : GL_TRIANGLES);
@@ -230,7 +239,8 @@ namespace ModelController
 				glEnd();
 				if((show_normals == true) && (draw_mode != 4))
 				{
-					glColor3f(1.0f,0.0f,0.0f);		// orange
+					glDisable(GL_LIGHTING);
+					glColor3f(1.0f,0.0f,0.0f);		// red
 					glBegin(GL_LINES);
 						//glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
 						glVertex3d(tmp->data->center.X, tmp->data->center.Y, tmp->data->center.Z);
@@ -238,6 +248,9 @@ namespace ModelController
 									tmp->data->normal.Y + tmp->data->center.Y,
 									tmp->data->normal.Z + tmp->data->center.Z);
 					glEnd();
+					glColor3f(1.0f,1.0f,1.0f);		// biela farba
+					if((draw_mode == 1) || (draw_mode == 3))
+						glEnable(GL_LIGHTING);
 				}
 				tmp = tmp->next;
 			}
@@ -261,6 +274,21 @@ namespace ModelController
 			B = int((g - G) / 256);
 		}
 		else G = g;
+	}
+
+	void CModel::HLSToRGB(double SDF_value, GLubyte &R, GLubyte &G, GLubyte &B)
+	{
+		//#pragma comment( lib, "shlwapi.lib" )  // needed for the ColorHLSToRGB() function
+
+		int hue, lum, sat;
+		hue = int(((SDF_value - SDF_control->nmin) / (SDF_control->nmax - SDF_control->nmin)) * (240.0 / 100.0));
+		lum = 120;
+		sat = 240;
+
+		COLORREF rgbColor = ColorHLSToRGB( hue, lum, sat );
+		R = GetRValue(rgbColor);
+		G = GetGValue(rgbColor);
+		B = GetBValue(rgbColor);
 	}
 
 	void CModel::setDrawMode(int mode)
@@ -304,5 +332,9 @@ namespace ModelController
 				tmp = tmp->next;
 			}
 		}
+	}
+	void CModel::ComputeSDF()
+	{
+		SDF_control->ComputeForAllFaces(triangles);
 	}
 }

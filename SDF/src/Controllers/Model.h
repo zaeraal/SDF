@@ -1,12 +1,14 @@
 // Model.h : subor pre kontrolu modelov
 #pragma once
 #include "Octree.h"
+#include "SDFController.h"
 #include "Assimp.h"
 
 namespace ModelController
 {
 	using namespace std;
 	using namespace AssimpFileHandler;
+	using namespace SDFController;
 
 	const int color_step = 4;
 
@@ -26,10 +28,12 @@ namespace ModelController
 		void GetBoundary(double &siz, double &x, double &y, double &z);
 		void DrawModel();
 		void ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B);
+		void HLSToRGB(double SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
 		void setDrawMode(int mode);
 		int getDrawMode();
 		int GetTriangleCount();
 		void ProcessPick(int x, int y);
+		void ComputeSDF();
 
 		bool loaded;
 		bool show_octree;
@@ -38,6 +42,7 @@ namespace ModelController
 
 	private:
 		CAssimp* Assimp;
+		CSDFController* SDF_control;
 		LinkedList<Face>* triangles;
 		LinkedList<Vertex>* points;
 		Octree* m_root;

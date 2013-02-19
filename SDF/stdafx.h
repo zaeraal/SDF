@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <assert.h>
+#include <shlwapi.h>
 #include <fstream>
 /*#include <iostream>
 #include <sstream>
