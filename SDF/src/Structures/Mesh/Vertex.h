@@ -2,9 +2,9 @@
 #pragma once
 #include "Vector4.h"
 
-namespace Model
+namespace MeshStructures
 {
-	using namespace Structures;
+	using namespace MathStructures;
 
 	public class Vertex
 	{

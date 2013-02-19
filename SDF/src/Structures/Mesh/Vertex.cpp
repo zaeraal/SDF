@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Vertex.h"
 
-namespace Model
+namespace MeshStructures
 {
 	// konstruktor
 	Vertex::Vertex(double x, double y, double z)

@@ -1,7 +1,7 @@
 // LinkedList.h : subor na vytvaranie spajanych zoznamov
 #pragma once
 
-namespace Structures
+namespace GenericStructures
 {
 	template <class T> public class LinkedList
 	{

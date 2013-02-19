@@ -61,7 +61,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controller;src\Controller\AssimpFileHandler;src\Controller\Model;src\Controller\Structures;src\OpenGLForm;src\Helper;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controller;src\Controller\AssimpFileHandler;src\Controller\Model;src\Controller\Structures;src\OpenGLForm;src\Helper;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -99,13 +99,15 @@
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SDF.cpp" />
     <ClCompile Include="SettingsForm.cpp" />
-    <ClCompile Include="src\Controller\AssimpFileHandler\Assimp.cpp" />
-    <ClCompile Include="src\Controller\ModelController.cpp" />
-    <ClCompile Include="src\Controller\Model\Face.cpp" />
-    <ClCompile Include="src\Controller\Model\Octree.cpp" />
-    <ClCompile Include="src\Controller\Model\Vertex.cpp" />
-    <ClCompile Include="src\Helper\StringHelper.cpp" />
-    <ClCompile Include="src\OpenGLForm\OpenGL.cpp" />
+    <ClCompile Include="src\Controllers\Assimp.cpp" />
+    <ClCompile Include="src\Controllers\Model.cpp" />
+    <ClCompile Include="src\Controllers\OpenGL.cpp" />
+    <ClCompile Include="src\Controllers\SDFController.cpp" />
+    <ClCompile Include="src\Helpers\StringHelper.cpp" />
+    <ClCompile Include="src\Structures\Mesh\Face.cpp" />
+    <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
+    <ClCompile Include="src\Structures\Mesh\Vertex.cpp" />
+    <ClCompile Include="src\Structures\ShapeDiameterFunction\CSDF.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -119,16 +121,18 @@
     <ClInclude Include="SettingsForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
-    <ClInclude Include="src\Controller\AssimpFileHandler\Assimp.h" />
-    <ClInclude Include="src\Controller\ModelController.h" />
-    <ClInclude Include="src\Controller\Model\Face.h" />
-    <ClInclude Include="src\Controller\Model\Octree.h" />
-    <ClInclude Include="src\Controller\Model\Vertex.h" />
-    <ClInclude Include="src\Controller\Structures\LinkedList.h" />
-    <ClInclude Include="src\Controller\Structures\Mat4.h" />
-    <ClInclude Include="src\Controller\Structures\Vector4.h" />
-    <ClInclude Include="src\Helper\StringHelper.h" />
-    <ClInclude Include="src\OpenGLForm\OpenGL.h" />
+    <ClInclude Include="src\Controllers\Assimp.h" />
+    <ClInclude Include="src\Controllers\Model.h" />
+    <ClInclude Include="src\Controllers\OpenGL.h" />
+    <ClInclude Include="src\Controllers\SDFController.h" />
+    <ClInclude Include="src\Helpers\StringHelper.h" />
+    <ClInclude Include="src\Structures\Generic\LinkedList.h" />
+    <ClInclude Include="src\Structures\Math\Mat4.h" />
+    <ClInclude Include="src\Structures\Math\Vector4.h" />
+    <ClInclude Include="src\Structures\Mesh\Face.h" />
+    <ClInclude Include="src\Structures\Mesh\Octree.h" />
+    <ClInclude Include="src\Structures\Mesh\Vertex.h" />
+    <ClInclude Include="src\Structures\ShapeDiameterFunction\CSDF.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

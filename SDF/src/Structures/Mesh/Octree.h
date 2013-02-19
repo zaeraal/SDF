@@ -2,10 +2,10 @@
 #pragma once
 #include "Face.h"
 
-namespace Model
+namespace MeshStructures
 {
 	using namespace std;
-	using namespace Structures;
+	using namespace GenericStructures;
 
 	const int max_depth = 4;
 	const int min_count = 2;

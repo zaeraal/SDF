@@ -1,10 +1,10 @@
-// ModelController.cpp : subor pre kontrolu modelov
+// Model.cpp : subor pre kontrolu modelov
 #include "stdafx.h"
-#include "ModelController.h"
+#include "Model.h"
 
-namespace Controller
+namespace ModelController
 {
-	ModelController::ModelController()
+	CModel::CModel()
 	{
 		Assimp = new CAssimp();
 		m_root = NULL;
@@ -13,7 +13,7 @@ namespace Controller
 		ResetSettings();
 	}
 
-	ModelController::~ModelController()
+	CModel::~CModel()
 	{
 		delete Assimp;
 
@@ -36,19 +36,19 @@ namespace Controller
 	}
 
 	// zapis info log do suboru
-	void ModelController::logInfo(std::string logString)
+	void CModel::logInfo(std::string logString)
 	{
 		Assimp->logInfo(logString);
 	}
 
 	// zapis debug log do suboru
-	void ModelController::logDebug(std::string logString)
+	void CModel::logDebug(std::string logString)
 	{
 		Assimp->logDebug(logString);
 	}
 
 	// nacita subor
-	void ModelController::LoadFile(std::string Filename)
+	void CModel::LoadFile(std::string Filename)
 	{
 		ResetSettings();
 
@@ -76,7 +76,7 @@ namespace Controller
 	}
 
 	// resetuje "show" nastavenia
-	void ModelController::ResetSettings()
+	void CModel::ResetSettings()
 	{
 		loaded = false;
 		draw_mode = 1;
@@ -86,7 +86,7 @@ namespace Controller
 	}
 
 	// vytvori Octree strukturu
-	void ModelController::CreateOctree()
+	void CModel::CreateOctree()
 	{
 		double minx = 99999.0, miny = 99999.0, minz = 99999.0;
 		double maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
@@ -153,7 +153,7 @@ namespace Controller
 	}
 
 	// nastavi farby pre picking
-	void ModelController::SetColors()
+	void CModel::SetColors()
 	{
 		int col;
 		int r = 0, g = 0, b = 0;
@@ -174,14 +174,14 @@ namespace Controller
 		}
 	}
 
-	// pre spravne vycentrovanie pohladu ked sa nacita model
-	void ModelController::GetBoundary(double &siz, double &x, double &y, double &z)
+	// pre spravne vycentrovanie pohladu ked sa nacita CModel
+	void CModel::GetBoundary(double &siz, double &x, double &y, double &z)
 	{
 		m_root->GetBoundary(siz, x, y, z);
 	}
 
-	// vykresli model
-	void ModelController::DrawModel()
+	// vykresli CModel
+	void CModel::DrawModel()
 	{
 		if((draw_mode == 1) || (draw_mode == 3))
 			glEnable(GL_LIGHTING);
@@ -251,7 +251,7 @@ namespace Controller
 		}
 	}
 
-	void ModelController::ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B)
+	void CModel::ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B)
 	{
 		R = color % 256;
 		int g = int((color - R) / 256);
@@ -263,21 +263,21 @@ namespace Controller
 		else G = g;
 	}
 
-	void ModelController::setDrawMode(int mode)
+	void CModel::setDrawMode(int mode)
 	{
 		draw_mode = mode;
 	}
-	int ModelController::getDrawMode()
+	int CModel::getDrawMode()
 	{
 		return draw_mode;
 	}
 
-	int ModelController::GetTriangleCount()
+	int CModel::GetTriangleCount()
 	{
 		return triangles->GetSize() - 1;
 	}
 
-	void ModelController::ProcessPick(int x, int y)
+	void CModel::ProcessPick(int x, int y)
 	{
 		GLint viewport[4];
 		GLubyte pixel[3];

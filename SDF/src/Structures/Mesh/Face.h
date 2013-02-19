@@ -2,11 +2,13 @@
 #pragma once
 #include "Vertex.h"
 #include "LinkedList.h"
+#include "CSDF.h"
 
-namespace Model
+namespace MeshStructures
 {
 	using namespace std;
-	using namespace Structures;
+	using namespace GenericStructures;
+	using namespace SDFStructures;
 
 	public class Face
 	{
@@ -23,6 +25,6 @@ namespace Model
 		Vector4					center;
 		LinkedList<Face>*		susedia;					// susedia
 		int						farba;						// pre picking
-		//SDF					value;
+		CSDF*					diameter;
 	};
 }

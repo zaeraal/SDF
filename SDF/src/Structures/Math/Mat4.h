@@ -2,7 +2,7 @@
 #pragma once
 #include "Vector4.h"
 
-namespace Structures
+namespace MathStructures
 {
 	const double Identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     struct Mat4

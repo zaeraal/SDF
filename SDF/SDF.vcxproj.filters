@@ -13,41 +13,41 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\Helper">
-      <UniqueIdentifier>{9c13564c-16d6-4a91-9430-987f4316a593}</UniqueIdentifier>
+    <Filter Include="Header Files\Structures">
+      <UniqueIdentifier>{fdb29c85-247a-4fd7-8192-34f159ec07c7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\OpenGLForm">
-      <UniqueIdentifier>{c7d860fc-295a-4434-90f8-8557b497a55d}</UniqueIdentifier>
+    <Filter Include="Source Files\Structures">
+      <UniqueIdentifier>{534f8524-ba46-4b97-ac45-f3652433cf58}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Controller">
-      <UniqueIdentifier>{d3a1edde-5205-4641-8f78-f6b460dab9a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Controller\AssimpFileHandler">
-      <UniqueIdentifier>{82c0c808-e431-4e53-b0eb-88cc85a28c55}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Controller\Model">
-      <UniqueIdentifier>{23e2a075-3819-4e9a-9d8a-a77ff913b775}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Controller">
-      <UniqueIdentifier>{6ac011f6-379f-4520-ba1a-789b850ed7b1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Controller\AssimpFileHandler">
-      <UniqueIdentifier>{7245619d-4a20-43f8-b4d6-cfb0119454de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Controller\Model">
-      <UniqueIdentifier>{4d0c9ea4-a100-433d-be80-14883d972df7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Helper">
-      <UniqueIdentifier>{96771b9c-bdab-4b11-ae8d-a69b116a77a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\OpenGLForm">
-      <UniqueIdentifier>{2ba86172-6c26-4645-9bc2-52480f70cf65}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Controller\Structures">
+    <Filter Include="Header Files\Structures\Generic">
       <UniqueIdentifier>{d20a0860-4d49-43b6-aee9-fd58a712b2a7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Controller\Structures">
-      <UniqueIdentifier>{f346fc19-dc54-41c9-ad43-c3f0e582eb62}</UniqueIdentifier>
+    <Filter Include="Header Files\Structures\Mesh">
+      <UniqueIdentifier>{23e2a075-3819-4e9a-9d8a-a77ff913b775}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Structures\ShapeDiameterFunction">
+      <UniqueIdentifier>{ab78820c-56e2-479e-b6ea-e7002bc21a03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Structures\Math">
+      <UniqueIdentifier>{e10cdfca-b7c8-4fc0-9dce-38d9effb0144}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Controllers">
+      <UniqueIdentifier>{d3a1edde-5205-4641-8f78-f6b460dab9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Helpers">
+      <UniqueIdentifier>{9c13564c-16d6-4a91-9430-987f4316a593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Controllers">
+      <UniqueIdentifier>{6ac011f6-379f-4520-ba1a-789b850ed7b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Helpers">
+      <UniqueIdentifier>{96771b9c-bdab-4b11-ae8d-a69b116a77a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Structures\ShapeDiameterFunction">
+      <UniqueIdentifier>{ee2cee80-d044-496f-9188-7bf74a902ba0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Structures\Mesh">
+      <UniqueIdentifier>{4d0c9ea4-a100-433d-be80-14883d972df7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,29 +66,35 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGLForm\OpenGL.cpp">
-      <Filter>Source Files\OpenGLForm</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Helper\StringHelper.cpp">
-      <Filter>Source Files\Helper</Filter>
-    </ClCompile>
     <ClCompile Include="SettingsForm.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controller\AssimpFileHandler\Assimp.cpp">
-      <Filter>Source Files\Controller\AssimpFileHandler</Filter>
+    <ClCompile Include="src\Controllers\Assimp.cpp">
+      <Filter>Source Files\Controllers</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controller\Model\Face.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
+    <ClCompile Include="src\Controllers\Model.cpp">
+      <Filter>Source Files\Controllers</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controller\Model\Octree.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
+    <ClCompile Include="src\Controllers\OpenGL.cpp">
+      <Filter>Source Files\Controllers</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controller\Model\Vertex.cpp">
-      <Filter>Source Files\Controller\Model</Filter>
+    <ClCompile Include="src\Controllers\SDFController.cpp">
+      <Filter>Source Files\Controllers</Filter>
     </ClCompile>
-    <ClCompile Include="src\Controller\ModelController.cpp">
-      <Filter>Source Files\Controller</Filter>
+    <ClCompile Include="src\Helpers\StringHelper.cpp">
+      <Filter>Source Files\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\Face.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\Octree.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\Vertex.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Structures\ShapeDiameterFunction\CSDF.cpp">
+      <Filter>Source Files\Structures\ShapeDiameterFunction</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,41 +104,47 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Helper\StringHelper.h">
-      <Filter>Header Files\Helper</Filter>
-    </ClInclude>
-    <ClInclude Include="src\OpenGLForm\OpenGL.h">
-      <Filter>Header Files\OpenGLForm</Filter>
-    </ClInclude>
     <ClInclude Include="Form1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SettingsForm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\AssimpFileHandler\Assimp.h">
-      <Filter>Header Files\Controller\AssimpFileHandler</Filter>
+    <ClInclude Include="src\Controllers\Assimp.h">
+      <Filter>Header Files\Controllers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Model\Face.h">
-      <Filter>Header Files\Controller\Model</Filter>
+    <ClInclude Include="src\Controllers\Model.h">
+      <Filter>Header Files\Controllers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Model\Vertex.h">
-      <Filter>Header Files\Controller\Model</Filter>
+    <ClInclude Include="src\Controllers\OpenGL.h">
+      <Filter>Header Files\Controllers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Model\Octree.h">
-      <Filter>Header Files\Controller\Model</Filter>
+    <ClInclude Include="src\Controllers\SDFController.h">
+      <Filter>Header Files\Controllers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Structures\Vector4.h">
-      <Filter>Header Files\Controller\Structures</Filter>
+    <ClInclude Include="src\Helpers\StringHelper.h">
+      <Filter>Header Files\Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Structures\LinkedList.h">
-      <Filter>Header Files\Controller\Structures</Filter>
+    <ClInclude Include="src\Structures\Generic\LinkedList.h">
+      <Filter>Header Files\Structures\Generic</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\ModelController.h">
-      <Filter>Header Files\Controller</Filter>
+    <ClInclude Include="src\Structures\Mesh\Face.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="src\Controller\Structures\Mat4.h">
-      <Filter>Header Files\Controller\Structures</Filter>
+    <ClInclude Include="src\Structures\Mesh\Octree.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Mesh\Vertex.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Math\Mat4.h">
+      <Filter>Header Files\Structures\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Math\Vector4.h">
+      <Filter>Header Files\Structures\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\ShapeDiameterFunction\CSDF.h">
+      <Filter>Header Files\Structures\ShapeDiameterFunction</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,7 @@
 namespace OpenGLForm
 {
 	// inicializacia OpenGL, vytvorenie handle pre okno a zavolanie vsetkeho potrebneho
-	COpenGL::COpenGL(System::Windows::Forms::Panel ^ parentForm, Controller::ModelController* MController)
+	COpenGL::COpenGL(System::Windows::Forms::Panel ^ parentForm, CModel* MController)
 	{
 		Width = parentForm->Size.Width;
 		Height = parentForm->Size.Height;

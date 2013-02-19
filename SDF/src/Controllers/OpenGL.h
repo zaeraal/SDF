@@ -1,16 +1,18 @@
 // OpenGL.h : subor pre OpenGL manipulaciu a vykreslenie
 #pragma once
 #include "StringHelper.h"
-#include "ModelController.h"
+#include "Model.h"
 
 using namespace System::Windows::Forms;
 
 namespace OpenGLForm
 {
+	using namespace ModelController;
+
 	public ref class COpenGL: public System::Windows::Forms::NativeWindow
 	{
 	public:
-		COpenGL(System::Windows::Forms::Panel ^ parentForm, Controller::ModelController* MController);
+		COpenGL(System::Windows::Forms::Panel ^ parentForm, CModel* MController);
 		System::Void ResizeOpengl(GLsizei width, GLsizei height);
 		virtual void WndProc(System::Windows::Forms::Message %m) override;
 		virtual System::Void Render(System::Void);
@@ -26,7 +28,7 @@ namespace OpenGLForm
 		// premenne na pohyb kamery
 		GLfloat c_Zoom;
 		GLfloat c_h, c_w;
-		Controller::ModelController* control;					// pre logovanie a nacitanie modelu
+		CModel* control;					// pre logovanie a nacitanie modelu
 		void GetSphereCoordinates(double &xx, double &yy);
 		void ZoomAndRotate();
 		void SetLastMouse(int x, int y);

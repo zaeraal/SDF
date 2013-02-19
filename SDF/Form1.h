@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ModelController.h"
+#include "Model.h"
 #include "OpenGL.h"
 #include "SettingsForm.h"
 
@@ -10,7 +10,7 @@ namespace SDF {
 	using namespace System::Collections;
 	using namespace System::Windows::Forms;
 	using namespace OpenGLForm;
-	using namespace Controller;
+	using namespace ModelController;
 
 	/// <summary>
 	/// Summary for Form1
@@ -20,7 +20,7 @@ namespace SDF {
 	public:
 		Form1(void)
 		{
-			MController = new ModelController();
+			MController = new CModel();
 			InitializeComponent();
 			OpenGL = gcnew COpenGL(this->panel1, MController);
 
@@ -46,7 +46,7 @@ namespace SDF {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		ModelController* MController;
+		CModel* MController;
 		COpenGL^ OpenGL;
 
 	private: System::Windows::Forms::MenuStrip^  menuStrip1;

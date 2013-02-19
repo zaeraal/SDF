@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Face.h"
 
-namespace Model
+namespace MeshStructures
 {
 	// konstruktor
 	Face::Face(Vertex* v1, Vertex* v2, Vertex* v3)
@@ -13,6 +13,7 @@ namespace Model
 		farba = 0;
 		susedia = NULL;
 		ComputeNormal();
+		diameter = new CSDF();
 	}
 
 	//destruktor
@@ -20,6 +21,7 @@ namespace Model
 	{
 		// osetrene v LinkdListe ze sa zmaze cely
 		delete susedia;
+		delete diameter;
 	}
 
 	void Face::ComputeNormal()

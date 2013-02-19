@@ -7,8 +7,8 @@
 namespace AssimpFileHandler
 {
 	using namespace std;
-	using namespace Model;
-	using namespace Structures;
+	using namespace GenericStructures;
+	using namespace MeshStructures;
 
 	public class CAssimp
 	{

@@ -1,21 +1,20 @@
-// ModelController.h : subor pre kontrolu modelov
+// Model.h : subor pre kontrolu modelov
 #pragma once
 #include "Octree.h"
 #include "Assimp.h"
 
-namespace Controller
+namespace ModelController
 {
 	using namespace std;
-	using namespace Model;
 	using namespace AssimpFileHandler;
 
 	const int color_step = 4;
 
-	public class ModelController
+	public class CModel
 	{
 	public:
-		ModelController();
-		~ModelController();
+		CModel();
+		~CModel();
 
 		void logInfo(string logString);
 		void logDebug(string logString);

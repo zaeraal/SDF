@@ -2,7 +2,7 @@
 #pragma once
 #include <cmath>
 
-namespace Structures
+namespace MathStructures
 {
     struct Vector4
     {

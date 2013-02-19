@@ -5,7 +5,7 @@
 /*		int **ptr;
 		ptr = new int*[n_faces];*/
 
-namespace Model
+namespace MeshStructures
 {
 	Octree::Octree(const int dep, const double siz, Vector4 ori, Octree* par)
 	{
