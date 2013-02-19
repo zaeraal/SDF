@@ -19,6 +19,7 @@ namespace MeshStructures
 		void ComputeNormal();
 		void AddSused(Face* sused);
 		void SetColor(int color);
+		void ComputeSDFValue(const std::vector<double> values, const std::vector<double> inverse_Yangles);
 
 		Vertex*					v[3];
 		Vector4					normal;

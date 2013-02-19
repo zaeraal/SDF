@@ -170,7 +170,7 @@ namespace ModelController
 			col = r + 256 * g + 256 * 256 * b;
 			if(tmp->data != NULL)
 				tmp->data->SetColor(col);
-			logInfo(MarshalString("farba: "+col+", RGB: " + r+" "+g+" "+b));
+			//logInfo(MarshalString("farba: "+col+", RGB: " + r+" "+g+" "+b));
 
 			tmp = tmp->next;
 		}
@@ -262,6 +262,51 @@ namespace ModelController
 			if(show_octree == true)
 				m_root->DrawOctree();
 		}
+		if(selected != NULL)
+		{
+			Vector4 U = Vector4(selected->v[1]->P - selected->v[0]->P);
+			Vector4 V = Vector4(selected->v[2]->P - selected->v[0]->P);
+			Vector4 normal = (U % V) * (-1.0);
+			normal.Normalize();
+
+			Vector4 tangens = Vector4(selected->v[0]->P - selected->v[2]->P);
+			tangens.Normalize();
+			Vector4 binormal = tangens % normal;
+			binormal.Normalize();
+			glColor3f(1.0f,0.5f,0.5f);
+			glBegin(GL_LINES);
+				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3d( normal.X + selected->center.X,
+							normal.Y + selected->center.Y,
+							normal.Z + selected->center.Z);
+				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3d( binormal.X + selected->center.X,
+							binormal.Y + selected->center.Y,
+							binormal.Z + selected->center.Z);
+				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3d( tangens.X + selected->center.X,
+							tangens.Y + selected->center.Y,
+							tangens.Z + selected->center.Z);
+			glEnd();
+			glColor3f(0.5f,0.5f,1.0f);
+			glBegin(GL_LINES);
+				for(int i = 0; i < 30; i++)
+				{
+					double rndy = rand()%int(20 / 2);
+					double rndx = rand()%(360);
+					if(rndy == 180.0)
+						rndy = 179.5;
+					Mat4 t_mat= Mat4(tangens, normal, binormal);
+					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
+					//Vector4 ray = CalcRayFromAngle(rndx, rndy);
+					ray.Normalize();
+					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
+					glVertex3d( ray.X + selected->center.X,
+								ray.Y + selected->center.Y,
+								ray.Z + selected->center.Z);
+				}
+			glEnd();
+		}
 	}
 
 	void CModel::ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B)
@@ -279,9 +324,9 @@ namespace ModelController
 	void CModel::HLSToRGB(double SDF_value, GLubyte &R, GLubyte &G, GLubyte &B)
 	{
 		//#pragma comment( lib, "shlwapi.lib" )  // needed for the ColorHLSToRGB() function
-
+		
 		int hue, lum, sat;
-		hue = int(((SDF_value - SDF_control->nmin) / (SDF_control->nmax - SDF_control->nmin)) * (240.0 / 100.0));
+		hue = int(SDF_value * 240.0);
 		lum = 120;
 		sat = 240;
 
@@ -289,6 +334,7 @@ namespace ModelController
 		R = GetRValue(rgbColor);
 		G = GetGValue(rgbColor);
 		B = GetBValue(rgbColor);
+		logInfo(MarshalString("value: " + SDF_value + ", R: " + R + ", G: "+G+", B: "+B));
 	}
 
 	void CModel::setDrawMode(int mode)
@@ -302,7 +348,7 @@ namespace ModelController
 
 	int CModel::GetTriangleCount()
 	{
-		return triangles->GetSize() - 1;
+		return triangles->GetSize();
 	}
 
 	void CModel::ProcessPick(int x, int y)
@@ -318,7 +364,8 @@ namespace ModelController
 		
 		selected = NULL;
 		int color = pixel[0] + 256 * int(pixel[1]) + 256 * 256 * int(pixel[2]);
-		logInfo(MarshalString("farba: "+color));
+		logInfo(MarshalString("Selected Pixel farba: "+color));
+
 		if(color > 0)
 		{
 			LinkedList<Face>::Cell<Face>* tmp = triangles->start;
@@ -335,6 +382,6 @@ namespace ModelController
 	}
 	void CModel::ComputeSDF()
 	{
-		SDF_control->ComputeForAllFaces(triangles);
+		SDF_control->ComputeForAllFaces(triangles, Assimp);
 	}
 }

@@ -94,7 +94,8 @@ namespace SDF {
 	private: System::Windows::Forms::Panel^  panel2;
 	private: System::Windows::Forms::TextBox^  TB_Filename;
 	private: System::Windows::Forms::Label^  LBL_Filename;
-	private: System::Windows::Forms::TextBox^  textBox1;
+	private: System::Windows::Forms::TextBox^  TB_SDF;
+
 	private: System::Windows::Forms::Label^  LBL_SDF;
 	private: System::Windows::Forms::TextBox^  TB_Triangle;
 	private: System::Windows::Forms::Label^  LBL_Triangle;
@@ -155,7 +156,7 @@ namespace SDF {
 			this->LBL_Status = (gcnew System::Windows::Forms::Label());
 			this->TB_Total = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Total = (gcnew System::Windows::Forms::Label());
-			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
+			this->TB_SDF = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_SDF = (gcnew System::Windows::Forms::Label());
 			this->TB_Triangle = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Triangle = (gcnew System::Windows::Forms::Label());
@@ -294,14 +295,14 @@ namespace SDF {
 			// computeSDFToolStripMenuItem
 			// 
 			this->computeSDFToolStripMenuItem->Name = L"computeSDFToolStripMenuItem";
-			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(147, 22);
 			this->computeSDFToolStripMenuItem->Text = L"&Compute SDF";
 			this->computeSDFToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::computeSDFToolStripMenuItem_Click);
 			// 
 			// optionsToolStripMenuItem
 			// 
 			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
-			this->optionsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->optionsToolStripMenuItem->Size = System::Drawing::Size(147, 22);
 			this->optionsToolStripMenuItem->Text = L"&Options";
 			this->optionsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::optionsToolStripMenuItem_Click);
 			// 
@@ -341,7 +342,7 @@ namespace SDF {
 			this->panel2->Controls->Add(this->LBL_Status);
 			this->panel2->Controls->Add(this->TB_Total);
 			this->panel2->Controls->Add(this->LBL_Total);
-			this->panel2->Controls->Add(this->textBox1);
+			this->panel2->Controls->Add(this->TB_SDF);
 			this->panel2->Controls->Add(this->LBL_SDF);
 			this->panel2->Controls->Add(this->TB_Triangle);
 			this->panel2->Controls->Add(this->LBL_Triangle);
@@ -389,14 +390,14 @@ namespace SDF {
 			this->LBL_Total->TabIndex = 6;
 			this->LBL_Total->Text = L"Total Triangles";
 			// 
-			// textBox1
+			// TB_SDF
 			// 
-			this->textBox1->Location = System::Drawing::Point(21, 155);
-			this->textBox1->Name = L"textBox1";
-			this->textBox1->ReadOnly = true;
-			this->textBox1->Size = System::Drawing::Size(150, 20);
-			this->textBox1->TabIndex = 5;
-			this->textBox1->Text = L"0";
+			this->TB_SDF->Location = System::Drawing::Point(21, 155);
+			this->TB_SDF->Name = L"TB_SDF";
+			this->TB_SDF->ReadOnly = true;
+			this->TB_SDF->Size = System::Drawing::Size(150, 20);
+			this->TB_SDF->TabIndex = 5;
+			this->TB_SDF->Text = L"0";
 			// 
 			// LBL_SDF
 			// 
@@ -505,6 +506,8 @@ namespace SDF {
 
 		int tmp = int(static_cast<void*>(MController->selected));
 		this->TB_Triangle->Text = "0 x" + tmp;
+		if(MController->selected != NULL)
+			this->TB_SDF->Text = "" + MController->selected->diameter->value;
 	}
 	private: System::Void panel1_Resize(System::Object^  sender, System::EventArgs^  e)
 	{

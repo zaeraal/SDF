@@ -32,8 +32,8 @@ namespace MeshStructures
 							 1.0);
 
 		// cross product
-		Vector4 U = Vector4(v[1]->P.X - v[0]->P.X, v[1]->P.Y - v[0]->P.Y, v[1]->P.Z - v[0]->P.Z);
-		Vector4 V = Vector4(v[2]->P.X - v[0]->P.X, v[2]->P.Y - v[0]->P.Y, v[2]->P.Z - v[0]->P.Z);
+		Vector4 U = v[1]->P - v[0]->P;
+		Vector4 V = v[2]->P - v[0]->P;
 		normal = U % V;
 		normal.Normalize();
 	}
@@ -49,5 +49,9 @@ namespace MeshStructures
 	void Face::SetColor(int color)
 	{
 		farba = color;
+	}
+	void Face::ComputeSDFValue(const std::vector<double> values, const std::vector<double> inverse_Yangles)
+	{
+		diameter->ComputeValue(values, inverse_Yangles);
 	}
 }

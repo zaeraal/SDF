@@ -23,7 +23,7 @@ namespace MathStructures
 			W = w;
 		}
 
-        double Length () { return sqrt(X * X + Y * Y + Z * Z + W * W); }
+        double Length () { return sqrt(X * X + Y * Y + Z * Z); }
 
 		void Normalize ()
 		{
@@ -31,7 +31,7 @@ namespace MathStructures
 			X = X/length;
 			Y = Y/length;
 			Z = Z/length;
-			W = W/length;
+			//W = W/length;
 		}
     };
 	

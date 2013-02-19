@@ -3,6 +3,7 @@
 #include "Octree.h"
 #include "SDFController.h"
 #include "Assimp.h"
+#include "MathHelper.h"
 
 namespace ModelController
 {

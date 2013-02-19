@@ -19,6 +19,7 @@ void GetDegrees(double& AngleX, double& Angley)
 Vector4 CalcRayFromAngle(double AngleX, double Angley)
 {
 	Vector4 result;
+	GetRadians(AngleX, Angley);
 	result.X = sin(Angley) * sin(AngleX);
 	result.Y = cos(Angley);
 	result.Z = sin(Angley) * cos(AngleX);
@@ -34,7 +35,7 @@ void CalcAnglesFromRay(Vector4 ray, double& AngleX, double& Angley)
 
 // prienik luca a trojuholnika
 // p - zdroj luca, d - smer luca, v0,v1,v2 - body trojuholniku
-bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2)
+bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, double& t)
 {
 	Vector4 e1 = v1 - v0;
 	Vector4 e2 = v2 - v0;
@@ -61,7 +62,7 @@ bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4
 
 	// at this stage we can compute t to find out where
 	// the intersection point is on the line
-	double t = f * (e2*q);
+	t = f * (e2*q);
 
 	if (t > 0.00001) // ray intersection (v smere luca)
 		return true;
