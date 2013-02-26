@@ -74,8 +74,8 @@ namespace MeshStructures
 					son_tria[code]->InsertToEnd(tria[i]);
 
 			}
-
-			// tabulka offsetov
+			/*
+			// old tabulka offsetov
 			double Table[8][3] =
             {
                 {-1.0, -1.0, -1.0},
@@ -86,6 +86,18 @@ namespace MeshStructures
                 {+1.0, -1.0, +1.0},
                 {-1.0, +1.0, +1.0},
                 {+1.0, +1.0, +1.0}
+            };*/
+			// tabulka offsetov
+			double Table[8][3] =
+            {
+                {-1.0, -1.0, +1.0},
+                {-1.0, -1.0, -1.0},
+                {-1.0, +1.0, +1.0},
+                {-1.0, +1.0, -1.0},
+                {+1.0, -1.0, +1.0},
+                {+1.0, -1.0, -1.0},
+                {+1.0, +1.0, +1.0},
+                {+1.0, +1.0, -1.0}
             };
 
 			count = (son_tria[8] == NULL ? 0 : son_tria[8]->GetSize());
@@ -145,9 +157,9 @@ namespace MeshStructures
 	int Octree::GetCode(const Vector4 pt)
 	{
 		int result = 0;
-		if (pt.X > origin.X) result |= 1;
+		if (pt.X > origin.X) result |= 4;
 		if (pt.Y > origin.Y) result |= 2;
-		if (pt.Z > origin.Z) result |= 4;
+		if (pt.Z <= origin.Z) result |= 1;
 
 		return result;
 	}
@@ -165,14 +177,14 @@ namespace MeshStructures
 		glBegin(GL_LINES);
 			double Table[8][3] =
             {
-                {-1.0, -1.0, -1.0},
-                {+1.0, -1.0, -1.0},
-                {-1.0, +1.0, -1.0},
-                {+1.0, +1.0, -1.0},
                 {-1.0, -1.0, +1.0},
-                {+1.0, -1.0, +1.0},
+                {-1.0, -1.0, -1.0},
                 {-1.0, +1.0, +1.0},
-                {+1.0, +1.0, +1.0}
+                {-1.0, +1.0, -1.0},
+                {+1.0, -1.0, +1.0},
+                {+1.0, -1.0, -1.0},
+                {+1.0, +1.0, +1.0},
+                {+1.0, +1.0, -1.0}
             };
 			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
 			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);

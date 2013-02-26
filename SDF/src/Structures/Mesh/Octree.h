@@ -21,13 +21,14 @@ namespace MeshStructures
 		bool isLeaf;
 		void GetBoundary(double &siz, double &x, double &y, double &z);
 		void DrawOctree();
+
+		Octree* parent;						// otec, NULL ak sme hlavny vrchol
+		Octree** son;						// synovia
+		Face** triangles;					// nase trojuholnicky
+		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je min_count
 	private:
 		int depth;							// ako hlboko sme v octree, max je max_depth
 		double size;						// hranica kocky
 		Vector4 origin;						// stred kocky
-		Octree** son;						// synovia
-		Octree* parent;						// otec, NULL ak sme hlavny vrchol
-		Face** triangles;					// nase trojuholnicky
-		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je min_count
 	};
 }

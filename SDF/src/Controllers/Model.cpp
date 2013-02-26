@@ -147,7 +147,7 @@ namespace ModelController
 		b_max = sqrt(3.0) * b_size;										// diagonala kocky
 		b_size = b_size / 2.0;
 
-		SDF_control = new CSDFController(b_max);
+		SDF_control = new CSDFController(b_max, Assimp);
 	}
 
 	// vytvori Octree strukturu
@@ -295,6 +295,7 @@ namespace ModelController
 			tangens.Normalize();
 			Vector4 binormal = tangens % normal;
 			binormal.Normalize();
+			Mat4 t_mat= Mat4(tangens, normal, binormal);
 			glColor3f(1.0f,0.5f,0.5f);
 			glBegin(GL_LINES);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
@@ -310,6 +311,7 @@ namespace ModelController
 							tangens.Y * b_sf + selected->center.Y,
 							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
+
 			glColor3f(0.5f,0.5f,1.0f);
 			glBegin(GL_LINES);
 				for(int i = 0; i < 30; i++)
@@ -318,15 +320,53 @@ namespace ModelController
 					double rndx = rand()%(360);
 					if(rndy == 180.0)
 						rndy = 179.5;
-					Mat4 t_mat= Mat4(tangens, normal, binormal);
 					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
 					//Vector4 ray = CalcRayFromAngle(rndx, rndy);
-					ray.Normalize(); ray = ray *  b_sf;
+					ray.Normalize();// ray = ray *  b_sf;
 					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-					glVertex3d( ray.X + selected->center.X,
-								ray.Y + selected->center.Y,
-								ray.Z + selected->center.Z);
+					glVertex3d( ray.X *  b_sf + selected->center.X,
+								ray.Y *  b_sf + selected->center.Y,
+								ray.Z *  b_sf + selected->center.Z);
 				}
+			glEnd();
+
+			Vector4 Center = selected->center - (normal * b_max);;
+			double o_size = 0.0;
+			double o_X = 0.0;
+			double o_Y = 0.0;
+			double o_Z = 0.0;
+			m_root->GetBoundary(o_size, o_X, o_Y, o_Z);
+
+			// fixes for rays with negative direction
+			if(normal.X < 0)
+			{
+				Center.X = (o_size * 2.0) - Center.X;
+				normal.X = - normal.X;
+			}
+			if(normal.Y < 0)
+			{
+				Center.Y = (o_size * 2.0) - Center.Y;
+				normal.Y = - normal.Y;
+			}
+			if(normal.Z < 0)
+			{
+				Center.Z = (o_size * 2.0) - Center.Z;
+				normal.Z = - normal.Z;
+			}
+
+			double divx = 1 / normal.X; // IEEE stability fix
+			double divy = 1 / normal.Y;
+			double divz = 1 / normal.Z;
+
+			double tx0 = ((o_X - o_size) - Center.X) * divx;
+			double tx1 = ((o_X + o_size) - Center.X) * divx;
+			double ty0 = ((o_Y - o_size) - Center.Y) * divy;
+			double ty1 = ((o_Y + o_size) - Center.Y) * divy;
+			double tz0 = ((o_Z - o_size) - Center.Z) * divz;
+			double tz1 = ((o_Z + o_size) - Center.Z) * divz;
+			glBegin(GL_LINES);
+				glVertex3d(tx0, ty0, tz0);
+				glVertex3d(tx1, ty1, tz1);
 			glEnd();
 		}
 	}
@@ -404,6 +444,6 @@ namespace ModelController
 	}
 	void CModel::ComputeSDF()
 	{
-		SDF_control->ComputeForAllFaces(triangles, Assimp);
+		SDF_control->Compute(triangles, NULL);
 	}
 }

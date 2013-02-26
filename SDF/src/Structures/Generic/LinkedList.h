@@ -11,6 +11,9 @@ namespace GenericStructures
 		~LinkedList();
 
 		void InsertToEnd(T* value);
+		void InsertToStart(T* value);
+		bool Contains(T* value);
+		void Clear();
 		void CompleteDelete();
 		unsigned int GetSize();
 
@@ -46,20 +49,7 @@ namespace GenericStructures
 
 	template <class T> LinkedList<T>::~LinkedList()
 	{
-		if(size == 0)
-			return;
-
-		Cell<T>* tmp1 = start;
-		Cell<T>* tmp2 = start;
-		for(unsigned int i = 0; i < size; i++)
-		{
-			tmp2 = tmp2->next;
-			delete tmp1;
-			tmp1 = tmp2;;
-		}
-		size = 0;
-		start = NULL;
-		end = NULL;
+		Clear();
 	}
 
 	template <class T> void LinkedList<T>::InsertToEnd(T* value)
@@ -78,6 +68,55 @@ namespace GenericStructures
 			end = tmp;
 		}
 		size++;
+	}
+	
+	template <class T> bool LinkedList<T>::Contains(T* value)
+	{
+		Cell<T>* tmp = start;
+		while(tmp != NULL)
+		{
+			if(tmp->data == value)
+				return true;
+			tmp = tmp->next;
+		}
+		return false;
+	}
+
+	template <class T> void LinkedList<T>::InsertToStart(T* value)
+	{
+		Cell<T>* tmp = new Cell<T>();
+		tmp->data = value;
+		tmp->next = NULL;
+		if(size == 0)
+		{
+			start = tmp;
+			end = tmp;
+		}
+		else
+		{
+			tmp->next = start;
+			start = tmp;
+		}
+		size++;
+	}
+
+	// vymaze len bunky
+	template <class T> void LinkedList<T>::Clear()
+	{
+		if(size == 0)
+			return;
+
+		Cell<T>* tmp1 = start;
+		Cell<T>* tmp2 = start;
+		for(unsigned int i = 0; i < size; i++)
+		{
+			tmp2 = tmp2->next;
+			delete tmp1;
+			tmp1 = tmp2;;
+		}
+		size = 0;
+		start = NULL;
+		end = NULL;
 	}
 
 	// vymaze aj data
