@@ -24,6 +24,7 @@ namespace ModelController
 
 		void LoadFile(string Filename);
 		void ResetSettings();
+		void ComputeBoundary();
 		void CreateOctree();
 		void SetColors();
 		void GetBoundary(double &siz, double &x, double &y, double &z);
@@ -48,6 +49,11 @@ namespace ModelController
 		LinkedList<Vertex>* points;
 		Octree* m_root;
 		int draw_mode;						// 0 picking (default), 1 selected triangle, 2 SDF, 3 wireframe
-		
+
+		// rozmery modelu
+		Vector4		b_stred;				// center of minN - maxN
+		double		b_size;					// size for octree
+		double		b_sf;					// scale factor
+		double		b_max;					// diagonala v octree
 	};
 }

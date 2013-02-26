@@ -8,7 +8,8 @@ namespace SDFStructures
 	CSDF::CSDF()
 	{
 		value = 0.0;
-		normalized = 0.0;
+		normalized1 = 0.0;
+		normalized2 = 0.0;
 	}
 
 	//destruktor
@@ -98,9 +99,14 @@ namespace SDFStructures
 		return deviation;
 	}
 
-	void CSDF::Normalize(double min, double max, double alfa)
+	void CSDF::Normalize1(double min, double max, double alfa)
 	{
-		normalized = log(((value - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
+		normalized1 = log(((value - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
+	}
+
+	void CSDF::Normalize2(double min, double max, double alfa)
+	{
+		normalized2 = log(((value - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
 	}
 
 }

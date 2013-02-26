@@ -15,10 +15,12 @@ namespace SDFStructures
 		double CalcStandardDeviation(const std::vector<double> values, unsigned int size);
 
 
-		void Normalize(double min, double max, double alfa);
+		void Normalize1(double min, double max, double alfa);
+		void Normalize2(double min, double max, double alfa);
 
 
 		double value;
-		double normalized;
+		double normalized1;
+		double normalized2;
 	};
 }

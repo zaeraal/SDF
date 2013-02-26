@@ -86,10 +86,11 @@ namespace OpenGLForm
 				int tmpx = LOWORD(m.LParam.ToInt32());
 				int tmpy = HIWORD(m.LParam.ToInt32());
 
+				int mod = control->getDrawMode();
 				control->setDrawMode(4);
 				Render();
 				control->ProcessPick(tmpx, tmpy);
-				control->setDrawMode(1);
+				control->setDrawMode(mod);
 			}
 		}
 		if(m.Msg == WM_MOUSEWHEEL)

@@ -6,9 +6,9 @@
 namespace SDFController
 {
 	// konstruktor
-	CSDFController::CSDFController()
+	CSDFController::CSDFController(double dia)
 	{
-		ResetValues();
+		diagonal = dia;
 	}
 
 	// destruktor
@@ -20,10 +20,12 @@ namespace SDFController
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
 	void CSDFController::ComputeForAllFaces(LinkedList<Face>* triangles, CAssimp* loggger)
 	{
-		ResetValues();
+		loggger->logInfo(MarshalString("diagonal: " + diagonal));
+		double min = 99999.0;
+		double max = 0.0;
 		srand (2013);					// initial seed for random number generator
 		double n_rays = 30.0;
-		double angle = 20.0;
+		double angle = 120.0;
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
 		{
@@ -38,7 +40,7 @@ namespace SDFController
 			Vector4 binormal = tangens % normal;
 			binormal.Normalize();
 			
-			Mat4 t_mat= Mat4(tangens, binormal, normal);
+			Mat4 t_mat= Mat4(tangens, normal, binormal);
 			std::vector<double> rays;
 			std::vector<double> weights;
 			for(int i = 0; i < n_rays; i++)
@@ -64,8 +66,14 @@ namespace SDFController
 
 					double dist2 = 99999.0;
 					bool intersected = rayIntersectsTriangle(tmp->data->center, ray, tmp2->data->v[0]->P, tmp2->data->v[1]->P, tmp2->data->v[2]->P, dist2);
-					if((intersected == true) && (dist2 < dist))
-						dist = dist2;
+					if(intersected == true)
+					{
+						double theta = acos( (ray * (tmp->data->normal * (-1))) / (ray.Length() * tmp->data->normal.Length()) );
+						theta = theta * (180.0 / M_PI);
+						//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
+						if((theta < 90.0) && (dist2 < dist))
+							dist = dist2;
+					}
 
 					tmp2 = tmp2->next;
 				}
@@ -90,27 +98,17 @@ namespace SDFController
 		tmp = triangles->start;
 		while(tmp != NULL)
 		{
-			tmp->data->diameter->Normalize(min, max, 4.0);
-			if(tmp->data->diameter->normalized < nmin)
-				nmin = tmp->data->diameter->normalized;
-			if(tmp->data->diameter->normalized > nmax)
-				nmax = tmp->data->diameter->normalized;
+			tmp->data->diameter->Normalize1(min, max, 4.0);
+			tmp->data->diameter->Normalize2(0, max, 4.0);
+
 			tmp = tmp->next;
 		}
-		loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
-		loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
+		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
 	}
 
 	void CSDFController::ComputeForOctree(Octree* root)
 	{
 
-	}
-
-	void CSDFController::ResetValues()
-	{
-		min = 99999.0;
-		max = 0.0;
-		nmin = 99999.0;
-		nmax = 0.0;
 	}
 }

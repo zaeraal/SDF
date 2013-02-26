@@ -7,7 +7,7 @@ namespace ModelController
 	CModel::CModel()
 	{
 		Assimp = new CAssimp();
-		SDF_control = new CSDFController();
+		SDF_control = NULL;
 		m_root = NULL;
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
@@ -58,6 +58,9 @@ namespace ModelController
 		if(m_root != NULL)
 			delete m_root;
 
+		if(SDF_control != NULL)
+			delete SDF_control;
+
 		// delete actual faces and vertices
 		triangles->CompleteDelete();
 		delete triangles;
@@ -66,6 +69,7 @@ namespace ModelController
 		delete points;
 
 		m_root = NULL;
+		SDF_control = NULL;
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
 
@@ -73,6 +77,7 @@ namespace ModelController
 		Assimp->LoadData(triangles, points);
 		loaded = true;
 
+		ComputeBoundary();
 		CreateOctree();
 		SetColors();
 	}
@@ -85,10 +90,14 @@ namespace ModelController
 		show_octree = false;
 		show_normals = false;
 		selected = NULL;
+
+		b_size = 0.0;
+		b_sf = 1.0;
+		b_max = 0.0;
 	}
 
-	// vytvori Octree strukturu
-	void CModel::CreateOctree()
+	// vypocita rozmery modelu
+	void CModel::ComputeBoundary()
 	{
 		double minx = 99999.0, miny = 99999.0, minz = 99999.0;
 		double maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
@@ -113,28 +122,38 @@ namespace ModelController
 			tmp = tmp->next;
 		}
 
-		Vector4 center = Vector4((minx+maxx) / 2.0, (miny+maxy) / 2.0, (minz+maxz) / 2.0);
+		b_stred = Vector4((minx+maxx) / 2.0, (miny+maxy) / 2.0, (minz+maxz) / 2.0);
 		double sizex = 0;
 		double sizey = 0;
 		double sizez = 0;
 
 		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
-			sizex = abs(minx+maxx) / 2.0;
+			sizex = abs(minx+maxx);
 		else
-			sizex = abs(minx-maxx) / 2.0;
+			sizex = abs(minx-maxx);
 
 		if(((miny<=0.0)&&(maxy<=0.0)) || ((miny>=0.0)&&(maxy>=0.0)))
-			sizey = abs(miny+maxy) / 2.0;
+			sizey = abs(miny+maxy);
 		else
-			sizey = abs(miny-maxy) / 2.0;
+			sizey = abs(miny-maxy);
 
 		if(((minz<=0.0)&&(maxz<=0.0)) || ((minz>=0.0)&&(maxz>=0.0)))
-			sizez = abs(minz+maxz) / 2.0;
+			sizez = abs(minz+maxz);
 		else
-			sizez = abs(minz-maxz) / 2.0;
-		double size = max(max(sizex, sizey), sizez);
+			sizez = abs(minz-maxz);
+		b_size = max(max(sizex, sizey), sizez);
 
-		m_root = new Octree(0, size, center, NULL);
+		b_sf = b_size / 10.0;											// 1 / 10 velkosti modelu budu tie vektory
+		b_max = sqrt(3.0) * b_size;										// diagonala kocky
+		b_size = b_size / 2.0;
+
+		SDF_control = new CSDFController(b_max);
+	}
+
+	// vytvori Octree strukturu
+	void CModel::CreateOctree()
+	{
+		m_root = new Octree(0, b_size, b_stred, NULL);
 
 		unsigned int siz = triangles->GetSize();
 		if(siz > 0)
@@ -179,7 +198,10 @@ namespace ModelController
 	// pre spravne vycentrovanie pohladu ked sa nacita CModel
 	void CModel::GetBoundary(double &siz, double &x, double &y, double &z)
 	{
-		m_root->GetBoundary(siz, x, y, z);
+		siz = b_size;
+		x = b_stred.X;
+		y = b_stred.Y;
+		z = b_stred.Z;
 	}
 
 	// vykresli CModel
@@ -226,7 +248,7 @@ namespace ModelController
 				else if(draw_mode == 2)
 				{
 					GLubyte r = 0, g = 0, b = 0;
-					HLSToRGB(tmp->data->diameter->normalized, r, g, b);
+					HLSToRGB(tmp->data->diameter->normalized2, r, g, b);
 					glColor3ub(r, g, b);
 				}
 
@@ -244,9 +266,9 @@ namespace ModelController
 					glBegin(GL_LINES);
 						//glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
 						glVertex3d(tmp->data->center.X, tmp->data->center.Y, tmp->data->center.Z);
-						glVertex3d( tmp->data->normal.X + tmp->data->center.X,
-									tmp->data->normal.Y + tmp->data->center.Y,
-									tmp->data->normal.Z + tmp->data->center.Z);
+						glVertex3d( tmp->data->normal.X * b_sf + tmp->data->center.X,
+									tmp->data->normal.Y * b_sf + tmp->data->center.Y,
+									tmp->data->normal.Z * b_sf + tmp->data->center.Z);
 					glEnd();
 					glColor3f(1.0f,1.0f,1.0f);		// biela farba
 					if((draw_mode == 1) || (draw_mode == 3))
@@ -276,30 +298,30 @@ namespace ModelController
 			glColor3f(1.0f,0.5f,0.5f);
 			glBegin(GL_LINES);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( normal.X + selected->center.X,
-							normal.Y + selected->center.Y,
-							normal.Z + selected->center.Z);
+				glVertex3d( normal.X * b_sf + selected->center.X,
+							normal.Y * b_sf + selected->center.Y,
+							normal.Z * b_sf + selected->center.Z);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( binormal.X + selected->center.X,
-							binormal.Y + selected->center.Y,
-							binormal.Z + selected->center.Z);
+				glVertex3d( binormal.X * b_sf + selected->center.X,
+							binormal.Y * b_sf + selected->center.Y,
+							binormal.Z * b_sf + selected->center.Z);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( tangens.X + selected->center.X,
-							tangens.Y + selected->center.Y,
-							tangens.Z + selected->center.Z);
+				glVertex3d( tangens.X * b_sf + selected->center.X,
+							tangens.Y * b_sf + selected->center.Y,
+							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
 			glColor3f(0.5f,0.5f,1.0f);
 			glBegin(GL_LINES);
 				for(int i = 0; i < 30; i++)
 				{
-					double rndy = rand()%int(20 / 2);
+					double rndy = rand()%int(120 / 2);
 					double rndx = rand()%(360);
 					if(rndy == 180.0)
 						rndy = 179.5;
 					Mat4 t_mat= Mat4(tangens, normal, binormal);
 					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
 					//Vector4 ray = CalcRayFromAngle(rndx, rndy);
-					ray.Normalize();
+					ray.Normalize(); ray = ray *  b_sf;
 					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
 					glVertex3d( ray.X + selected->center.X,
 								ray.Y + selected->center.Y,

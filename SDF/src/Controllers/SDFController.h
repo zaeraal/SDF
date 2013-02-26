@@ -12,16 +12,13 @@ namespace SDFController
 	public class CSDFController
 	{
 	public:
-		CSDFController();
+		CSDFController(double dia);
 		~CSDFController();
 
 		void ComputeForAllFaces(LinkedList<Face>* triangles, CAssimp* loggger);
 		void ComputeForOctree(Octree* root);
-		void ResetValues();
 
-		double min;
-		double max;
-		double nmin;
-		double nmax;
+	private:
+		double diagonal;
 	};
 }
