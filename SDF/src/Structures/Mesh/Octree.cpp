@@ -1,9 +1,7 @@
 // Octree.cpp : subor obsahujuci zakladnu octree strukturu
 #include "stdafx.h"
 #include "Octree.h"
-
-/*		int **ptr;
-		ptr = new int*[n_faces];*/
+#include "MathHelper.h"
 
 namespace MeshStructures
 {
@@ -40,18 +38,34 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
+		// tabulka offsetov
+		double Table[8][3] =
+        {
+            {-1.0, -1.0, +1.0},
+            {-1.0, -1.0, -1.0},
+            {-1.0, +1.0, +1.0},
+            {-1.0, +1.0, -1.0},
+            {+1.0, -1.0, +1.0},
+            {+1.0, -1.0, -1.0},
+            {+1.0, +1.0, +1.0},
+            {+1.0, +1.0, -1.0}
+        };
+
 		if((depth >= max_depth) || (length <= min_count))
 		{
 			count = length;
 			triangles = tria;
+			isLeaf = true;
 		}
 		else
 		{
+			isLeaf = false;
+			count = 0;
 			int new_depth = depth + 1;
 			double new_size = size / 2.0;
 
-			LinkedList<Face>** son_tria = new LinkedList<Face>* [9];
-			for(unsigned int i = 0; i < 9; i++)
+			LinkedList<Face>** son_tria = new LinkedList<Face>* [8];
+			for(unsigned int i = 0; i < 8; i++)
 				son_tria[i] = NULL; // preistotu
 
 			// zisti kam patria trojuholniky
@@ -64,15 +78,29 @@ namespace MeshStructures
 
 				if((code1 == code2) && (code1 == code3))
 				{
-					isLeaf = false;
 					code = code1;
+					if(son_tria[code] == NULL)
+						son_tria[code] = new LinkedList<Face>(tria[i]);
+					else
+						son_tria[code]->InsertToEnd(tria[i]);
 				}
-
-				if(son_tria[code] == NULL)
-					son_tria[code] = new LinkedList<Face>(tria[i]);
 				else
-					son_tria[code]->InsertToEnd(tria[i]);
-
+				{
+					for(int j = 0; j < 8; j++)
+					{
+						Vector4 tmpv = Vector4(origin.X + new_size*Table[j][0],
+											   origin.Y + new_size*Table[j][1],
+											   origin.Z + new_size*Table[j][2]);
+						if(triBoxOverlap(tmpv, new_size, tria[i]->v[0]->P, tria[i]->v[1]->P, tria[i]->v[2]->P))
+						{
+							code = j;
+							if(son_tria[code] == NULL)
+								son_tria[code] = new LinkedList<Face>(tria[i]);
+							else
+								son_tria[code]->InsertToEnd(tria[i]);
+						}
+					}
+				}
 			}
 			/*
 			// old tabulka offsetov
@@ -87,64 +115,36 @@ namespace MeshStructures
                 {-1.0, +1.0, +1.0},
                 {+1.0, +1.0, +1.0}
             };*/
-			// tabulka offsetov
-			double Table[8][3] =
-            {
-                {-1.0, -1.0, +1.0},
-                {-1.0, -1.0, -1.0},
-                {-1.0, +1.0, +1.0},
-                {-1.0, +1.0, -1.0},
-                {+1.0, -1.0, +1.0},
-                {+1.0, -1.0, -1.0},
-                {+1.0, +1.0, +1.0},
-                {+1.0, +1.0, -1.0}
-            };
 
-			count = (son_tria[8] == NULL ? 0 : son_tria[8]->GetSize());
-			if(count > 0)
+			// vytvor octree a uloz ich tam
+			for(int i = 0; i < 8; i++)
 			{
-				triangles = new Face* [count];
+				Vector4 tmpv = Vector4(origin.X + new_size*Table[i][0],
+									   origin.Y + new_size*Table[i][1],
+									   origin.Z + new_size*Table[i][2]);
+				son[i] = new Octree(new_depth, new_size, tmpv, this);
 
-				LinkedList<Face>::Cell<Face>* tmp = son_tria[8]->start;
-				for(unsigned int i = 0; i < count; i++)
+				unsigned int velkost = (son_tria[i] == NULL ? 0 : son_tria[i]->GetSize());
+				Face** tmp_zoznam = NULL;
+				if(velkost > 0)
 				{
-					triangles[i] = tmp->data;
-					tmp = tmp->next;
-				}
-			}
+					tmp_zoznam = new Face* [velkost];
 
-			if(isLeaf != true)
-			{
-				// vytvor octree a uloz ich tam
-				for(int i = 0; i < 8; i++)
-				{
-					Vector4 tmpv = Vector4(origin.X + new_size*Table[i][0],
-										   origin.Y + new_size*Table[i][1],
-										   origin.Z + new_size*Table[i][2]);
-					son[i] = new Octree(new_depth, new_size, tmpv, this);
-
-					unsigned int velkost = (son_tria[i] == NULL ? 0 : son_tria[i]->GetSize());
-					Face** tmp_zoznam = NULL;
-					if(velkost > 0)
+					LinkedList<Face>::Cell<Face>* tmp = son_tria[i]->start;
+					for(unsigned int j = 0; j < velkost; j++)
 					{
-						tmp_zoznam = new Face* [velkost];
-
-						LinkedList<Face>::Cell<Face>* tmp = son_tria[i]->start;
-						for(unsigned int j = 0; j < velkost; j++)
-						{
-							tmp_zoznam[j] = tmp->data;
-							tmp = tmp->next;
-						}
+						tmp_zoznam[j] = tmp->data;
+						tmp = tmp->next;
 					}
-					son[i]->Build(tmp_zoznam, velkost);
 				}
+				son[i]->Build(tmp_zoznam, velkost);
 			}
 
 			// zmazanie pola, kedze vytvaram vlastne
 			delete [] tria;
 
 			// zmazanie pomocnych poli kedze som urobil vlastne
-			for(unsigned int i = 0; i < 9; i++)
+			for(unsigned int i = 0; i < 8; i++)
 			{
 				delete son_tria[i];
 				son_tria[i] = NULL;		// preistotu
