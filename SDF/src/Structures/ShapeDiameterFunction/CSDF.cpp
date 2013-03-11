@@ -8,6 +8,7 @@ namespace SDFStructures
 	CSDF::CSDF()
 	{
 		value = 0.0;
+		smoothed = 0.0;
 		normalized1 = 0.0;
 		normalized2 = 0.0;
 	}
@@ -106,7 +107,22 @@ namespace SDFStructures
 
 	void CSDF::Normalize2(double min, double max, double alfa)
 	{
-		normalized2 = log(((value - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
+		normalized2 = log(((smoothed - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
 	}
 
+	void CSDF::Smooth(const std::vector<double> values, const std::vector<double> weights)
+	{
+		unsigned int size = values.size();
+		if(size == 0)
+			return;
+
+		double sum_values = 0.0;
+		double sum_weights = 0.0;
+		for(unsigned int i = 0; i < size; i++)
+		{
+			sum_values += values[i] * weights[i];
+			sum_weights += weights[i];
+		}
+		smoothed = sum_values / sum_weights;
+	}
 }

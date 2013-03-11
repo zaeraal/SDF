@@ -16,6 +16,8 @@ namespace SDFController
 		~CSDFController();
 
 		void Compute(LinkedList<Face>* triangles, Octree* root);
+		double* ComputeGaussianKernel(int radius);
+		void Smooth(Face* tmp, double* kernel, int kernel_size);
 		LinkedList<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray);
 		void ComputeTNB(Face* tmp, Vector4& tang, Vector4& norm, Vector4& binor);
 		int first_node(double tx0, double ty0, double tz0, double txm, double tym, double tzm);

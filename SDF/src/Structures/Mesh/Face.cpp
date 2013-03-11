@@ -11,7 +11,6 @@ namespace MeshStructures
 		v[1] = v2;
 		v[2] = v3;
 		farba = 0;
-		susedia = NULL;
 		ComputeNormal();
 		diameter = new CSDF();
 	}
@@ -20,7 +19,6 @@ namespace MeshStructures
 	Face::~Face()
 	{
 		// osetrene v LinkdListe ze sa zmaze cely
-		delete susedia;
 		delete diameter;
 	}
 
@@ -38,20 +36,29 @@ namespace MeshStructures
 		normal.Normalize();
 	}
 
-	void Face::AddSused(Face* sused)
-	{
-		if(susedia == NULL)
-			susedia = new LinkedList<Face>(sused);
-		else
-			susedia->InsertToEnd(sused);
-	}
-
 	void Face::SetColor(int color)
 	{
 		farba = color;
 	}
+
 	void Face::ComputeSDFValue(const std::vector<double> values, const std::vector<double> inverse_Yangles)
 	{
 		diameter->ComputeValue(values, inverse_Yangles);
+	}
+
+	LinkedList<Face>* Face::GetSusedia()
+	{
+		LinkedList<Face>* result = new LinkedList<Face>();
+		for(int i = 0; i < 3; i++)
+		{
+			LinkedList<void>::Cell<void>* tmp = v[i]->susedia->start;
+			while(tmp != NULL)
+			{
+				if(!result->Contains((Face*)tmp->data))
+					result->InsertToEnd((Face*)tmp->data);
+				tmp = tmp->next;
+			}
+		}
+		return result;
 	}
 }

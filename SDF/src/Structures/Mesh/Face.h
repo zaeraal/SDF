@@ -1,7 +1,6 @@
 // Face.h : subor pre pracu s facetmi
 #pragma once
 #include "Vertex.h"
-#include "LinkedList.h"
 #include "CSDF.h"
 
 namespace MeshStructures
@@ -17,14 +16,13 @@ namespace MeshStructures
 		~Face();
 
 		void ComputeNormal();
-		void AddSused(Face* sused);
 		void SetColor(int color);
 		void ComputeSDFValue(const std::vector<double> values, const std::vector<double> inverse_Yangles);
+		LinkedList<Face>* GetSusedia();
 
 		Vertex*					v[3];
 		Vector4					normal;
 		Vector4					center;
-		LinkedList<Face>*		susedia;					// susedia
 		int						farba;						// pre picking
 		CSDF*					diameter;
 	};

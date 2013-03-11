@@ -1,10 +1,12 @@
 // Vertex.h : subor pre manipulaciu s 3D bodom
 #pragma once
 #include "Vector4.h"
+#include "LinkedList.h"
 
 namespace MeshStructures
 {
 	using namespace MathStructures;
+	using namespace GenericStructures;
 
 	public class Vertex
 	{
@@ -14,5 +16,6 @@ namespace MeshStructures
 		~Vertex();
 
 		Vector4 P;
+		LinkedList<void>*		susedia;					// susedia
 	};
 }

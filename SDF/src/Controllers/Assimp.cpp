@@ -67,16 +67,14 @@ namespace AssimpFileHandler
 	void CAssimp::LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		glLoadIdentity();
-		/*Vertex* v1 = new Vertex(10.0,20.0,0.0,1.0);
-		Vertex* v2 = new Vertex(-10.0,20.0,0.0,1.0);
-		Vertex* v3 = new Vertex(0.0,0.0,0.0,1.0);
-		Face* fc = new Face(v1, v2, v3);
-		points.push_back(v1);
-		points.push_back(v2);
-		points.push_back(v3);
-		faces.push_back(fc);*/
-		//faces.clear();
-		//points.clear();
+		/*Vertex* v1 = new Vertex(10.0,20.0,0.0);
+		Vertex* v2 = new Vertex(-10.0,20.0,0.0);
+		Vertex* v3 = new Vertex(0.0,0.0,0.0);
+		Face* fck = new Face(v1, v2, v3);
+		pts->InsertToEnd(v1);
+		pts->InsertToEnd(v2);
+		pts->InsertToEnd(v3);
+		fc->InsertToEnd(fck);*/
 		RecursiveLoad(scene, scene->mRootNode, fc, pts);
 	}
 
@@ -134,6 +132,9 @@ namespace AssimpFileHandler
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
+					tmp_points[face->mIndices[0]]->susedia->InsertToEnd(tmp_faces[t]);
+					tmp_points[face->mIndices[1]]->susedia->InsertToEnd(tmp_faces[t]);
+					tmp_points[face->mIndices[2]]->susedia->InsertToEnd(tmp_faces[t]);
 				}
 
 				for(unsigned int i = 0; i < n_faces; i++)

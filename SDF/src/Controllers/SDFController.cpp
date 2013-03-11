@@ -92,18 +92,103 @@ namespace SDFController
 			//counter++;
 			tmp = tmp->next;
 		}
+		// postprocessing - smoothing and normalization
+		int kernel_size = 2;
+		//double kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		double* kernel = ComputeGaussianKernel(kernel_size);
 		tmp = triangles->start;
 		while(tmp != NULL)
 		{
+			Smooth(tmp->data, kernel, kernel_size);
 			tmp->data->diameter->Normalize1(min, max, 4.0);
 			tmp->data->diameter->Normalize2(0, max, 4.0);
 			//tmp->data->diameter->Normalize2(0, diagonal, 4.0);
 
 			tmp = tmp->next;
 		}
+		delete kernel;
 		//loggger->logInfo(MarshalString("pocet: " + counter));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+	}
+
+	// vypocitaj normalizovany 1D kernel pre gaussian
+	double* CSDFController::ComputeGaussianKernel(int radius)
+	{
+		double* matrix = new double [radius*2+1];
+		double sigma = (double)radius/2.0;
+		double norm = 1.0 / (sqrt(2*M_PI) * sigma);
+		double coeff = 2*sigma*sigma;
+		double total=0;
+		for(int x = -radius; x <= radius; x++)
+		{
+			double g = norm * exp( (-x*x)/coeff );
+			matrix[x+radius] = g;
+			total+=g;
+		}
+		for(int x=0; x<=2*radius; x++)
+			matrix[x]=(matrix[x]/total) * 1000.0;
+
+		return matrix;
+	}
+
+	void CSDFController::Smooth(Face* tmp, double* kernel, int kernel_size)
+	{
+		LinkedList<Face>** sus = new LinkedList<Face>*[kernel_size + 1];
+		sus[0] = new LinkedList<Face>(tmp);
+		for(int i=1; i <= kernel_size; i++)				// bacha na posunutie
+		{
+			sus[i] = new LinkedList<Face>();
+			LinkedList<Face>::Cell<Face>* tm = sus[i-1]->start;
+			while(tm != NULL)
+			{
+				LinkedList<Face>* t = tm->data->GetSusedia();
+				LinkedList<Face>::Cell<Face>* tc = t->start;
+				while(tc != NULL)
+				{
+					bool pokracuj = false;
+					for(int j = 0; j <= i; j++)
+					{
+						if(sus[j]->Contains(tc->data))
+						{
+							pokracuj = true;
+							break;
+						}
+					}
+					if(pokracuj)
+					{
+						tc = tc->next;
+						continue;
+					}
+					sus[i]->InsertToEnd(tc->data);
+					tc = tc->next;
+				}
+				delete t;
+				tm = tm->next;
+			}
+		}
+		std::vector<double> _values;
+		std::vector<double> _weights;
+
+		for(int i=0; i <= kernel_size; i++)
+		{
+			int _size = sus[i]->GetSize();
+			if(_size != 0)
+			{
+				double _weight = kernel[kernel_size + i];// / (double)_size;
+				LinkedList<Face>::Cell<Face>* tc = sus[i]->start;
+				while(tc != NULL)
+				{
+					_values.push_back(tc->data->diameter->value);
+					_weights.push_back(_weight);
+					tc = tc->next;
+				}
+			}
+			delete sus[i];
+		}
+		delete [] sus;
+
+		tmp->diameter->Smooth(_values, _weights);
 	}
 
 	LinkedList<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray)

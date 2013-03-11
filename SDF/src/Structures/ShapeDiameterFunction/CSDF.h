@@ -13,6 +13,7 @@ namespace SDFStructures
 		double CalcMedian(const std::vector<double> values, unsigned int size);
 		double CalcMean(const std::vector<double> values, unsigned int size);
 		double CalcStandardDeviation(const std::vector<double> values, unsigned int size);
+		void Smooth(const std::vector<double> values, const std::vector<double> weights);
 
 
 		void Normalize1(double min, double max, double alfa);
@@ -20,6 +21,7 @@ namespace SDFStructures
 
 
 		double value;
+		double smoothed;
 		double normalized1;
 		double normalized2;
 	};
