@@ -25,5 +25,6 @@ namespace MeshStructures
 		Vector4					center;
 		int						farba;						// pre picking
 		CSDF*					diameter;
+		const struct aiFace*	assimp_ref;
 	};
 }

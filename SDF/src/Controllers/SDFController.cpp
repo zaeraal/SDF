@@ -99,7 +99,7 @@ namespace SDFController
 				if(tmp->data->diameter->value > max)
 					max = tmp->data->diameter->value;
 			}
-			counter++;
+			counter = counter + 1;
 			tmp = tmp->next;
 		}
 		// postprocessing - smoothing and normalization
@@ -117,7 +117,7 @@ namespace SDFController
 			tmp = tmp->next;
 		}
 		delete kernel;
-		//loggger->logInfo(MarshalString("pocet: " + counter));
+		loggger->logInfo(MarshalString("pocet: " + counter));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
 	}
@@ -366,8 +366,6 @@ namespace SDFController
 		// fixes for rays with negative direction
 		if(ray.X < 0.0)
 		{
-			//Center.X = o_size / 4.0 - Center.X;
-			//ray.X *= -1.0;
 			tx0 = (o_max.X - Center.X) * -invdirx;
 			tx1 = (o_min.X - Center.X) * -invdirx;
 			a |= 4 ; //bitwise OR (latest bits are XYZ)
@@ -379,8 +377,6 @@ namespace SDFController
 		}
 		if(ray.Y < 0.0)
 		{
-			//Center.Y = o_size / 4.0 - Center.Y;
-			//ray.Y *= -1.0;
 			ty0 = (o_max.Y - Center.Y) * -invdiry;
 			ty1 = (o_min.Y - Center.Y) * -invdiry;
 			a |= 2 ;
@@ -392,8 +388,6 @@ namespace SDFController
 		}
 		if(ray.Z < 0.0)
 		{
-			//Center.Z = o_size / 4.0 - Center.Z;
-			//ray.Z *= -1.0;
 			tz0 = (o_max.Z - Center.Z) * -invdirz;
 			tz1 = (o_min.Z - Center.Z) * -invdirz;
 			a |= 1 ;
@@ -404,52 +398,12 @@ namespace SDFController
 			tz1 = (o_max.Z - Center.Z) * invdirz;
 		}
 
-
-
 		/*double tx0 = (o_min.X - Center.X) * invdirx;
 		double tx1 = (o_max.X - Center.X) * invdirx;
 		double ty0 = (o_min.Y - Center.Y) * invdiry;
 		double ty1 = (o_max.Y - Center.Y) * invdiry;
 		double tz0 = (o_min.Z - Center.Z) * invdirz;
 		double tz1 = (o_max.Z - Center.Z) * invdirz;*/
-
-		/*double tx0 = ((o_X - o_size)) * invdirx;
-		double tx1 = ((o_X + o_size)) * invdirx;
-		double ty0 = ((o_Y - o_size)) * invdiry;
-		double ty1 = ((o_Y + o_size)) * invdiry;
-		double tz0 = ((o_Z - o_size)) * invdirz;
-		double tz1 = ((o_Z + o_size)) * invdirz;*/
-
-        /*double tx0 = -Center.X * invdirx;
-        double tx1 = (to_size - Center.X) * invdirx;
- 
-        double ty0 = -Center.Y * invdiry;
-        double ty1 = (to_size - Center.Y) * invdiry;
-
-        double tz0 = -Center.Z * invdirz;
-        double tz1 = (to_size - Center.Z) * invdirz;*/
-
-		/*if (ray.X < Bias)
-        {
-                if (tx0 < 0) tx0 = -INT_MAX;
-                else tx0 = INT_MAX;
-                if (tx1 < 0) tx1 = -INT_MAX;
-                else tx1 = INT_MAX;
-        }
-        if (ray.Y < Bias)
-        {
-                if (ty0 < 0) ty0 = -INT_MAX;
-                else ty0 = INT_MAX;
-                if (ty1 < 0) ty1 = -INT_MAX;
-                else ty1 = INT_MAX;
-        }
-        if (ray.Z < Bias)
-        {
-                if (tz0 < 0) tz0 = -INT_MAX;
-                else tz0 = INT_MAX;
-                if (tz1 < 0) tz1 = -INT_MAX;
-                else tz1 = INT_MAX;
-        }*/
 
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 

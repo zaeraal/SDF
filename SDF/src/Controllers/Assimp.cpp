@@ -63,7 +63,10 @@ namespace AssimpFileHandler
 		//Will add message to File with "debug" Tag
 		Assimp::DefaultLogger::get()->debug(logString.c_str());
 	}
-
+	void CAssimp::SetScene(aiScene* scena)
+	{
+		scene = scena;
+	}
 	void CAssimp::LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		glLoadIdentity();
@@ -132,6 +135,7 @@ namespace AssimpFileHandler
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
+					tmp_faces[t]->assimp_ref = face;
 					tmp_points[face->mIndices[0]]->susedia->InsertToEnd(tmp_faces[t]);
 					tmp_points[face->mIndices[1]]->susedia->InsertToEnd(tmp_faces[t]);
 					tmp_points[face->mIndices[2]]->susedia->InsertToEnd(tmp_faces[t]);

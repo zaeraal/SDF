@@ -18,6 +18,7 @@ namespace AssimpFileHandler
 		void logInfo(std::string logString);
 		void logDebug(std::string logString);
 		void LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts);
+		void SetScene(aiScene* scena);
 		~CAssimp();
 	private:
 		void RecursiveLoad (const struct aiScene *sc, const struct aiNode* nd, LinkedList<Face>* fc, LinkedList<Vertex>* pts);

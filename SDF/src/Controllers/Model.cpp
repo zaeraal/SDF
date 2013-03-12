@@ -82,6 +82,56 @@ namespace ModelController
 		SetColors();
 	}
 
+	// nacita priamo Assimp
+	void CModel::LoadAssimp(aiScene* scene)
+	{
+		ResetSettings();
+
+		// ak znovu nacitavame, premaz povodne udaje
+		if(m_root != NULL)
+			delete m_root;
+
+		if(SDF_control != NULL)
+			delete SDF_control;
+
+		// delete actual faces and vertices
+		triangles->CompleteDelete();
+		delete triangles;
+
+		points->CompleteDelete();
+		delete points;
+
+		m_root = NULL;
+		SDF_control = NULL;
+		triangles = new LinkedList<Face>();
+		points = new LinkedList<Vertex>();
+
+		Assimp->SetScene(scene);
+		Assimp->LoadData(triangles, points);
+		loaded = true;
+
+		ComputeBoundary();
+		CreateOctree();
+		SetColors();
+	}
+
+	double CModel::GetSDF(const struct aiFace* face, bool smoothed)
+	{
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			if(tmp->data->assimp_ref == face)
+			{
+				if(smoothed)
+					return tmp->data->diameter->smoothed;
+				else
+					return tmp->data->diameter->value;
+			}
+			tmp = tmp->next;
+		}
+		return 0;
+	}
+
 	// resetuje "show" nastavenia
 	void CModel::ResetSettings()
 	{

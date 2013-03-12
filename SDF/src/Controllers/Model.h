@@ -23,6 +23,8 @@ namespace ModelController
 		void logDebug(string logString);
 
 		void LoadFile(string Filename);
+		void LoadAssimp(aiScene* scene);
+		double GetSDF(const struct aiFace* face, bool smoothed);
 		void ResetSettings();
 		void ComputeBoundary();
 		void CreateOctree();
