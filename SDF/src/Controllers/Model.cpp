@@ -282,7 +282,7 @@ namespace ModelController
 			glDisable(GL_LIGHTING);
 			glColor3f(0.5f,0.5f,0.5f);							// seda farba
 			if(show_octree == true)
-				m_root->DrawOctree();
+				m_root->DrawOctree(true);
 		}
 		if(selected != NULL)
 		{
@@ -296,12 +296,12 @@ namespace ModelController
 			Vector4 binormal = tangens % normal;
 			binormal.Normalize();
 			Mat4 t_mat= Mat4(tangens, normal, binormal);
-			glColor3f(1.0f,0.5f,0.5f);
+			glColor3f(0.0f,1.0f,0.0f);
 			glBegin(GL_LINES);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( normal.X * b_sf + selected->center.X,
-							normal.Y * b_sf + selected->center.Y,
-							normal.Z * b_sf + selected->center.Z);
+				glVertex3d( normal.X * 5.0 + selected->center.X,
+							normal.Y * 5.0 + selected->center.Y,
+							normal.Z * 5.0 + selected->center.Z);
 				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
 				glVertex3d( binormal.X * b_sf + selected->center.X,
 							binormal.Y * b_sf + selected->center.Y,
@@ -312,7 +312,7 @@ namespace ModelController
 							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
 
-			glColor3f(0.5f,0.5f,1.0f);
+			/*glColor3f(0.5f,0.5f,1.0f);
 			glBegin(GL_LINES);
 				for(int i = 0; i < 30; i++)
 				{
@@ -328,9 +328,9 @@ namespace ModelController
 								ray.Y *  b_sf + selected->center.Y,
 								ray.Z *  b_sf + selected->center.Z);
 				}
-			glEnd();
+			glEnd();*/
 
-			Vector4 Center = selected->center - (normal * b_max);;
+			Vector4 Center = selected->center;// - (normal * b_max);
 			double o_size = 0.0;
 			double o_X = 0.0;
 			double o_Y = 0.0;
@@ -338,21 +338,21 @@ namespace ModelController
 			m_root->GetBoundary(o_size, o_X, o_Y, o_Z);
 
 			// fixes for rays with negative direction
-			if(normal.X < 0)
+			/*if(normal.X < 0)
 			{
-				Center.X = (o_size * 2.0) - Center.X;
+				Center.X = (o_size) - Center.X;
 				normal.X = - normal.X;
 			}
 			if(normal.Y < 0)
 			{
-				Center.Y = (o_size * 2.0) - Center.Y;
+				Center.Y = (o_size) - Center.Y;
 				normal.Y = - normal.Y;
 			}
 			if(normal.Z < 0)
 			{
-				Center.Z = (o_size * 2.0) - Center.Z;
+				Center.Z = (o_size) - Center.Z;
 				normal.Z = - normal.Z;
-			}
+			}*/
 
 			double divx = 1 / normal.X; // IEEE stability fix
 			double divy = 1 / normal.Y;
@@ -364,10 +364,53 @@ namespace ModelController
 			double ty1 = ((o_Y + o_size) - Center.Y) * divy;
 			double tz0 = ((o_Z - o_size) - Center.Z) * divz;
 			double tz1 = ((o_Z + o_size) - Center.Z) * divz;
-			glBegin(GL_LINES);
+
+			/*double tx0 = -Center.X * divx;
+			double tx1 = (o_size - Center.X) * divx;
+ 
+			double ty0 = -Center.Y * divy;
+			double ty1 = (o_size - Center.Y) * divy;
+
+			double tz0 = -Center.Z * divz;
+			double tz1 = (o_size - Center.Z) * divz;*/
+
+			if (normal.X == 0.0f)
+			{
+					if (tx0 < 0) tx0 = -9.0;
+					else tx0 = 9.0;
+					if (tx1 < 0) tx1 = -9.0;
+					else tx1 = 9.0;
+			}
+			if (normal.Y == 0.0f)
+			{
+					if (ty0 < 0) ty0 = -9.0;
+					else ty0 = 9.0;
+					if (ty1 < 0) ty1 = -9.0;
+					else ty1 = 9.0;
+			}
+			if (normal.Z == 0.0f)
+			{
+					if (tz0 < 0) tz0 = -9.0;
+					else tz0 = 9.0;
+					if (tz1 < 0) tz1 = -9.0;
+					else tz1 = 9.0;
+			}
+
+			/*glBegin(GL_LINES);
 				glVertex3d(tx0, ty0, tz0);
 				glVertex3d(tx1, ty1, tz1);
-			glEnd();
+			glEnd();*/
+			Vector4 norm = (U % V) * (-1.0);
+			norm.Normalize();
+			LinkedList<Octree>* octrees = new LinkedList<Octree>();
+			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees);
+			LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
+			glColor3f(1.0f,0.5f,0.5f);
+			while(tmp != NULL)
+			{
+				tmp->data->DrawOctree(false);
+				tmp = tmp->next;
+			}
 		}
 	}
 

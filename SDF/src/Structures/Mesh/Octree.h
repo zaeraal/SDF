@@ -20,7 +20,7 @@ namespace MeshStructures
 		int GetCode(const Vector4 pt);
 		bool isLeaf;
 		void GetBoundary(double &siz, double &x, double &y, double &z);
-		void DrawOctree();
+		void DrawOctree(bool recursive);
 
 		Octree* parent;						// otec, NULL ak sme hlavny vrchol
 		Octree** son;						// synovia

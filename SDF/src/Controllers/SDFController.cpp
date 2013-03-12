@@ -3,6 +3,8 @@
 #include "SDFController.h"
 #include "MathHelper.h"
 
+#define DOUBLE_MAX  99999.0
+
 namespace SDFController
 {
 	// konstruktor
@@ -22,12 +24,12 @@ namespace SDFController
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
 	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root)
 	{
-		double min = 99999.0;
+		double min = DOUBLE_MAX;
 		double max = 0.0;
 		srand (2013);					// initial seed for random number generator
 		double n_rays = 30.0;
 		double angle = 120.0;
-		//int counter = 0;
+		int counter = 0;
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
 		{
@@ -48,7 +50,7 @@ namespace SDFController
 				Vector4 ray = CalcRayFromAngle(rndx, rndy) * t_mat;
 				ray.Normalize();
 
-				double dist = 99999.0;
+				double dist = DOUBLE_MAX;
 				LinkedList<Face>* tmpp = GetFaceList(triangles, root, tmp->data->center, ray);
 				LinkedList<Face>::Cell<Face>* tmp2 = tmpp->start;
 				while(tmp2 != NULL)
@@ -59,7 +61,7 @@ namespace SDFController
 						continue;
 					}
 
-					double dist2 = 99999.0;
+					double dist2 = DOUBLE_MAX;
 					bool intersected = rayIntersectsTriangle(tmp->data->center, ray, tmp2->data->v[0]->P, tmp2->data->v[1]->P, tmp2->data->v[2]->P, dist2);
 					if(intersected == true)
 					{
@@ -72,7 +74,7 @@ namespace SDFController
 
 					tmp2 = tmp2->next;
 				}
-				if(dist < 99998)
+				if(dist < (DOUBLE_MAX - 1.0))
 				{
 					//loggger->logInfo(MarshalString("pridany ray s dlzkou: " + dist));
 					rays.push_back(dist);
@@ -89,7 +91,7 @@ namespace SDFController
 				if(tmp->data->diameter->value > max)
 					max = tmp->data->diameter->value;
 			}
-			//counter++;
+			counter++;
 			tmp = tmp->next;
 		}
 		// postprocessing - smoothing and normalization
@@ -198,25 +200,19 @@ namespace SDFController
 
 		LinkedList<Octree>* octrees = new LinkedList<Octree>();
 		LinkedList<Face>* faces = new LinkedList<Face>();
-		center = center - (ray * diagonal);						// hack
+		//center = center - (ray * diagonal);						// hack
 
 		ray_octree_traversal(root, ray, center, octrees);
 
-		// insert parents, zbytocne pomale
+		// create triangle list
 		LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
 		while(tmp != NULL)
 		{
-			if((tmp->data->parent != NULL) && (octrees->Contains(tmp->data->parent) == false))
-				octrees->InsertToEnd(tmp->data->parent);
-			tmp = tmp->next;
-		}
-		
-		// create triangle list
-		tmp = octrees->start;
-		while(tmp != NULL)
-		{
 			for(unsigned int i = 0; i < tmp->data->count; i++)
-				faces->InsertToEnd(tmp->data->triangles[i]);
+			{
+				if(!faces->Contains(tmp->data->triangles[i]))
+					faces->InsertToEnd(tmp->data->triangles[i]);
+			}
 			tmp = tmp->next;
 		}
 		delete octrees;
@@ -366,21 +362,59 @@ namespace SDFController
 			ray.Z = - ray.Z;
 			a |= 1 ;
 		}
+		double Bias = 0.00001;
+		double invdirx = ray.X < Bias ? 1.0 : (1 / ray.X); // IEEE stability fix
+		double invdiry = ray.Y < Bias ? 1.0 : (1 / ray.Y);
+		double invdirz = ray.Z < Bias ? 1.0 : (1 / ray.Z);
 
-		double divx = 1 / ray.X; // IEEE stability fix
-		double divy = 1 / ray.Y;
-		double divz = 1 / ray.Z;
+		/*double tx0 = ((o_X - o_size) - Center.X) * invdirx;
+		double tx1 = ((o_X + o_size) - Center.X) * invdirx;
+		double ty0 = ((o_Y - o_size) - Center.Y) * invdiry;
+		double ty1 = ((o_Y + o_size) - Center.Y) * invdiry;
+		double tz0 = ((o_Z - o_size) - Center.Z) * invdirz;
+		double tz1 = ((o_Z + o_size) - Center.Z) * invdirz;*/
 
-		double tx0 = ((o_X - o_size) - Center.X) * divx;
-		double tx1 = ((o_X + o_size) - Center.X) * divx;
-		double ty0 = ((o_Y - o_size) - Center.Y) * divy;
-		double ty1 = ((o_Y + o_size) - Center.Y) * divy;
-		double tz0 = ((o_Z - o_size) - Center.Z) * divz;
-		double tz1 = ((o_Z + o_size) - Center.Z) * divz;
+		double tx0 = ((o_X - o_size)) * invdirx;
+		double tx1 = ((o_X + o_size)) * invdirx;
+		double ty0 = ((o_Y - o_size)) * invdiry;
+		double ty1 = ((o_Y + o_size)) * invdiry;
+		double tz0 = ((o_Z - o_size)) * invdirz;
+		double tz1 = ((o_Z + o_size)) * invdirz;
+
+        /*double tx0 = -Center.X * invdirx;
+        double tx1 = (o_size - Center.X) * invdirx;
+ 
+        double ty0 = -Center.Y * invdiry;
+        double ty1 = (o_size - Center.Y) * invdiry;
+
+        double tz0 = -Center.Z * invdirz;
+        double tz1 = (o_size - Center.Z) * invdirz;*/
+
+		if (ray.X < Bias)
+        {
+                if (tx0 < 0) tx0 = -DOUBLE_MAX;
+                else tx0 = DOUBLE_MAX;
+                if (tx1 < 0) tx1 = -DOUBLE_MAX;
+                else tx1 = DOUBLE_MAX;
+        }
+        if (ray.Y < Bias)
+        {
+                if (ty0 < 0) ty0 = -DOUBLE_MAX;
+                else ty0 = DOUBLE_MAX;
+                if (ty1 < 0) ty1 = -DOUBLE_MAX;
+                else ty1 = DOUBLE_MAX;
+        }
+        if (ray.Z < Bias)
+        {
+                if (tz0 < 0) tz0 = -DOUBLE_MAX;
+                else tz0 = DOUBLE_MAX;
+                if (tz1 < 0) tz1 = -DOUBLE_MAX;
+                else tz1 = DOUBLE_MAX;
+        }
 
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 
 			proc_subtree(tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
 		}
-		}
 	}
+}

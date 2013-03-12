@@ -38,19 +38,29 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
+		// Front half			Back half (viewed from front)
+		// -----------------	-----------------
+		// |       |       |	|       |       |
+		// |   2   |   6   |	|   3   |   7   |
+		// |       |       |	|       |       |
+		// -----------------	-----------------
+		// |       |       |	|       |       |
+		// |   0   |   4   |	|   1   |   5   |
+		// |       |       |	|       |       |
+		// -----------------	-----------------
+		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
 		// tabulka offsetov
 		double Table[8][3] =
         {
-            {-1.0, -1.0, +1.0},
             {-1.0, -1.0, -1.0},
-            {-1.0, +1.0, +1.0},
+            {-1.0, -1.0, +1.0},
             {-1.0, +1.0, -1.0},
-            {+1.0, -1.0, +1.0},
+            {-1.0, +1.0, +1.0},
             {+1.0, -1.0, -1.0},
-            {+1.0, +1.0, +1.0},
-            {+1.0, +1.0, -1.0}
+            {+1.0, -1.0, +1.0},
+            {+1.0, +1.0, -1.0},
+            {+1.0, +1.0, +1.0}
         };
-
 		if((depth >= max_depth) || (length <= min_count))
 		{
 			count = length;
@@ -159,7 +169,7 @@ namespace MeshStructures
 		int result = 0;
 		if (pt.X > origin.X) result |= 4;
 		if (pt.Y > origin.Y) result |= 2;
-		if (pt.Z <= origin.Z) result |= 1;
+		if (pt.Z > origin.Z) result |= 1;
 
 		return result;
 	}
@@ -172,20 +182,20 @@ namespace MeshStructures
 		z = origin.Z;
 	}
 
-	void Octree::DrawOctree()
+	void Octree::DrawOctree(bool recursive)
 	{
 		glBegin(GL_LINES);
 			double Table[8][3] =
-            {
-                {-1.0, -1.0, +1.0},
-                {-1.0, -1.0, -1.0},
-                {-1.0, +1.0, +1.0},
-                {-1.0, +1.0, -1.0},
-                {+1.0, -1.0, +1.0},
-                {+1.0, -1.0, -1.0},
-                {+1.0, +1.0, +1.0},
-                {+1.0, +1.0, -1.0}
-            };
+			{
+				{-1.0, -1.0, -1.0},
+				{-1.0, -1.0, +1.0},
+				{-1.0, +1.0, -1.0},
+				{-1.0, +1.0, +1.0},
+				{+1.0, -1.0, -1.0},
+				{+1.0, -1.0, +1.0},
+				{+1.0, +1.0, -1.0},
+				{+1.0, +1.0, +1.0}
+			};
 			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
 			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
 
@@ -223,11 +233,11 @@ namespace MeshStructures
 			glVertex3d(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 		glEnd();
 
-		if(isLeaf != true)
+		if((isLeaf == false) && (recursive == true))
 		{
 			for(int i = 0; i < 8; i++)
 			{
-				son[i]->DrawOctree();
+				son[i]->DrawOctree(recursive);
 			}
 		}
 	}
