@@ -4,6 +4,14 @@
 #include "MathHelper.h"
 
 #define DOUBLE_MAX  99999.0
+#define FLD_NODE 0
+#define BLD_NODE 1
+#define FLT_NODE 2
+#define BLT_NODE 3
+#define FRD_NODE 4
+#define BRD_NODE 5
+#define FRT_NODE 6
+#define BRT_NODE 7
 
 namespace SDFController
 {
@@ -278,19 +286,15 @@ namespace SDFController
 		double txm, tym, tzm;
 		int currNode;
 
-		if(tx1 < 0 || ty1 < 0 || tz1 < 0) return;
-		
+		if((tx1 < 0.0) || (ty1 < 0.0) || (tz1 < 0.0)) return;
+
 		if(node->isLeaf)
 		{
 			//loggger->logInfo("Reached leaf node");
-			octrees->InsertToStart(node);
+			octrees->InsertToEnd(node);
 			return;
 		}
-		else
-		{
-			//loggger->logInfo("Reached no_leaf node");
-		}
-
+		
 		txm = 0.5*(tx0 + tx1);
 		tym = 0.5*(ty0 + ty1);
 		tzm = 0.5*(tz0 + tz1);
@@ -342,79 +346,213 @@ namespace SDFController
 		double o_Y = 0.0;
 		double o_Z = 0.0;
 		octree->GetBoundary(o_size, o_X, o_Y, o_Z);
+		double to_size = o_size * 2.0;
+
+		// avoid division by zero
+		double Bias = 0.0001;
+		if (fabs(ray.X) < Bias) ray.X = ray.X < 0.0 ? -Bias : Bias;
+		if (fabs(ray.Y) < Bias) ray.Y = ray.Y < 0.0 ? -Bias : Bias;
+		if (fabs(ray.Z) < Bias) ray.Z = ray.Z < 0.0 ? -Bias : Bias;
+
+		double invdirx = 1.0 / fabs(ray.X);
+		double invdiry = 1.0 / fabs(ray.Y);
+		double invdirz = 1.0 / fabs(ray.Z);
+
+		// TODO: pridat do octree a nie sem
+		Vector4 o_min = Vector4(o_X - o_size, o_Y - o_size, o_Z - o_size, 1.0);
+		Vector4 o_max = Vector4(o_X + o_size, o_Y + o_size, o_Z + o_size, 1.0);
+		double tx0 ,tx1, ty0, ty1, tz0, tz1;
 
 		// fixes for rays with negative direction
-		if(ray.X < 0)
+		if(ray.X < 0.0)
 		{
-			Center.X = (o_size * 2.0) - Center.X;
-			ray.X = - ray.X;
+			//Center.X = o_size / 4.0 - Center.X;
+			//ray.X *= -1.0;
+			tx0 = (o_max.X - Center.X) * -invdirx;
+			tx1 = (o_min.X - Center.X) * -invdirx;
 			a |= 4 ; //bitwise OR (latest bits are XYZ)
 		}
-		if(ray.Y < 0)
+		else
 		{
-			Center.Y = (o_size * 2.0) - Center.Y;
-			ray.Y = - ray.Y;
+			tx0 = (o_min.X - Center.X) * invdirx;
+			tx1 = (o_max.X - Center.X) * invdirx;
+		}
+		if(ray.Y < 0.0)
+		{
+			//Center.Y = o_size / 4.0 - Center.Y;
+			//ray.Y *= -1.0;
+			ty0 = (o_max.Y - Center.Y) * -invdiry;
+			ty1 = (o_min.Y - Center.Y) * -invdiry;
 			a |= 2 ;
 		}
-		if(ray.Z < 0)
+		else
 		{
-			Center.Z = (o_size * 2.0) - Center.Z;
-			ray.Z = - ray.Z;
+			ty0 = (o_min.Y - Center.Y) * invdiry;
+			ty1 = (o_max.Y - Center.Y) * invdiry;
+		}
+		if(ray.Z < 0.0)
+		{
+			//Center.Z = o_size / 4.0 - Center.Z;
+			//ray.Z *= -1.0;
+			tz0 = (o_max.Z - Center.Z) * -invdirz;
+			tz1 = (o_min.Z - Center.Z) * -invdirz;
 			a |= 1 ;
 		}
-		double Bias = 0.00001;
-		double invdirx = ray.X < Bias ? 1.0 : (1 / ray.X); // IEEE stability fix
-		double invdiry = ray.Y < Bias ? 1.0 : (1 / ray.Y);
-		double invdirz = ray.Z < Bias ? 1.0 : (1 / ray.Z);
+		else
+		{
+			tz0 = (o_min.Z - Center.Z) * invdirz;
+			tz1 = (o_max.Z - Center.Z) * invdirz;
+		}
 
-		/*double tx0 = ((o_X - o_size) - Center.X) * invdirx;
-		double tx1 = ((o_X + o_size) - Center.X) * invdirx;
-		double ty0 = ((o_Y - o_size) - Center.Y) * invdiry;
-		double ty1 = ((o_Y + o_size) - Center.Y) * invdiry;
-		double tz0 = ((o_Z - o_size) - Center.Z) * invdirz;
-		double tz1 = ((o_Z + o_size) - Center.Z) * invdirz;*/
 
-		double tx0 = ((o_X - o_size)) * invdirx;
+
+		/*double tx0 = (o_min.X - Center.X) * invdirx;
+		double tx1 = (o_max.X - Center.X) * invdirx;
+		double ty0 = (o_min.Y - Center.Y) * invdiry;
+		double ty1 = (o_max.Y - Center.Y) * invdiry;
+		double tz0 = (o_min.Z - Center.Z) * invdirz;
+		double tz1 = (o_max.Z - Center.Z) * invdirz;*/
+
+		/*double tx0 = ((o_X - o_size)) * invdirx;
 		double tx1 = ((o_X + o_size)) * invdirx;
 		double ty0 = ((o_Y - o_size)) * invdiry;
 		double ty1 = ((o_Y + o_size)) * invdiry;
 		double tz0 = ((o_Z - o_size)) * invdirz;
-		double tz1 = ((o_Z + o_size)) * invdirz;
+		double tz1 = ((o_Z + o_size)) * invdirz;*/
 
         /*double tx0 = -Center.X * invdirx;
-        double tx1 = (o_size - Center.X) * invdirx;
+        double tx1 = (to_size - Center.X) * invdirx;
  
         double ty0 = -Center.Y * invdiry;
-        double ty1 = (o_size - Center.Y) * invdiry;
+        double ty1 = (to_size - Center.Y) * invdiry;
 
         double tz0 = -Center.Z * invdirz;
-        double tz1 = (o_size - Center.Z) * invdirz;*/
+        double tz1 = (to_size - Center.Z) * invdirz;*/
 
-		if (ray.X < Bias)
+		/*if (ray.X < Bias)
         {
-                if (tx0 < 0) tx0 = -DOUBLE_MAX;
-                else tx0 = DOUBLE_MAX;
-                if (tx1 < 0) tx1 = -DOUBLE_MAX;
-                else tx1 = DOUBLE_MAX;
+                if (tx0 < 0) tx0 = -INT_MAX;
+                else tx0 = INT_MAX;
+                if (tx1 < 0) tx1 = -INT_MAX;
+                else tx1 = INT_MAX;
         }
         if (ray.Y < Bias)
         {
-                if (ty0 < 0) ty0 = -DOUBLE_MAX;
-                else ty0 = DOUBLE_MAX;
-                if (ty1 < 0) ty1 = -DOUBLE_MAX;
-                else ty1 = DOUBLE_MAX;
+                if (ty0 < 0) ty0 = -INT_MAX;
+                else ty0 = INT_MAX;
+                if (ty1 < 0) ty1 = -INT_MAX;
+                else ty1 = INT_MAX;
         }
         if (ray.Z < Bias)
         {
-                if (tz0 < 0) tz0 = -DOUBLE_MAX;
-                else tz0 = DOUBLE_MAX;
-                if (tz1 < 0) tz1 = -DOUBLE_MAX;
-                else tz1 = DOUBLE_MAX;
-        }
+                if (tz0 < 0) tz0 = -INT_MAX;
+                else tz0 = INT_MAX;
+                if (tz1 < 0) tz1 = -INT_MAX;
+                else tz1 = INT_MAX;
+        }*/
 
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 
 			proc_subtree(tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
 		}
+	}
+
+	struct ActualState
+	{
+		double tx0;
+		double tx1;
+		double ty0;
+		double ty1;
+		double tz0;
+		double tz1;
+	};
+	void CSDFController::proc_subtree2 (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees)
+	{
+		if((tx1 < 0.0) || (ty1 < 0.0) || (tz1 < 0.0)) return;
+
+		if(node->isLeaf)
+		{
+			//loggger->logInfo("Reached leaf node");
+			octrees->InsertToEnd(node);
+			return;
+		}
+
+		int currNode = 0;
+		double txm, tym, tzm;
+	
+		ActualState state;
+		ActualState newState;
+
+		state.tx0 = tx0; state.ty0 = ty0; state.tz0 = tz0;
+		state.tx1 = tx1; state.ty1 = ty1; state.tz1 = tz1;	
+
+		int stateLookUp = 0;
+
+		txm = 0.5f * (state.tx0 + state.tx1);
+		tym = 0.5f * (state.ty0 + state.ty1);
+		tzm = 0.5f * (state.tz0 + state.tz1);
+
+		currNode = first_node(state.tx0, state.ty0, state.tz0, txm, tym, tzm);
+		do 
+		{
+			int case1 = 8;
+			int case2 = 8;
+			int case3 = 8;		
+			switch (currNode)
+			{
+				case FLD_NODE:
+					newState.tx0 = state.tx0; newState.ty0 = state.ty0; newState.tz0 = state.tz0;
+					newState.tx1 = txm;		  newState.ty1 = tym;		newState.tz1 = tzm;						
+					stateLookUp = FLD_NODE ^ a;
+					case1 = FRD_NODE; case2 = FLT_NODE; case3 = BLD_NODE;
+					break;
+				case BLD_NODE:
+					newState.tx0 = state.tx0; newState.ty0 = state.ty0; newState.tz0 = tzm;
+					newState.tx1 = txm;		  newState.ty1 = tym;		newState.tz1 = state.tz1;										
+					stateLookUp = BLD_NODE ^ a;
+					case1 = BRD_NODE; case2 = BLT_NODE;
+					break;
+				case FLT_NODE:
+					newState.tx0 = state.tx0; newState.ty0 = tym;		newState.tz0 = state.tz0;
+					newState.tx1 = txm;		  newState.ty1 = state.ty1; newState.tz1 = tzm;							
+					stateLookUp = FLT_NODE ^ a;
+					case1 = FRT_NODE; case3 = BLT_NODE;
+					break;
+				case BLT_NODE:
+					newState.tx0 = state.tx0; newState.ty0 = tym;		newState.tz0 = tzm;
+					newState.tx1 = txm;		  newState.ty1 = state.ty1; newState.tz1 = state.tz1;							
+					stateLookUp = BLT_NODE ^ a;
+					case1 = BRT_NODE;
+					break;
+				case FRD_NODE:
+					newState.tx0 = txm;		  newState.ty0 = state.ty0; newState.tz0 = state.tz0;
+					newState.tx1 = state.tx1; newState.ty1 = tym;		newState.tz1 = tzm;						
+					stateLookUp = FRD_NODE ^ a;
+					case2 = FRT_NODE; case3 = BRD_NODE;
+					break;
+				case BRD_NODE:
+					newState.tx0 = txm;		  newState.ty0 = state.ty0; newState.tz0 = tzm;
+					newState.tx1 = state.tx1; newState.ty1 = tym;		newState.tz1 = state.tz1;						
+					stateLookUp = BRD_NODE ^ a;
+					case2 = BRT_NODE;
+					break;
+				case FRT_NODE:
+					newState.tx0 = txm;		  newState.ty0 = tym;		newState.tz0 = state.tz0;
+					newState.tx1 = state.tx1; newState.ty1 = state.ty1; newState.tz1 = tzm;						
+					stateLookUp = FRT_NODE ^ a;
+					case3 = BRT_NODE;
+					break;
+				case BRT_NODE:
+					newState.tx0 = txm;		  newState.ty0 = tym;		newState.tz0 = tzm;
+					newState.tx1 = state.tx1; newState.ty1 = state.ty1; newState.tz1 = state.tz1;						
+					stateLookUp = BRT_NODE ^ a;
+					break;
+			}
+
+			currNode = new_node(newState.tx1, case1, 
+								newState.ty1, case2,
+								newState.tz1, case3);
+			proc_subtree2(newState.tx0, newState.ty0, newState.tz0, newState.tx1, newState.ty1, newState.tz1,node->son[stateLookUp], octrees);
+		} while (currNode < 8);
 	}
 }

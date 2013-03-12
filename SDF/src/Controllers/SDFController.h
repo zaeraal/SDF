@@ -23,6 +23,7 @@ namespace SDFController
 		int first_node(double tx0, double ty0, double tz0, double txm, double tym, double tzm);
 		int new_node(double txm, int x, double tym, int y, double tzm, int z);
 		void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees);
+		void proc_subtree2 (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees);
 		void ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees);
 	private:
 		double diagonal;

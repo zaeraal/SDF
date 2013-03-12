@@ -405,6 +405,12 @@ namespace ModelController
 			LinkedList<Octree>* octrees = new LinkedList<Octree>();
 			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees);
 			LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
+			glColor3f(1.0f,0.0f,0.0f);
+			if(tmp != NULL)
+			{
+				tmp->data->DrawOctree(false);
+				tmp = tmp->next;
+			}
 			glColor3f(1.0f,0.5f,0.5f);
 			while(tmp != NULL)
 			{
@@ -487,6 +493,6 @@ namespace ModelController
 	}
 	void CModel::ComputeSDF()
 	{
-		SDF_control->Compute(triangles, NULL);
+		SDF_control->Compute(triangles, m_root);
 	}
 }
