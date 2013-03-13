@@ -24,7 +24,8 @@ namespace ModelController
 
 		void LoadFile(string Filename);
 		void LoadAssimp(aiScene* scene);
-		double GetSDF(const struct aiFace* face, bool smoothed);
+		//double GetSDF(const struct aiFace* face, bool smoothed);
+		double* GetSDF(int& size, bool smoothed);
 		void ResetSettings();
 		void ComputeBoundary();
 		void CreateOctree();

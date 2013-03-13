@@ -135,7 +135,7 @@ namespace AssimpFileHandler
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);
-					tmp_faces[t]->assimp_ref = face;
+					//tmp_faces[t]->assimp_ref = face;
 					tmp_points[face->mIndices[0]]->susedia->InsertToEnd(tmp_faces[t]);
 					tmp_points[face->mIndices[1]]->susedia->InsertToEnd(tmp_faces[t]);
 					tmp_points[face->mIndices[2]]->susedia->InsertToEnd(tmp_faces[t]);

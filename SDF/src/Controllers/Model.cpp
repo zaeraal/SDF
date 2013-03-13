@@ -115,7 +115,7 @@ namespace ModelController
 		SetColors();
 	}
 
-	double CModel::GetSDF(const struct aiFace* face, bool smoothed)
+	/*double CModel::GetSDF(const struct aiFace* face, bool smoothed)
 	{
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
@@ -130,6 +130,31 @@ namespace ModelController
 			tmp = tmp->next;
 		}
 		return 0;
+	}*/
+
+	double* CModel::GetSDF(int& size, bool smoothed)
+	{
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		size = points->GetSize();
+		double* values = new double[size];
+		for(int i = 0; i < size; i++)
+		{
+			double hodnota = 0;
+			double total = tmp->data->susedia->GetSize();
+			LinkedList<void>::Cell<void>* tm = tmp->data->susedia->start;
+			while(tm != NULL)
+			{
+				if(smoothed)
+					hodnota += ((Face*)tm->data)->diameter->smoothed;
+				else
+					hodnota += ((Face*)tm->data)->diameter->value;
+				tm = tm->next;
+			}
+			hodnota = hodnota / total;
+			values[i] = hodnota;
+			tmp = tmp->next;
+		}
+		return values;
 	}
 
 	// resetuje "show" nastavenia

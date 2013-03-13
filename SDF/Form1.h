@@ -114,6 +114,7 @@ namespace SDF {
 	private: System::Windows::Forms::TextBox^  TB_Status;
 	private: System::Windows::Forms::Label^  LBL_Status;
 	private: System::Windows::Forms::ToolStripMenuItem^  normalsToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  exportToolStripMenuItem;
 
 
 	private: System::ComponentModel::IContainer^  components;
@@ -162,6 +163,7 @@ namespace SDF {
 			this->LBL_Triangle = (gcnew System::Windows::Forms::Label());
 			this->TB_Filename = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Filename = (gcnew System::Windows::Forms::Label());
+			this->exportToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->SuspendLayout();
@@ -285,8 +287,8 @@ namespace SDF {
 			// 
 			// toolsToolStripMenuItem
 			// 
-			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->computeSDFToolStripMenuItem, 
-				this->optionsToolStripMenuItem});
+			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->computeSDFToolStripMenuItem, 
+				this->exportToolStripMenuItem, this->optionsToolStripMenuItem});
 			this->toolsToolStripMenuItem->Enabled = false;
 			this->toolsToolStripMenuItem->Name = L"toolsToolStripMenuItem";
 			this->toolsToolStripMenuItem->Size = System::Drawing::Size(48, 20);
@@ -295,14 +297,14 @@ namespace SDF {
 			// computeSDFToolStripMenuItem
 			// 
 			this->computeSDFToolStripMenuItem->Name = L"computeSDFToolStripMenuItem";
-			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->computeSDFToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->computeSDFToolStripMenuItem->Text = L"&Compute SDF";
 			this->computeSDFToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::computeSDFToolStripMenuItem_Click);
 			// 
 			// optionsToolStripMenuItem
 			// 
 			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
-			this->optionsToolStripMenuItem->Size = System::Drawing::Size(147, 22);
+			this->optionsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->optionsToolStripMenuItem->Text = L"&Options";
 			this->optionsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::optionsToolStripMenuItem_Click);
 			// 
@@ -442,6 +444,13 @@ namespace SDF {
 			this->LBL_Filename->Size = System::Drawing::Size(49, 13);
 			this->LBL_Filename->TabIndex = 0;
 			this->LBL_Filename->Text = L"Filename";
+			// 
+			// exportToolStripMenuItem
+			// 
+			this->exportToolStripMenuItem->Name = L"exportToolStripMenuItem";
+			this->exportToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->exportToolStripMenuItem->Text = L"&Export";
+			this->exportToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::exportToolStripMenuItem_Click);
 			// 
 			// Form1
 			// 
@@ -604,7 +613,32 @@ namespace SDF {
 		MController->setDrawMode(2);
 		MController->logInfo("Compute SDF");
 		MController->ComputeSDF();
+		TB_Status->Text = "SDF Computed";
 
+		timer1->Enabled = true;
+	}
+	private: System::Void exportToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		timer1->Enabled = false;
+		double* values1 = NULL;
+		double* values2 = NULL;
+		int size = 0;
+
+		MController->logInfo("Exporting SDF values");
+		values1 = MController->GetSDF(size, false);
+		values2 = MController->GetSDF(size, true);
+		std::ofstream vypis;
+		vypis.open ("Export.txt");
+		for(int i = 0; i < size; i++)
+		{
+			vypis << MarshalString(values1[i] + " " + values2[i] + "\n");
+		}
+		vypis.close();
+
+		MController->logInfo("SDF values Exported");
+		TB_Status->Text = "SDF values Exported";
+		delete [] values1;
+		delete [] values2;
 		timer1->Enabled = true;
 	}
 };

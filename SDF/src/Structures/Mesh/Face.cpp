@@ -13,7 +13,7 @@ namespace MeshStructures
 		farba = 0;
 		ComputeNormal();
 		diameter = new CSDF();
-		assimp_ref = NULL;
+		//assimp_ref = NULL;
 	}
 
 	//destruktor
