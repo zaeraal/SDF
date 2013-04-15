@@ -5,7 +5,7 @@
 
 namespace MeshStructures
 {
-	Octree::Octree(const int dep, const double siz, Vector4 ori, Octree* par)
+	Octree::Octree(const int dep, const float siz, Vector4 ori, Octree* par)
 	{
 		isLeaf = true;
 		depth = dep;
@@ -50,7 +50,7 @@ namespace MeshStructures
 		// -----------------	-----------------
 		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
 		// tabulka offsetov
-		double Table[8][3] =
+		float Table[8][3] =
         {
             {-1.0, -1.0, -1.0},
             {-1.0, -1.0, +1.0},
@@ -72,7 +72,7 @@ namespace MeshStructures
 			isLeaf = false;
 			count = 0;
 			int new_depth = depth + 1;
-			double new_size = size / 2.0;
+			float new_size = size / 2.0f;
 
 			LinkedList<Face>** son_tria = new LinkedList<Face>* [8];
 			for(unsigned int i = 0; i < 8; i++)
@@ -114,7 +114,7 @@ namespace MeshStructures
 			}
 			/*
 			// old tabulka offsetov
-			double Table[8][3] =
+			float Table[8][3] =
             {
                 {-1.0, -1.0, -1.0},
                 {+1.0, -1.0, -1.0},
@@ -174,7 +174,7 @@ namespace MeshStructures
 		return result;
 	}
 
-	void Octree::GetBoundary(double &siz, double &x, double &y, double &z)
+	void Octree::GetBoundary(float &siz, float &x, float &y, float &z)
 	{
 		siz = size;
 		x = origin.X;
@@ -185,7 +185,7 @@ namespace MeshStructures
 	void Octree::DrawOctree(bool recursive)
 	{
 		glBegin(GL_LINES);
-			double Table[8][3] =
+			float Table[8][3] =
 			{
 				{-1.0, -1.0, -1.0},
 				{-1.0, -1.0, +1.0},

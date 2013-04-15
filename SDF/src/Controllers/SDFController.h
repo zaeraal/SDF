@@ -12,21 +12,21 @@ namespace SDFController
 	public class CSDFController
 	{
 	public:
-		CSDFController(double dia, CAssimp* logg);
+		CSDFController(float dia, CAssimp* logg);
 		~CSDFController();
 
 		void Compute(LinkedList<Face>* triangles, Octree* root);
-		double* ComputeGaussianKernel(int radius);
-		void Smooth(Face* tmp, double* kernel, int kernel_size);
+		float* ComputeGaussianKernel(int radius);
+		void Smooth(Face* tmp, float* kernel, int kernel_size);
 		LinkedList<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray);
 		void ComputeTNB(Face* tmp, Vector4& tang, Vector4& norm, Vector4& binor);
-		int first_node(double tx0, double ty0, double tz0, double txm, double tym, double tzm);
-		int new_node(double txm, int x, double tym, int y, double tzm, int z);
-		void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees);
-		void proc_subtree2 (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees);
+		int first_node(float tx0, float ty0, float tz0, float txm, float tym, float tzm);
+		int new_node(float txm, int x, float tym, int y, float tzm, int z);
+		void proc_subtree (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees);
+		void proc_subtree2 (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees);
 		void ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees);
 	private:
-		double diagonal;
+		float diagonal;
 		unsigned char a;					// for octree traveersal
 		CAssimp* loggger;
 	};

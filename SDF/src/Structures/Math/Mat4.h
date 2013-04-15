@@ -4,27 +4,22 @@
 
 namespace MathStructures
 {
-	const double Identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	const float Identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     struct Mat4
     {
 		public:
-        double M[16];
+        float M[16];
 
 		Mat4 () { Mat4(Identity); }
-		Mat4 (float m[16])	// wtf, to nezobere proste double?
+		Mat4 (float m[16])	// wtf, to nezobere proste float?
 		{
 			for (int i = 0; i < 16; i++)
 				M[i] = m[i];
 		}
-		Mat4 (double m[16])
-		{
-			for (int i = 0; i < 16; i++)
-				M[i] = m[i];
-		}
-		Mat4 (double a0, double a1, double a2, double a3,
-			  double b0, double b1, double b2, double b3,
-			  double c0, double c1, double c2, double c3,
-			  double d0, double d1, double d2, double d3)
+		Mat4 (float a0, float a1, float a2, float a3,
+			  float b0, float b1, float b2, float b3,
+			  float c0, float c1, float c2, float c3,
+			  float d0, float d1, float d2, float d3)
 		{
 			M[0] = a0;		M[1] = a1;		M[2] = a2;		M[3] = a3;
 			M[4] = b0;		M[5] = b1;		M[6] = b2;		M[7] = b3;
@@ -73,7 +68,7 @@ namespace MathStructures
 	}
 
 	// multplication of matrix and number
-	inline Mat4 operator*(const Mat4& lhs, const double& rhs)
+	inline Mat4 operator*(const Mat4& lhs, const float& rhs)
 	{
 		Mat4 result;
 		for (int i = 0; i < 16; i++)
@@ -82,13 +77,13 @@ namespace MathStructures
 		return result;
 	}
 	// multplication of number and matrix
-	inline Mat4 operator*(const double& lhs, const Mat4& rhs)
+	inline Mat4 operator*(const float& lhs, const Mat4& rhs)
 	{
 		return rhs*lhs;
 	}
 
 	// division of matrix and number
-	inline Mat4 operator/(const Mat4& lhs, const double& rhs)
+	inline Mat4 operator/(const Mat4& lhs, const float& rhs)
 	{
 		Mat4 result;
 		for (int i = 0; i < 16; i++)

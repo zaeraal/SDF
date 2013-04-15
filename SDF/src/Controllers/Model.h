@@ -24,16 +24,16 @@ namespace ModelController
 
 		void LoadFile(string Filename);
 		void LoadAssimp(aiScene* scene);
-		//double GetSDF(const struct aiFace* face, bool smoothed);
-		double* GetSDF(int& size, bool smoothed);
+		//float GetSDF(const struct aiFace* face, bool smoothed);
+		float* GetSDF(int& size, bool smoothed);
 		void ResetSettings();
 		void ComputeBoundary();
 		void CreateOctree();
 		void SetColors();
-		void GetBoundary(double &siz, double &x, double &y, double &z);
+		void GetBoundary(float &siz, float &x, float &y, float &z);
 		void DrawModel();
 		void ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B);
-		void HLSToRGB(double SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
+		void HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
 		void setDrawMode(int mode);
 		int getDrawMode();
 		int GetTriangleCount();
@@ -55,8 +55,8 @@ namespace ModelController
 
 		// rozmery modelu
 		Vector4		b_stred;				// center of minN - maxN
-		double		b_size;					// size for octree
-		double		b_sf;					// scale factor
-		double		b_max;					// diagonala v octree
+		float		b_size;					// size for octree
+		float		b_sf;					// scale factor
+		float		b_max;					// diagonala v octree
 	};
 }

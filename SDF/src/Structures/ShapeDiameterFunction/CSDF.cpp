@@ -23,7 +23,7 @@ namespace SDFStructures
 	/// fall within one standard deviation from the median of
 	/// all lengths. The weights used are the inverse of the angle
 	/// between the ray to the center of the cone.
-	void CSDF::ComputeValue(const std::vector<double> values, const std::vector<double> inverse_Yangles)
+	void CSDF::ComputeValue(const std::vector<float> values, const std::vector<float> inverse_Yangles)
 	{
 		unsigned int size = values.size();
 		if(size == 0)
@@ -35,11 +35,11 @@ namespace SDFStructures
 			return;
 		}
 
-		double median = CalcMedian(values, size);
-		double deviation = CalcStandardDeviation(values, size);
+		float median = CalcMedian(values, size);
+		float deviation = CalcStandardDeviation(values, size);
 
-		double sum_values = 0.0;
-		double sum_weights = 0.0;
+		float sum_values = 0.0;
+		float sum_weights = 0.0;
 		for(unsigned int i = 0; i < size; i++)
 		{
 			if(abs(values[i] - median) < deviation)
@@ -51,12 +51,12 @@ namespace SDFStructures
 		value = sum_values / sum_weights;
 	}
 
-	double CSDF::CalcMedian(const std::vector<double> values, unsigned int size)
+	float CSDF::CalcMedian(const std::vector<float> values, unsigned int size)
 	{
-		double median = 0.0;
+		float median = 0.0;
 
 		// create a copy of our values
-		std::vector<double> tmp(values);
+		std::vector<float> tmp(values);
 
 		sort(tmp.begin(), tmp.end());
 
@@ -72,25 +72,25 @@ namespace SDFStructures
 		return median;
 	}
 
-	double CSDF::CalcMean(const std::vector<double> values, unsigned int size)
+	float CSDF::CalcMean(const std::vector<float> values, unsigned int size)
 	{
-		double mean = 0.0;
+		float mean = 0.0;
 
 		for(unsigned int i = 0; i < size; i++)
 		{
 			mean += values[i];
 		}
-		return (mean / double(size));
+		return (mean / float(size));
 	}
 
-	double CSDF::CalcStandardDeviation(const std::vector<double> values, unsigned int size)
+	float CSDF::CalcStandardDeviation(const std::vector<float> values, unsigned int size)
 	{
-		double deviation = 0.0;
+		float deviation = 0.0;
 
-		double mean = CalcMean(values, size);
+		float mean = CalcMean(values, size);
 
 		// create a copy of our values
-		std::vector<double> tmp(values);
+		std::vector<float> tmp(values);
 		for(unsigned int i = 0; i < size; i++)
 		{
 			tmp[i] = (tmp[i] - mean) * (tmp[i] - mean);
@@ -100,24 +100,24 @@ namespace SDFStructures
 		return deviation;
 	}
 
-	void CSDF::Normalize1(double min, double max, double alfa)
+	void CSDF::Normalize1(float min, float max, float alfa)
 	{
-		normalized1 = log(((value - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
+		normalized1 = log(((value - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
 	}
 
-	void CSDF::Normalize2(double min, double max, double alfa)
+	void CSDF::Normalize2(float min, float max, float alfa)
 	{
-		normalized2 = log(((smoothed - min) / (max - min)) * alfa + 1.0) / log(alfa + 1.0);
+		normalized2 = log(((smoothed - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
 	}
 
-	void CSDF::Smooth(const std::vector<double> values, const std::vector<double> weights)
+	void CSDF::Smooth(const std::vector<float> values, const std::vector<float> weights)
 	{
 		unsigned int size = values.size();
 		if(size == 0)
 			return;
 
-		double sum_values = 0.0;
-		double sum_weights = 0.0;
+		float sum_values = 0.0;
+		float sum_weights = 0.0;
 		for(unsigned int i = 0; i < size; i++)
 		{
 			sum_values += values[i] * weights[i];

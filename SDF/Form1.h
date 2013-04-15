@@ -620,8 +620,8 @@ namespace SDF {
 	private: System::Void exportToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e)
 	{
 		timer1->Enabled = false;
-		double* values1 = NULL;
-		double* values2 = NULL;
+		float* values1 = NULL;
+		float* values2 = NULL;
 		int size = 0;
 
 		MController->logInfo("Exporting SDF values");

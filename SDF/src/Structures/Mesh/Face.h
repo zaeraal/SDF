@@ -17,7 +17,7 @@ namespace MeshStructures
 
 		void ComputeNormal();
 		void SetColor(int color);
-		void ComputeSDFValue(const std::vector<double> values, const std::vector<double> inverse_Yangles);
+		void ComputeSDFValue(const std::vector<float> values, const std::vector<float> inverse_Yangles);
 		LinkedList<Face>* GetSusedia();
 
 		Vertex*					v[3];

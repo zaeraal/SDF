@@ -115,7 +115,7 @@ namespace ModelController
 		SetColors();
 	}
 
-	/*double CModel::GetSDF(const struct aiFace* face, bool smoothed)
+	/*float CModel::GetSDF(const struct aiFace* face, bool smoothed)
 	{
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
@@ -132,15 +132,15 @@ namespace ModelController
 		return 0;
 	}*/
 
-	double* CModel::GetSDF(int& size, bool smoothed)
+	float* CModel::GetSDF(int& size, bool smoothed)
 	{
 		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
 		size = points->GetSize();
-		double* values = new double[size];
+		float* values = new float[size];
 		for(int i = 0; i < size; i++)
 		{
-			double hodnota = 0;
-			double total = tmp->data->susedia->GetSize();
+			float hodnota = 0;
+			float total = float(tmp->data->susedia->GetSize());
 			LinkedList<void>::Cell<void>* tm = tmp->data->susedia->start;
 			while(tm != NULL)
 			{
@@ -174,8 +174,8 @@ namespace ModelController
 	// vypocita rozmery modelu
 	void CModel::ComputeBoundary()
 	{
-		double minx = 99999.0, miny = 99999.0, minz = 99999.0;
-		double maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
+		float minx = 99999.0, miny = 99999.0, minz = 99999.0;
+		float maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
 
 		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
 		while(tmp != NULL)
@@ -197,10 +197,10 @@ namespace ModelController
 			tmp = tmp->next;
 		}
 
-		b_stred = Vector4((minx+maxx) / 2.0, (miny+maxy) / 2.0, (minz+maxz) / 2.0);
-		double sizex = 0;
-		double sizey = 0;
-		double sizez = 0;
+		b_stred = Vector4((minx+maxx) / 2.0f, (miny+maxy) / 2.0f, (minz+maxz) / 2.0f);
+		float sizex = 0;
+		float sizey = 0;
+		float sizez = 0;
 
 		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
 			sizex = abs(minx+maxx);
@@ -218,9 +218,9 @@ namespace ModelController
 			sizez = abs(minz-maxz);
 		b_size = max(max(sizex, sizey), sizez);
 
-		b_sf = b_size / 10.0;											// 1 / 10 velkosti modelu budu tie vektory
-		b_max = sqrt(3.0) * b_size;										// diagonala kocky
-		b_size = b_size / 2.0;
+		b_sf = b_size / 10.0f;											// 1 / 10 velkosti modelu budu tie vektory
+		b_max = sqrt(3.0f) * b_size;									// diagonala kocky
+		b_size = b_size / 2.0f;
 
 		SDF_control = new CSDFController(b_max, Assimp);
 	}
@@ -271,7 +271,7 @@ namespace ModelController
 	}
 
 	// pre spravne vycentrovanie pohladu ked sa nacita CModel
-	void CModel::GetBoundary(double &siz, double &x, double &y, double &z)
+	void CModel::GetBoundary(float &siz, float &x, float &y, float &z)
 	{
 		siz = b_size;
 		x = b_stred.X;
@@ -391,8 +391,8 @@ namespace ModelController
 			glBegin(GL_LINES);
 				for(int i = 0; i < 30; i++)
 				{
-					double rndy = rand()%int(120 / 2);
-					double rndx = rand()%(360);
+					float rndy = rand()%int(120 / 2);
+					float rndx = rand()%(360);
 					if(rndy == 180.0)
 						rndy = 179.5;
 					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
@@ -406,10 +406,10 @@ namespace ModelController
 			glEnd();*/
 
 			Vector4 Center = selected->center;// - (normal * b_max);
-			double o_size = 0.0;
-			double o_X = 0.0;
-			double o_Y = 0.0;
-			double o_Z = 0.0;
+			float o_size = 0.0;
+			float o_X = 0.0;
+			float o_Y = 0.0;
+			float o_Z = 0.0;
 			m_root->GetBoundary(o_size, o_X, o_Y, o_Z);
 
 			// fixes for rays with negative direction
@@ -429,25 +429,25 @@ namespace ModelController
 				normal.Z = - normal.Z;
 			}*/
 
-			double divx = 1 / normal.X; // IEEE stability fix
-			double divy = 1 / normal.Y;
-			double divz = 1 / normal.Z;
+			float divx = 1 / normal.X; // IEEE stability fix
+			float divy = 1 / normal.Y;
+			float divz = 1 / normal.Z;
 
-			double tx0 = ((o_X - o_size) - Center.X) * divx;
-			double tx1 = ((o_X + o_size) - Center.X) * divx;
-			double ty0 = ((o_Y - o_size) - Center.Y) * divy;
-			double ty1 = ((o_Y + o_size) - Center.Y) * divy;
-			double tz0 = ((o_Z - o_size) - Center.Z) * divz;
-			double tz1 = ((o_Z + o_size) - Center.Z) * divz;
+			float tx0 = ((o_X - o_size) - Center.X) * divx;
+			float tx1 = ((o_X + o_size) - Center.X) * divx;
+			float ty0 = ((o_Y - o_size) - Center.Y) * divy;
+			float ty1 = ((o_Y + o_size) - Center.Y) * divy;
+			float tz0 = ((o_Z - o_size) - Center.Z) * divz;
+			float tz1 = ((o_Z + o_size) - Center.Z) * divz;
 
-			/*double tx0 = -Center.X * divx;
-			double tx1 = (o_size - Center.X) * divx;
+			/*float tx0 = -Center.X * divx;
+			float tx1 = (o_size - Center.X) * divx;
  
-			double ty0 = -Center.Y * divy;
-			double ty1 = (o_size - Center.Y) * divy;
+			float ty0 = -Center.Y * divy;
+			float ty1 = (o_size - Center.Y) * divy;
 
-			double tz0 = -Center.Z * divz;
-			double tz1 = (o_size - Center.Z) * divz;*/
+			float tz0 = -Center.Z * divz;
+			float tz1 = (o_size - Center.Z) * divz;*/
 
 			if (normal.X == 0.0f)
 			{
@@ -507,7 +507,7 @@ namespace ModelController
 		else G = g;
 	}
 
-	void CModel::HLSToRGB(double SDF_value, GLubyte &R, GLubyte &G, GLubyte &B)
+	void CModel::HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B)
 	{
 		//#pragma comment( lib, "shlwapi.lib" )  // needed for the ColorHLSToRGB() function
 		

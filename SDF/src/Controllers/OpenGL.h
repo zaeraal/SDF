@@ -29,10 +29,10 @@ namespace OpenGLForm
 		GLfloat c_Zoom;
 		GLfloat c_h, c_w;
 		CModel* control;					// pre logovanie a nacitanie modelu
-		void GetSphereCoordinates(double &xx, double &yy);
+		void GetSphereCoordinates(float &xx, float &yy);
 		void ZoomAndRotate();
 		void SetLastMouse(int x, int y);
-		void SetRotation(double x, double y);
+		void SetRotation(float x, float y);
 	protected:
 		~COpenGL(System::Void);
 		GLint MySetPixelFormat(HDC hdc);

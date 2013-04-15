@@ -3,7 +3,7 @@
 #include "SDFController.h"
 #include "MathHelper.h"
 
-#define DOUBLE_MAX  99999.0
+#define FLOAT_MAX  99999.0
 #define FLD_NODE 0
 #define BLD_NODE 1
 #define FLT_NODE 2
@@ -16,7 +16,7 @@
 namespace SDFController
 {
 	// konstruktor
-	CSDFController::CSDFController(double dia, CAssimp* logg)
+	CSDFController::CSDFController(float dia, CAssimp* logg)
 	{
 		diagonal = dia;
 		loggger = logg;
@@ -32,11 +32,11 @@ namespace SDFController
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
 	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root)
 	{
-		double min = DOUBLE_MAX;
-		double max = 0.0;
+		float min = FLOAT_MAX;
+		float max = 0.0;
 		srand (2013);					// initial seed for random number generator
-		double n_rays = 30.0;
-		double angle = 120.0;
+		float n_rays = 30.0;
+		float angle = 120.0;
 		int counter = 0;
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
@@ -46,19 +46,20 @@ namespace SDFController
 			ComputeTNB(tmp->data, tangens, normal, binormal);
 			Mat4 t_mat= Mat4(tangens, normal, binormal);
 
-			std::vector<double> rays;
-			std::vector<double> weights;
+			std::vector<float> rays;
+			std::vector<float> weights;
 			for(int i = 0; i < n_rays; i++)
 			{
-				double rndy = rand()%int(angle / 2);
-				double rndx = rand()%(360);
+				// todo :: presun hore?
+				float rndy = float(rand()%int(angle / 2));
+				float rndx = float(rand()%(360));
 				if(rndy == 0.0)
 					rndy = 0.5;
 
 				Vector4 ray = CalcRayFromAngle(rndx, rndy) * t_mat;
 				ray.Normalize();
 
-				double dist = DOUBLE_MAX;
+				float dist = FLOAT_MAX;
 				LinkedList<Face>* tmpp = GetFaceList(triangles, root, tmp->data->center, ray);
 				LinkedList<Face>::Cell<Face>* tmp2 = tmpp->start;
 				while(tmp2 != NULL)
@@ -69,24 +70,24 @@ namespace SDFController
 						continue;
 					}
 
-					double dist2 = DOUBLE_MAX;
+					float dist2 = FLOAT_MAX;
 					bool intersected = rayIntersectsTriangle(tmp->data->center, ray, tmp2->data->v[0]->P, tmp2->data->v[1]->P, tmp2->data->v[2]->P, dist2);
 					if(intersected == true)
 					{
-						double theta = acos( (ray * (tmp->data->normal * (-1))) / (ray.Length() * tmp->data->normal.Length()) );
-						theta = theta * (180.0 / M_PI);
+						float theta = acos( (ray * (tmp->data->normal * (-1))) / (ray.Length() * tmp->data->normal.Length()) );
+						theta = theta * float(180.0 / M_PI);
 						//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
-						if((theta < 90.0) && (dist2 < dist))
+						if((theta < 90.0f) && (dist2 < dist))
 							dist = dist2;
 					}
 
 					tmp2 = tmp2->next;
 				}
-				if(dist < (DOUBLE_MAX - 1.0))
+				if(dist < (FLOAT_MAX - 1.0f))
 				{
 					//loggger->logInfo(MarshalString("pridany ray s dlzkou: " + dist));
 					rays.push_back(dist);
-					weights.push_back(180.0 - rndy);
+					weights.push_back(180.0f - rndy);
 				}
 				if(root != NULL)
 					delete tmpp;						// generated list
@@ -104,8 +105,8 @@ namespace SDFController
 		}
 		// postprocessing - smoothing and normalization
 		int kernel_size = 2;
-		//double kernel[] = {1.0,4.0,6.0,4.0,1.0};
-		double* kernel = ComputeGaussianKernel(kernel_size);
+		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		float* kernel = ComputeGaussianKernel(kernel_size);
 		tmp = triangles->start;
 		while(tmp != NULL)
 		{
@@ -123,26 +124,26 @@ namespace SDFController
 	}
 
 	// vypocitaj normalizovany 1D kernel pre gaussian
-	double* CSDFController::ComputeGaussianKernel(int radius)
+	float* CSDFController::ComputeGaussianKernel(int radius)
 	{
-		double* matrix = new double [radius*2+1];
-		double sigma = (double)radius/2.0;
-		double norm = 1.0 / (sqrt(2*M_PI) * sigma);
-		double coeff = 2*sigma*sigma;
-		double total=0;
+		float* matrix = new float [radius*2+1];
+		float sigma = (float)radius/2.0f;
+		float norm = 1.0f / float(sqrt(2*M_PI) * sigma);
+		float coeff = 2*sigma*sigma;
+		float total=0;
 		for(int x = -radius; x <= radius; x++)
 		{
-			double g = norm * exp( (-x*x)/coeff );
+			float g = norm * exp( (-x*x)/coeff );
 			matrix[x+radius] = g;
 			total+=g;
 		}
 		for(int x=0; x<=2*radius; x++)
-			matrix[x]=(matrix[x]/total) * 1000.0;
+			matrix[x]=(matrix[x]/total) * 1000.0f;
 
 		return matrix;
 	}
 
-	void CSDFController::Smooth(Face* tmp, double* kernel, int kernel_size)
+	void CSDFController::Smooth(Face* tmp, float* kernel, int kernel_size)
 	{
 		LinkedList<Face>** sus = new LinkedList<Face>*[kernel_size + 1];
 		sus[0] = new LinkedList<Face>(tmp);
@@ -177,15 +178,15 @@ namespace SDFController
 				tm = tm->next;
 			}
 		}
-		std::vector<double> _values;
-		std::vector<double> _weights;
+		std::vector<float> _values;
+		std::vector<float> _weights;
 
 		for(int i=0; i <= kernel_size; i++)
 		{
 			int _size = sus[i]->GetSize();
 			if(_size != 0)
 			{
-				double _weight = kernel[kernel_size + i];// / (double)_size;
+				float _weight = kernel[kernel_size + i];// / (float)_size;
 				LinkedList<Face>::Cell<Face>* tc = sus[i]->start;
 				while(tc != NULL)
 				{
@@ -241,7 +242,7 @@ namespace SDFController
 		binor.Normalize();
 	}
 
-	int CSDFController::first_node(double tx0, double ty0, double tz0, double txm, double tym, double tzm)
+	int CSDFController::first_node(float tx0, float ty0, float tz0, float txm, float tym, float tzm)
 	{
 		unsigned char answer = 0;   // initialize to 00000000
 		// select the entry plane and set bits
@@ -268,7 +269,7 @@ namespace SDFController
 		return (int) answer;
 	}
 
-	int CSDFController::new_node(double txm, int x, double tym, int y, double tzm, int z)
+	int CSDFController::new_node(float txm, int x, float tym, int y, float tzm, int z)
 	{
 		if(txm < tym)
 		{
@@ -281,9 +282,9 @@ namespace SDFController
 		return z;							// XY plane;
 	}
 
-	void CSDFController::proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees)
+	void CSDFController::proc_subtree (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
-		double txm, tym, tzm;
+		float txm, tym, tzm;
 		int currNode;
 
 		if((tx1 < 0.0) || (ty1 < 0.0) || (tz1 < 0.0)) return;
@@ -295,9 +296,9 @@ namespace SDFController
 			return;
 		}
 		
-		txm = 0.5*(tx0 + tx1);
-		tym = 0.5*(ty0 + ty1);
-		tzm = 0.5*(tz0 + tz1);
+		txm = 0.5f*(tx0 + tx1);
+		tym = 0.5f*(ty0 + ty1);
+		tzm = 0.5f*(tz0 + tz1);
 		currNode = first_node(tx0,ty0,tz0,txm,tym,tzm);
 		do{
 			switch (currNode)
@@ -341,27 +342,27 @@ namespace SDFController
 	void CSDFController::ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees)
 	{
 		a = 0;
-		double o_size = 0.0;
-		double o_X = 0.0;
-		double o_Y = 0.0;
-		double o_Z = 0.0;
+		float o_size = 0.0;
+		float o_X = 0.0;
+		float o_Y = 0.0;
+		float o_Z = 0.0;
 		octree->GetBoundary(o_size, o_X, o_Y, o_Z);
-		double to_size = o_size * 2.0;
+		float to_size = o_size * 2.0f;
 
 		// avoid division by zero
-		double Bias = 0.0001;
+		float Bias = 0.0001f;
 		if (fabs(ray.X) < Bias) ray.X = ray.X < 0.0 ? -Bias : Bias;
 		if (fabs(ray.Y) < Bias) ray.Y = ray.Y < 0.0 ? -Bias : Bias;
 		if (fabs(ray.Z) < Bias) ray.Z = ray.Z < 0.0 ? -Bias : Bias;
 
-		double invdirx = 1.0 / fabs(ray.X);
-		double invdiry = 1.0 / fabs(ray.Y);
-		double invdirz = 1.0 / fabs(ray.Z);
+		float invdirx = 1.0f / fabs(ray.X);
+		float invdiry = 1.0f / fabs(ray.Y);
+		float invdirz = 1.0f / fabs(ray.Z);
 
 		// TODO: pridat do octree a nie sem
 		Vector4 o_min = Vector4(o_X - o_size, o_Y - o_size, o_Z - o_size, 1.0);
 		Vector4 o_max = Vector4(o_X + o_size, o_Y + o_size, o_Z + o_size, 1.0);
-		double tx0 ,tx1, ty0, ty1, tz0, tz1;
+		float tx0 ,tx1, ty0, ty1, tz0, tz1;
 
 		// fixes for rays with negative direction
 		if(ray.X < 0.0)
@@ -398,12 +399,12 @@ namespace SDFController
 			tz1 = (o_max.Z - Center.Z) * invdirz;
 		}
 
-		/*double tx0 = (o_min.X - Center.X) * invdirx;
-		double tx1 = (o_max.X - Center.X) * invdirx;
-		double ty0 = (o_min.Y - Center.Y) * invdiry;
-		double ty1 = (o_max.Y - Center.Y) * invdiry;
-		double tz0 = (o_min.Z - Center.Z) * invdirz;
-		double tz1 = (o_max.Z - Center.Z) * invdirz;*/
+		/*float tx0 = (o_min.X - Center.X) * invdirx;
+		float tx1 = (o_max.X - Center.X) * invdirx;
+		float ty0 = (o_min.Y - Center.Y) * invdiry;
+		float ty1 = (o_max.Y - Center.Y) * invdiry;
+		float tz0 = (o_min.Z - Center.Z) * invdirz;
+		float tz1 = (o_max.Z - Center.Z) * invdirz;*/
 
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 
@@ -413,14 +414,14 @@ namespace SDFController
 
 	struct ActualState
 	{
-		double tx0;
-		double tx1;
-		double ty0;
-		double ty1;
-		double tz0;
-		double tz1;
+		float tx0;
+		float tx1;
+		float ty0;
+		float ty1;
+		float tz0;
+		float tz1;
 	};
-	void CSDFController::proc_subtree2 (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Octree* node, LinkedList<Octree>* octrees)
+	void CSDFController::proc_subtree2 (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
 		if((tx1 < 0.0) || (ty1 < 0.0) || (tz1 < 0.0)) return;
 
@@ -432,7 +433,7 @@ namespace SDFController
 		}
 
 		int currNode = 0;
-		double txm, tym, tzm;
+		float txm, tym, tzm;
 	
 		ActualState state;
 		ActualState newState;

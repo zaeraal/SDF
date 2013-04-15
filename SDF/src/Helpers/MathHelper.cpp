@@ -3,20 +3,20 @@
 #include "MathHelper.h"
 
 // get radians from degrees
-void GetRadians(double& AngleX, double& Angley)
+void GetRadians(float& AngleX, float& Angley)
 {
-	AngleX = AngleX * (M_PI / 180.0);
-	Angley = Angley * (M_PI / 180.0);
+	AngleX = AngleX * float(M_PI / 180.0);
+	Angley = Angley * float(M_PI / 180.0);
 }
 
 //get degrees from radians
-void GetDegrees(double& AngleX, double& Angley)
+void GetDegrees(float& AngleX, float& Angley)
 {
-	AngleX = AngleX * (180.0 / M_PI);
-	Angley = Angley * (180.0 / M_PI);
+	AngleX = AngleX * float(180.0 / M_PI);
+	Angley = Angley * float(180.0 / M_PI);
 }
 
-Vector4 CalcRayFromAngle(double AngleX, double Angley)
+Vector4 CalcRayFromAngle(float AngleX, float Angley)
 {
 	Vector4 result;
 	GetRadians(AngleX, Angley);
@@ -26,20 +26,20 @@ Vector4 CalcRayFromAngle(double AngleX, double Angley)
 	return result;
 }
 
-void CalcAnglesFromRay(Vector4 ray, double& AngleX, double& Angley)
+void CalcAnglesFromRay(Vector4 ray, float& AngleX, float& Angley)
 {
-	double r = sqrt(ray.X*ray.X + ray.Y*ray.Y + ray.Z*ray.Z);
+	float r = sqrt(ray.X*ray.X + ray.Y*ray.Y + ray.Z*ray.Z);
 	AngleX = atan2(ray.Z, ray.X);
 	Angley = acos(ray.Y / r);
 }
 
 // prienik luca a trojuholnika
 // p - zdroj luca, d - smer luca, v0,v1,v2 - body trojuholniku
-bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, double& t)
+bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, float& t)
 {
 	Vector4 e1 = v1 - v0;
 	Vector4 e2 = v2 - v0;
-	double a,f,u,v;
+	float a,f,u,v;
 
 	Vector4 h = d % e2;
 	a = e1 * h;
@@ -47,7 +47,7 @@ bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4
 	if (a > -0.00001 && a < 0.00001)
 		return false;
 
-	f = 1.0 / a;
+	f = 1.0f / a;
 	Vector4 s = p - v0;
 	u = f * (s*h);
 
@@ -72,7 +72,7 @@ bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4
 		 return false;
 }
 
-void FINDMINMAX(double X, double Y, double Z, double& min, double& max)
+void FINDMINMAX(float X, float Y, float Z, float& min, float& max)
 {
 	min = max = X;   
 
@@ -84,7 +84,7 @@ void FINDMINMAX(double X, double Y, double Z, double& min, double& max)
 }
 
 // extra pomocna funkcia
-void getVMinVMax(double normal, double maxbox, double v, double& vmin, double& vmax)
+void getVMinVMax(float normal, float maxbox, float v, float& vmin, float& vmax)
 {
 	if(normal>0.0f)
 	{
@@ -98,10 +98,10 @@ void getVMinVMax(double normal, double maxbox, double v, double& vmin, double& v
 	}
 }
 
-bool planeBoxOverlap(Vector4 normal, Vector4 vert, double maxbox)
+bool planeBoxOverlap(Vector4 normal, Vector4 vert, float maxbox)
 {
 	Vector4 vmin,vmax;
-	double _vmin = 0,_vmax = 0;
+	float _vmin = 0,_vmax = 0;
 
 	getVMinVMax(normal.X, maxbox, vert.X, _vmin, _vmax); vmin.X = _vmin; vmax.X = _vmax;
 	getVMinVMax(normal.Y, maxbox, vert.Y, _vmin, _vmax); vmin.Y = _vmin; vmax.Y = _vmax;
@@ -112,17 +112,17 @@ bool planeBoxOverlap(Vector4 normal, Vector4 vert, double maxbox)
 	return 0;
 }
 
-bool AXISTEST(double a, double b, double fa, double fb, double boxhalfsize, double k1, double k2, double l1, double l2)
+bool AXISTEST(float a, float b, float fa, float fb, float boxhalfsize, float k1, float k2, float l1, float l2)
 {
-	double min = 0;
-	double max = 0;
-	double p0 = a*k1 - b*k2;
-	double p2 = a*l1 - b*l2;
+	float min = 0;
+	float max = 0;
+	float p0 = a*k1 - b*k2;
+	float p2 = a*l1 - b*l2;
 
     if(p0<p2) {min=p0; max=p2;}
 	else {min=p2; max=p0;}
 
-	double rad = fa * boxhalfsize + fb * boxhalfsize;
+	float rad = fa * boxhalfsize + fb * boxhalfsize;
 	if(min>rad || max<-rad)
 		return 0;
 
@@ -130,7 +130,7 @@ bool AXISTEST(double a, double b, double fa, double fb, double boxhalfsize, doub
 }
 
 // main function for triangle box overlaping
-bool triBoxOverlap(Vector4 boxcenter, double boxhalfsize, Vector4 p0, Vector4 p1, Vector4 p2)
+bool triBoxOverlap(Vector4 boxcenter, float boxhalfsize, Vector4 p0, Vector4 p1, Vector4 p2)
 {
   /*    use separating axis theorem to test overlap between triangle and box */
   /*    need to test for overlap in these directions: */
@@ -143,7 +143,7 @@ bool triBoxOverlap(Vector4 boxcenter, double boxhalfsize, Vector4 p0, Vector4 p1
    Vector4 v0,v1,v2;
    Vector4 e0,e1,e2;
    Vector4 normal;
-   double min,max,fex,fey,fez;
+   float min,max,fex,fey,fez;
 
    /* This is the fastest branch on Sun */
    /* move everything so that the boxcenter is in (0,0,0) */

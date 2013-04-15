@@ -5,7 +5,7 @@
 namespace MeshStructures
 {
 	// konstruktor
-	Vertex::Vertex(double x, double y, double z)
+	Vertex::Vertex(float x, float y, float z)
 	{
 		P.Init(x, y, z, 1.0);
 		susedia = new LinkedList<void>();

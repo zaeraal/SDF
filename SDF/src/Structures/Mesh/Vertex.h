@@ -11,7 +11,7 @@ namespace MeshStructures
 	public class Vertex
 	{
 	public:
-		Vertex(double x, double y, double z);
+		Vertex(float x, float y, float z);
 		Vertex(Vector4 position);
 		~Vertex();
 

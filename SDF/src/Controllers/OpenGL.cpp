@@ -72,7 +72,7 @@ namespace OpenGLForm
 			// ak taha pravym tlacitkom
 			if(m.WParam.ToInt32() & MK_RBUTTON)
 			{
-				SetRotation(c_w-(360.0/(double)Width)*(double)(tmpx-Last_X), c_h-(180.0/(double)Height)*(double)(tmpy-Last_Y));
+				SetRotation(c_w-(360.0f/(float)Width)*(float)(tmpx-Last_X), c_h-(180.0f/(float)Height)*(float)(tmpy-Last_Y));
 			}
 			SetLastMouse(tmpx, tmpy);
 				 
@@ -131,23 +131,23 @@ namespace OpenGLForm
 			glRotatef(90,-1.0f,0.0f,0.0f);
 
 			// debug kod ak chcem sledovat vektor
-			/*double x = 1.0;
-			double y = -1.0;
-			double z = 0.5;
+			/*float x = 1.0;
+			float y = -1.0;
+			float z = 0.5;
 
-			double r = sqrt(x*x + y*y + z*z);
-			double wx = atan2(z, x);
-			double wy = acos(y / r);
+			float r = sqrt(x*x + y*y + z*z);
+			float wx = atan2(z, x);
+			float wy = acos(y / r);
 
-			double CameraX = wx * (180.0/M_PI);
-			double CameraY = wy * (180.0/M_PI);;
+			float CameraX = wx * (180.0/M_PI);
+			float CameraY = wy * (180.0/M_PI);;
 
 			// uhol na radian
 			GetSphereCoordinates(CameraX, CameraY);
 
-			GLdouble X = sin(CameraY) * sin(CameraX);
-			GLdouble Y = cos(CameraY);
-			GLdouble Z = sin(CameraY) * cos(CameraX);
+			GLfloat X = sin(CameraY) * sin(CameraX);
+			GLfloat Y = cos(CameraY);
+			GLfloat Z = sin(CameraY) * cos(CameraX);
 
 			// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 			gluLookAt (X, Y, Z, 0, 0, 0, 0.0, 1.0, 0.0);*/
@@ -166,10 +166,10 @@ namespace OpenGLForm
 	// nacitaj si suradnice objektu
 	void COpenGL::ReloadBoundary()
 	{
-		double rad = 0.0;
-		double xx = 0.0;
-		double yy = 0.0;
-		double zz = 0.0;
+		float rad = 0.0f;
+		float xx = 0.0f;
+		float yy = 0.0f;
+		float zz = 0.0f;
 		control->GetBoundary(rad, xx, yy, zz);
 		radius = (GLfloat)rad;
 		c_X = (GLfloat)xx;
@@ -183,10 +183,10 @@ namespace OpenGLForm
 	}
 
 	// Prerobi uhle na radiany
-	void COpenGL::GetSphereCoordinates(double &x, double &y)
+	void COpenGL::GetSphereCoordinates(float &x, float &y)
 	{
-		x = x * (M_PI / 180.0f);
-		y = y * (M_PI / 180.0f);
+		x = x * float(M_PI / 180.0f);
+		y = y * float(M_PI / 180.0f);
 	}
 
 	// otoci ma smerom kde vykreslujem tu panoramu
@@ -201,16 +201,16 @@ namespace OpenGLForm
 		glLoadIdentity();
 
 		// rotacia Z, Y, X
-		double CameraX = c_w;					// je to (0) - (360)
-		double CameraY = c_h;					// je to (0) - (180)
+		float CameraX = c_w;					// je to (0) - (360)
+		float CameraY = c_h;					// je to (0) - (180)
 		//control->logDebug(str_format("X: %f, Y: %f", CameraFi, CameraTheta));			// vypis na overenie pokial treba
 
 		// uhol na radian
 		GetSphereCoordinates(CameraX, CameraY);
 
-		GLdouble X = c_X + sin(CameraY) * sin(CameraX) * radius * 5.0f;
-        GLdouble Y = c_Y + cos(CameraY) * radius * 5.0f;
-        GLdouble Z = c_Z + sin(CameraY) * cos(CameraX) *radius * 5.0f;
+		GLfloat X = c_X + sin(CameraY) * sin(CameraX) * radius * 5.0f;
+        GLfloat Y = c_Y + cos(CameraY) * radius * 5.0f;
+        GLfloat Z = c_Z + sin(CameraY) * cos(CameraX) *radius * 5.0f;
 
 		// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 1.0, 0.0);
@@ -227,7 +227,7 @@ namespace OpenGLForm
 	}
 
 	// nastav spravnu rotaciu
-	void COpenGL::SetRotation(double x, double y)
+	void COpenGL::SetRotation(float x, float y)
 	{
 		if(x > 360.0f) x -= 360.0f;
 		if(x < 0.0f) x += 360.0f;

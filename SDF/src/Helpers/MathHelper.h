@@ -4,13 +4,13 @@
 
 using namespace MathStructures;
 
-void GetRadians(double& AngleX, double& Angley);
-void GetDegrees(double& AngleX, double& Angley);
+void GetRadians(float& AngleX, float& Angley);
+void GetDegrees(float& AngleX, float& Angley);
 
-Vector4 CalcRayFromAngle(double AngleX, double Angley);
-void CalcAnglesFromRay(Vector4 ray, double& AngleX, double& Angley);
+Vector4 CalcRayFromAngle(float AngleX, float Angley);
+void CalcAnglesFromRay(Vector4 ray, float& AngleX, float& Angley);
 
-bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, double& t);
+bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, float& t);
 
 /********************************************************/
 /* AABB-triangle overlap test code                      */
@@ -25,8 +25,8 @@ bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4
 /* suggestions and discussions on how to optimize code. */
 /* Thanks to David Hunt for finding a ">="-bug!         */
 /********************************************************/
-void FINDMINMAX(double X, double Y, double Z, double& min, double& max);
-void getVMinVMax(double normal, double maxbox, double& vmin, double& vmax);
-bool planeBoxOverlap(Vector4 normal, Vector4 vert, double maxbox);
-bool AXISTEST(double a, double b, double fa, double fb, double boxhalfsize, double k1, double k2, double l1, double l2);
-bool triBoxOverlap(Vector4 boxcenter, double boxhalfsize, Vector4 p1, Vector4 p2, Vector4 p3);
+void FINDMINMAX(float X, float Y, float Z, float& min, float& max);
+void getVMinVMax(float normal, float maxbox, float& vmin, float& vmax);
+bool planeBoxOverlap(Vector4 normal, Vector4 vert, float maxbox);
+bool AXISTEST(float a, float b, float fa, float fb, float boxhalfsize, float k1, float k2, float l1, float l2);
+bool triBoxOverlap(Vector4 boxcenter, float boxhalfsize, Vector4 p1, Vector4 p2, Vector4 p3);

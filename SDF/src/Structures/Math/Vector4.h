@@ -7,15 +7,15 @@ namespace MathStructures
     struct Vector4
     {
 		public:
-        double X;
-        double Y;
-        double Z;
-        double W;
+        float X;
+        float Y;
+        float Z;
+        float W;
 
 		Vector4 (): X(0), Y(0), Z(0), W(0) {}
-		Vector4 (double x, double y, double z, double w = 0) { Init(x,y,z,w); }
+		Vector4 (float x, float y, float z, float w = 0) { Init(x,y,z,w); }
 
-		void Init (double x, double y, double z, double w = 0)
+		void Init (float x, float y, float z, float w = 0)
 		{
 			X = x;
 			Y = y;
@@ -23,11 +23,11 @@ namespace MathStructures
 			W = w;
 		}
 
-        double Length () { return sqrt(X * X + Y * Y + Z * Z); }
+        float Length () { return sqrt(X * X + Y * Y + Z * Z); }
 
 		void Normalize ()
 		{
-			double length = Length();
+			float length = Length();
 			X = X/length;
 			Y = Y/length;
 			Z = Z/length;
@@ -60,7 +60,7 @@ namespace MathStructures
 	}
 
 	// multplication of vector and number
-	inline Vector4 operator*(const Vector4& lhs, const double& rhs)
+	inline Vector4 operator*(const Vector4& lhs, const float& rhs)
 	{
 		Vector4 result;
 		result.X = lhs.X * rhs;
@@ -70,13 +70,13 @@ namespace MathStructures
 		return result;
 	}
 	// multplication of number and vector
-	inline Vector4 operator*(const double& lhs, const Vector4& rhs)
+	inline Vector4 operator*(const float& lhs, const Vector4& rhs)
 	{
 		return rhs*lhs;
 	}
 
 	// division of vector and number
-	inline Vector4 operator/(const Vector4& lhs, const double& rhs)
+	inline Vector4 operator/(const Vector4& lhs, const float& rhs)
 	{
 		Vector4 result;
 		result.X = lhs.X / rhs;
@@ -87,7 +87,7 @@ namespace MathStructures
 	}
 
 	// Dot Product
-	inline double operator*(const Vector4& lhs, const Vector4& rhs)
+	inline float operator*(const Vector4& lhs, const Vector4& rhs)
 	{
 		return ( lhs.X * rhs.X + lhs.Y * rhs.Y + lhs.Z * rhs.Z + lhs.W * rhs.W );
 	}
