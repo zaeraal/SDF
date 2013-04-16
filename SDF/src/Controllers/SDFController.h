@@ -31,5 +31,7 @@ namespace SDFController
 		CAssimp* loggger;
 		LinkedList<Face>* fc_list;			// prealokovany list facov
 		LinkedList<Octree>* oc_list;		// prealokovany list octree
+		int kernel_size;					// velkost gaussianu pri vyhladeni
+		LinkedList<Face>** gauss_sus;
 	};
 }

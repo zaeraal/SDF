@@ -7,7 +7,7 @@ namespace MeshStructures
 	using namespace std;
 	using namespace GenericStructures;
 
-	const int max_depth = 8;
+	const int max_depth = 11;
 	const int min_count = 2;
 
 	public class Octree
@@ -17,7 +17,7 @@ namespace MeshStructures
 		~Octree();
 
 		void Build(Face** tria, unsigned int length);
-		int GetCode(const Vector4 pt);
+		byte GetCode(const Vector4 pt);
 		bool isLeaf;
 		void GetBoundary(float &siz, float &x, float &y, float &z);
 		void DrawOctree(bool recursive);
@@ -28,7 +28,7 @@ namespace MeshStructures
 		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je min_count
 	private:
 		int depth;							// ako hlboko sme v octree, max je max_depth
-		float size;						// hranica kocky
+		float size;							// hranica kocky
 		Vector4 origin;						// stred kocky
 	};
 }

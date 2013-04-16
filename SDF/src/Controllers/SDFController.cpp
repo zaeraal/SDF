@@ -24,6 +24,14 @@ namespace SDFController
 		fc_list->Preallocate(100);
 		oc_list = new LinkedList<Octree>();
 		oc_list->Preallocate(100);
+		kernel_size = 2;
+		gauss_sus = new LinkedList<Face>*[kernel_size + 1];
+		// preallocate smoothing arrays
+		for(int i=0; i <= kernel_size; i++)				// bacha na posunutie
+		{
+			gauss_sus[i] = new LinkedList<Face>();
+			gauss_sus[i]->Preallocate(10^i);
+		}
 		//loggger->logInfo(MarshalString("diagonal: " + diagonal));
 	}
 
@@ -32,6 +40,12 @@ namespace SDFController
 	{
 		delete fc_list;
 		delete oc_list;
+
+		for(int i=0; i <= kernel_size; i++)
+		{
+			delete gauss_sus[i];
+		}
+		delete [] gauss_sus;
 	}
 		
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
@@ -137,7 +151,6 @@ namespace SDFController
 
 		time_t timer2 = time(NULL);
 		// postprocessing - smoothing and normalization
-		int kernel_size = 2;
 		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
 		float* kernel = ComputeGaussianKernel(kernel_size);
 		current_face = triangles->start;
@@ -183,12 +196,11 @@ namespace SDFController
 
 	void CSDFController::Smooth(Face* tmp, float* kernel, int kernel_size)
 	{
-		LinkedList<Face>** sus = new LinkedList<Face>*[kernel_size + 1];
-		sus[0] = new LinkedList<Face>(tmp);
+		gauss_sus[0]->InsertToEnd(tmp);
 		for(int i=1; i <= kernel_size; i++)				// bacha na posunutie
 		{
-			sus[i] = new LinkedList<Face>();
-			LinkedList<Face>::Cell<Face>* tm = sus[i-1]->start;
+			//gauss_sus[i] = new LinkedList<Face>();
+			LinkedList<Face>::Cell<Face>* tm = gauss_sus[i-1]->start;
 			while(tm != NULL)
 			{
 				LinkedList<Face>* t = tm->data->GetSusedia();
@@ -198,7 +210,7 @@ namespace SDFController
 					bool pokracuj = false;
 					for(int j = 0; j <= i; j++)
 					{
-						if(sus[j]->Contains(tc->data))
+						if(gauss_sus[j]->Contains(tc->data))
 						{
 							pokracuj = true;
 							break;
@@ -209,10 +221,10 @@ namespace SDFController
 						tc = tc->next;
 						continue;
 					}
-					sus[i]->InsertToEnd(tc->data);
+					gauss_sus[i]->InsertToEnd(tc->data);
 					tc = tc->next;
 				}
-				delete t;
+				//delete t;
 				tm = tm->next;
 			}
 		}
@@ -221,11 +233,11 @@ namespace SDFController
 
 		for(int i=0; i <= kernel_size; i++)
 		{
-			int _size = sus[i]->GetSize();
+			int _size = gauss_sus[i]->GetSize();
 			if(_size != 0)
 			{
 				float _weight = kernel[kernel_size + i];// / (float)_size;
-				LinkedList<Face>::Cell<Face>* tc = sus[i]->start;
+				LinkedList<Face>::Cell<Face>* tc = gauss_sus[i]->start;
 				while(tc != NULL)
 				{
 					_values.push_back(tc->data->diameter->value);
@@ -233,9 +245,9 @@ namespace SDFController
 					tc = tc->next;
 				}
 			}
-			delete sus[i];
+			gauss_sus[i]->Clear();
 		}
-		delete [] sus;
+		//delete [] gauss_sus;
 
 		tmp->diameter->Smooth(_values, _weights);
 	}

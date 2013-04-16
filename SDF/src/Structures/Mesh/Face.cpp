@@ -49,17 +49,21 @@ namespace MeshStructures
 
 	LinkedList<Face>* Face::GetSusedia()
 	{
-		LinkedList<Face>* result = new LinkedList<Face>();
+		return susedia;
+	}
+	void Face::ComputeSusedov()
+	{
+		susedia = new LinkedList<Face>();
 		for(int i = 0; i < 3; i++)
 		{
 			LinkedList<void>::Cell<void>* tmp = v[i]->susedia->start;
 			while(tmp != NULL)
 			{
-				if(!result->Contains((Face*)tmp->data))
-					result->InsertToEnd((Face*)tmp->data);
+				if(!susedia->Contains((Face*)tmp->data))
+					susedia->InsertToEnd((Face*)tmp->data);
 				tmp = tmp->next;
 			}
 		}
-		return result;
+		//return result;
 	}
 }

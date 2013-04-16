@@ -30,6 +30,7 @@ namespace ModelController
 		void ComputeBoundary();
 		void CreateOctree();
 		void SetColors();
+		void ComputeSusedov();
 		void GetBoundary(float &siz, float &x, float &y, float &z);
 		void DrawModel();
 		void ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B);

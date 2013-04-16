@@ -5,6 +5,14 @@
 
 namespace MeshStructures
 {
+	enum Flags
+	{
+		FLAG0 = 0x0,
+		FLAG1 = 0x1,
+		FLAG2 = 0x2,
+		FLAG4 = 0x4,
+		FLAG8 = 0x8
+	};
 	Octree::Octree(const int dep, const float siz, Vector4 ori, Octree* par)
 	{
 		isLeaf = true;
@@ -81,10 +89,10 @@ namespace MeshStructures
 			// zisti kam patria trojuholniky
 			for(unsigned int i = 0; i < length; i++)
 			{
-				int code1 = GetCode(tria[i]->v[0]->P);
-				int code2 = GetCode(tria[i]->v[1]->P);
-				int code3 = GetCode(tria[i]->v[2]->P);
-				int code = 8;
+				byte code1 = GetCode(tria[i]->v[0]->P);
+				byte code2 = GetCode(tria[i]->v[1]->P);
+				byte code3 = GetCode(tria[i]->v[2]->P);
+				byte code = FLAG8;
 
 				if((code1 == code2) && (code1 == code3))
 				{
@@ -96,8 +104,33 @@ namespace MeshStructures
 				}
 				else
 				{
-					for(int j = 0; j < 8; j++)
+					// moc neurychli
+					/*bool crosses [8] = {0,0,0,0,0,0,0,0};
+					bool crosses1 [8] = {0,0,0,0,0,0,0,0};
+					bool crosses2 [8] = {0,0,0,0,0,0,0,0};
+					bool crosses3 [8] = {0,0,0,0,0,0,0,0};
+
+					if(!(code1 & FLAG1) || !(code2 & FLAG1) || !(code3 & FLAG1))
+						{ crosses1[0] = true; crosses1[2] = true; crosses1[4] = true; crosses1[6] = true; }
+					if((code1 & FLAG1) || (code2 & FLAG1) || (code3 & FLAG1))
+						{ crosses1[1] = true; crosses1[3] = true; crosses1[5] = true; crosses1[7] = true; }
+					if(!(code1 & FLAG2) || !(code2 & FLAG2) || !(code3 & FLAG2))
+						{ crosses2[0] = true; crosses2[4] = true; crosses2[1] = true; crosses2[5] = true; }
+					if((code1 & FLAG2) || (code2 & FLAG2) || (code3 & FLAG2))
+						{ crosses2[2] = true; crosses2[6] = true; crosses2[3] = true; crosses2[7] = true; }
+					if(!(code1 & FLAG4) || !(code2 & FLAG4) || !(code3 & FLAG4))
+						{ crosses3[0] = true; crosses3[1] = true; crosses3[2] = true; crosses3[3] = true; }
+					if((code1 & FLAG4) || (code2 & FLAG4) || (code3 & FLAG4))
+						{ crosses3[4] = true; crosses3[5] = true; crosses3[6] = true; crosses3[7] = true; }
+					for(byte j = 0; j < 8; j++)
 					{
+						if((crosses1[j] == true) && (crosses2[j] == true) && (crosses3[j] == true) )
+							crosses[j] = true;
+					}*/
+					for(byte j = 0; j < 8; j++)
+					{
+						/*if(crosses[j] == false)
+							continue;*/
 						Vector4 tmpv = Vector4(origin.X + new_size*Table[j][0],
 											   origin.Y + new_size*Table[j][1],
 											   origin.Z + new_size*Table[j][2]);
@@ -164,12 +197,12 @@ namespace MeshStructures
 	}
 
 	// vrati poziciu v octree
-	int Octree::GetCode(const Vector4 pt)
+	byte Octree::GetCode(const Vector4 pt)
 	{
-		int result = 0;
-		if (pt.X > origin.X) result |= 4;
-		if (pt.Y > origin.Y) result |= 2;
-		if (pt.Z > origin.Z) result |= 1;
+		byte result = FLAG0;
+		if (pt.X > origin.X) result |= FLAG4;
+		if (pt.Y > origin.Y) result |= FLAG2;
+		if (pt.Z > origin.Z) result |= FLAG1;
 
 		return result;
 	}
@@ -184,6 +217,9 @@ namespace MeshStructures
 
 	void Octree::DrawOctree(bool recursive)
 	{
+		if((recursive == true) && (depth > 5))
+			return;
+
 		glBegin(GL_LINES);
 			float Table[8][3] =
 			{

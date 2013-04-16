@@ -84,15 +84,19 @@ namespace ModelController
 		time_t timer4 = time(NULL);
 		ComputeBoundary();
 		CreateOctree();
-		SetColors();
-
 		time_t timer5 = time(NULL);
+
+		SetColors();
+		ComputeSusedov();
+
+		time_t timer6 = time(NULL);
 
 		logInfo(MarshalString("Vycistenie starych zaznamov: " + (timer2 - timer1)+ "s"));
 		logInfo(MarshalString("Nacitanie modelu do Assimpu: " + (timer3 - timer2)+ "s"));
 		logInfo(MarshalString("Nacitanie Assimpu do mojich objektov: " + (timer4 - timer3)+ "s"));
 		logInfo(MarshalString("Vytvorenie Octree: " + (timer5 - timer4)+ "s"));
-		logInfo(MarshalString("Celkovy cas nacitania: " + (timer5 - timer1)+ "s"));
+		logInfo(MarshalString("Vytvorenie susedov: " + (timer6 - timer5)+ "s"));
+		logInfo(MarshalString("Celkovy cas nacitania: " + (timer6 - timer1)+ "s"));
 	}
 
 	// nacita priamo Assimp
@@ -126,6 +130,7 @@ namespace ModelController
 		ComputeBoundary();
 		CreateOctree();
 		SetColors();
+		ComputeSusedov();
 	}
 
 	/*float CModel::GetSDF(const struct aiFace* face, bool smoothed)
@@ -279,6 +284,17 @@ namespace ModelController
 				tmp->data->SetColor(col);
 			//logInfo(MarshalString("farba: "+col+", RGB: " + r+" "+g+" "+b));
 
+			tmp = tmp->next;
+		}
+	}
+
+	// nastavi susedov pre facy
+	void CModel::ComputeSusedov()
+	{
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			tmp->data->ComputeSusedov();
 			tmp = tmp->next;
 		}
 	}

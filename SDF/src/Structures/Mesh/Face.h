@@ -19,12 +19,15 @@ namespace MeshStructures
 		void SetColor(int color);
 		void ComputeSDFValue(const std::vector<float> values, const std::vector<float> inverse_Yangles);
 		LinkedList<Face>* GetSusedia();
+		void ComputeSusedov();
 
 		Vertex*					v[3];
 		Vector4					normal;
 		Vector4					center;
 		int						farba;						// pre picking
 		CSDF*					diameter;
+	private:
+		LinkedList<Face>* susedia;
 		//const struct aiFace*	assimp_ref;
 	};
 }
