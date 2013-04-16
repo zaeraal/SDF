@@ -52,6 +52,7 @@ namespace ModelController
 	// nacita subor
 	void CModel::LoadFile(std::string Filename)
 	{
+		time_t timer1 = time(NULL);
 		ResetSettings();
 
 		// ak znovu nacitavame, premaz povodne udaje
@@ -72,14 +73,26 @@ namespace ModelController
 		SDF_control = NULL;
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
+		time_t timer2 = time(NULL);
 
 		Assimp->Import3DFromFile(Filename);
+
+		time_t timer3 = time(NULL);
 		Assimp->LoadData(triangles, points);
 		loaded = true;
 
+		time_t timer4 = time(NULL);
 		ComputeBoundary();
 		CreateOctree();
 		SetColors();
+
+		time_t timer5 = time(NULL);
+
+		logInfo(MarshalString("Vycistenie starych zaznamov: " + (timer2 - timer1)+ "s"));
+		logInfo(MarshalString("Nacitanie modelu do Assimpu: " + (timer3 - timer2)+ "s"));
+		logInfo(MarshalString("Nacitanie Assimpu do mojich objektov: " + (timer4 - timer3)+ "s"));
+		logInfo(MarshalString("Vytvorenie Octree: " + (timer5 - timer4)+ "s"));
+		logInfo(MarshalString("Celkovy cas nacitania: " + (timer5 - timer1)+ "s"));
 	}
 
 	// nacita priamo Assimp

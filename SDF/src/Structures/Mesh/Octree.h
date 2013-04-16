@@ -7,7 +7,7 @@ namespace MeshStructures
 	using namespace std;
 	using namespace GenericStructures;
 
-	const int max_depth = 6;
+	const int max_depth = 8;
 	const int min_count = 2;
 
 	public class Octree

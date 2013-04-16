@@ -10,7 +10,11 @@ namespace MathStructures
 		public:
         float M[16];
 
-		Mat4 () { Mat4(Identity); }
+		Mat4 ()
+		{
+			for (int i = 0; i < 16; i++)
+				M[i] = Identity[i];
+		}
 		Mat4 (float m[16])	// wtf, to nezobere proste float?
 		{
 			for (int i = 0; i < 16; i++)

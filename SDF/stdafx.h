@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <shlwapi.h>
 #include <fstream>
+#include <time.h>
 /*#include <iostream>
 #include <sstream>
 #include <iomanip>*/

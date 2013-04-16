@@ -29,5 +29,7 @@ namespace SDFController
 		float diagonal;
 		unsigned char a;					// for octree traveersal
 		CAssimp* loggger;
+		LinkedList<Face>* fc_list;			// prealokovany list facov
+		LinkedList<Octree>* oc_list;		// prealokovany list octree
 	};
 }

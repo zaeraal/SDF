@@ -532,7 +532,12 @@ namespace SDF {
 
 		// Displays an OpenFileDialog so the user can select a model.
 		OpenFileDialog ^openFileDialog1 = gcnew OpenFileDialog();
-		openFileDialog1->Filter = "3D Model Files(*.OBJ)|*.OBJ|All files (*.*)|*.*";
+		openFileDialog1->Filter =	"Common 3D Model Formats|*.obj;*.3ds;*.dae;*.blend;*.ase;*.ifc;*.xgl;*.zgl;*.ply;*.dxf;*.lwo;*.lws;*.lxo;*.stl;*.x;*.ac;*.ms3d;*.cob;*.scn"+
+									"|Motion Capture Formats|*.bvh;*.csm"+
+									"|Graphics Engine Formats|*.xml;*.irrmesh;*.irr"+
+									"|Game File Formats|*.mdl;*.md2;*.md3;*.pk3;*.mdc;*.md5;*.smd;*.vta;*.m3;*.3d"+
+									"|Other File Formats|*.b3d;*.q3d;*.q3s;*.nff;*.off;*.raw;*.ter;*.mdl;*.hmp;*.ndo"+
+									"|All files (*.*)|*.*";
 		openFileDialog1->Title = "Select Model";
 
 		// Show the Dialog.

@@ -20,105 +20,143 @@ namespace SDFController
 	{
 		diagonal = dia;
 		loggger = logg;
+		fc_list = new LinkedList<Face>();
+		fc_list->Preallocate(100);
+		oc_list = new LinkedList<Octree>();
+		oc_list->Preallocate(100);
 		//loggger->logInfo(MarshalString("diagonal: " + diagonal));
 	}
 
 	// destruktor
 	CSDFController::~CSDFController()
 	{
-
+		delete fc_list;
+		delete oc_list;
 	}
 		
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
 	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root)
 	{
+		time_t timer1 = time(NULL);
 		float min = FLOAT_MAX;
 		float max = 0.0;
-		srand (2013);					// initial seed for random number generator
-		float n_rays = 30.0;
-		float angle = 120.0;
-		int counter = 0;
-		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
-		while(tmp != NULL)
+		
+		unsigned int n_rays = 30;
+		float angle = 120.0f;
+		unsigned int counter = 0;
+
+		//------------------prealocated variables------------------
+		Vector4 tangens, normal, binormal;
+		Mat4 t_mat;
+		std::vector<float> rays;
+		std::vector<float> weights;
+
+		// precompute those N rays
+		srand (123);											// initial seed for random number generator
+		float* rndy = new float[n_rays];
+		float* rndx = new float[n_rays];
+		for(unsigned int i = 0; i < n_rays; i++)
+		{
+			rndy[i] = float(rand()%int(angle / 2));
+			rndx[i] = float(rand()%(360));
+			if(rndy[i] == 0.0)
+				rndy[i] = 0.5;
+		}
+
+		float dist = FLOAT_MAX;
+		float dist2 = FLOAT_MAX;
+		float theta = 0.0f;
+		bool intersected = false;
+
+		LinkedList<Face>* face_list = NULL;
+		LinkedList<Face>::Cell<Face>* intersected_face = NULL;
+		//------------------prealocated variables------------------
+
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		while(current_face != NULL)
 		{
 			// vypocet TNB vektorov a matice
-			Vector4 tangens, normal, binormal;
-			ComputeTNB(tmp->data, tangens, normal, binormal);
-			Mat4 t_mat= Mat4(tangens, normal, binormal);
+			ComputeTNB(current_face->data, tangens, normal, binormal);
+			t_mat = Mat4(tangens, normal, binormal);
 
-			std::vector<float> rays;
-			std::vector<float> weights;
-			for(int i = 0; i < n_rays; i++)
+			rays.clear();
+			weights.clear();
+			for(unsigned int i = 0; i < n_rays; i++)
 			{
-				// todo :: presun hore?
-				float rndy = float(rand()%int(angle / 2));
-				float rndx = float(rand()%(360));
-				if(rndy == 0.0)
-					rndy = 0.5;
-
-				Vector4 ray = CalcRayFromAngle(rndx, rndy) * t_mat;
+				Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]) * t_mat;
 				ray.Normalize();
 
-				float dist = FLOAT_MAX;
-				LinkedList<Face>* tmpp = GetFaceList(triangles, root, tmp->data->center, ray);
-				LinkedList<Face>::Cell<Face>* tmp2 = tmpp->start;
-				while(tmp2 != NULL)
+				dist = FLOAT_MAX;
+				face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				intersected_face = face_list->start;
+				while(intersected_face != NULL)
 				{
-					if(tmp == tmp2)
+					if(current_face == intersected_face)
 					{
-						tmp2 = tmp2->next;
+						intersected_face = intersected_face->next;
 						continue;
 					}
 
-					float dist2 = FLOAT_MAX;
-					bool intersected = rayIntersectsTriangle(tmp->data->center, ray, tmp2->data->v[0]->P, tmp2->data->v[1]->P, tmp2->data->v[2]->P, dist2);
+					dist2 = FLOAT_MAX;
+					intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face->data->v[0]->P, intersected_face->data->v[1]->P, intersected_face->data->v[2]->P, dist2);
 					if(intersected == true)
 					{
-						float theta = acos( (ray * (tmp->data->normal * (-1))) / (ray.Length() * tmp->data->normal.Length()) );
+						theta = acos( (ray * (current_face->data->normal * (-1))) / (ray.Length() * current_face->data->normal.Length()) );
 						theta = theta * float(180.0 / M_PI);
 						//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
 						if((theta < 90.0f) && (dist2 < dist))
 							dist = dist2;
 					}
 
-					tmp2 = tmp2->next;
+					intersected_face = intersected_face->next;
 				}
 				if(dist < (FLOAT_MAX - 1.0f))
 				{
 					//loggger->logInfo(MarshalString("pridany ray s dlzkou: " + dist));
 					rays.push_back(dist);
-					weights.push_back(180.0f - rndy);
+					weights.push_back(180.0f - rndy[i]);
 				}
-				if(root != NULL)
-					delete tmpp;						// generated list
+				//if(root != NULL)
+					//delete face_list;						// generated list, bez prealokovania
 			}
 			if(rays.size() > 0)
 			{
-				tmp->data->ComputeSDFValue(rays, weights);
-				if(tmp->data->diameter->value < min)
-					min = tmp->data->diameter->value;
-				if(tmp->data->diameter->value > max)
-					max = tmp->data->diameter->value;
+				current_face->data->ComputeSDFValue(rays, weights);
+				if(current_face->data->diameter->value < min)
+					min = current_face->data->diameter->value;
+				if(current_face->data->diameter->value > max)
+					max = current_face->data->diameter->value;
 			}
 			counter = counter + 1;
-			tmp = tmp->next;
+			current_face = current_face->next;
 		}
+		fc_list->Clear();
+		oc_list->Clear();
+		delete [] rndy;
+		delete [] rndx;
+
+		time_t timer2 = time(NULL);
 		// postprocessing - smoothing and normalization
 		int kernel_size = 2;
 		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
 		float* kernel = ComputeGaussianKernel(kernel_size);
-		tmp = triangles->start;
-		while(tmp != NULL)
+		current_face = triangles->start;
+		while(current_face != NULL)
 		{
-			Smooth(tmp->data, kernel, kernel_size);
-			tmp->data->diameter->Normalize1(min, max, 4.0);
-			tmp->data->diameter->Normalize2(0, max, 4.0);
+			Smooth(current_face->data, kernel, kernel_size);
+			current_face->data->diameter->Normalize1(min, max, 4.0);
+			current_face->data->diameter->Normalize2(0, max, 4.0);
 			//tmp->data->diameter->Normalize2(0, diagonal, 4.0);
 
-			tmp = tmp->next;
+			current_face = current_face->next;
 		}
 		delete kernel;
-		loggger->logInfo(MarshalString("pocet: " + counter));
+		time_t timer3 = time(NULL);
+
+		loggger->logInfo(MarshalString("SDF vypocitane v case: " + (timer2 - timer1)+ "s"));
+		loggger->logInfo(MarshalString("SDF hodnoty vyhladene v case: " + (timer3 - timer2)+ "s"));
+		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (timer3 - timer1)+ "s, pre " + counter + " trojuholnikov"));
+		//loggger->logInfo(MarshalString("pocet: " + counter));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
 	}
@@ -207,8 +245,10 @@ namespace SDFController
 		if (root == NULL)
 			return triangles;
 
-		LinkedList<Octree>* octrees = new LinkedList<Octree>();
-		LinkedList<Face>* faces = new LinkedList<Face>();
+		LinkedList<Octree>* octrees = oc_list;
+		LinkedList<Face>* faces = fc_list;
+		octrees->Clear();
+		faces->Clear();
 		//center = center - (ray * diagonal);						// hack
 
 		ray_octree_traversal(root, ray, center, octrees);
@@ -224,7 +264,7 @@ namespace SDFController
 			}
 			tmp = tmp->next;
 		}
-		delete octrees;
+		//delete octrees;								// bez prealokovania
 		return faces;
 	}
 
