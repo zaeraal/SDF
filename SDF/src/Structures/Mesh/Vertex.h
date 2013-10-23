@@ -17,5 +17,6 @@ namespace MeshStructures
 
 		Vector4 P;
 		LinkedList<void>*		susedia;					// susedia
+		unsigned int			number;						// cislo v zozname
 	};
 }

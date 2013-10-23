@@ -14,6 +14,7 @@ namespace GenericStructures
 		void InsertToEnd(T* value);
 		void InsertToStart(T* value);
 		bool Contains(T* value);
+		void DeleteFirst();
 		void Clear();									// only clears actual stuff
 		void CompleteClear();							// clears preallocation too
 		void CompleteDelete();							// clears and deletes everything
@@ -145,6 +146,68 @@ namespace GenericStructures
 			tmp = tmp->next;
 		}
 		return false;
+	}
+
+	template <class T> void LinkedList<T>::DeleteFirst()
+	{
+		if(size == 0)
+			return;
+		if(prealocated == true)
+		{
+			if(size == 1)
+			{
+				start->data = NULL;
+				start->next = NULL;
+				start = NULL;
+				end = NULL;
+			}
+			else
+			{
+				r_end->rnext = r_start;
+
+				start = r_start->rnext;
+				if(size == 2)
+					end = r_start->rnext;
+
+				r_start->next = NULL;
+				r_start->data = NULL;
+				r_start->rnext = NULL;
+
+				r_end = r_start;
+				r_start = start;
+			}
+		}
+		else
+		{
+			if(size == 1)
+			{
+				start->data = NULL;
+				start->next = NULL;
+				start = NULL;
+				end = NULL;
+				r_start = NULL;
+				r_end = NULL;
+			}
+			else
+			{
+				Cell<T>* tmp = start;
+				start = tmp->next;
+				r_start = tmp->next;
+
+				if(size == 2)
+				{
+					end = tmp->next;
+					r_end = tmp->next;
+				}
+
+				tmp->next = NULL;
+				tmp->data = NULL;
+				tmp->rnext = NULL;
+
+				delete tmp;
+			}
+		}
+		size--;
 	}
 
 	template <class T> void LinkedList<T>::InsertToStart(T* value)

@@ -55,6 +55,9 @@
     <None Include="app.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="sdf.cl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SDF.cpp">
@@ -97,6 +100,12 @@
       <Filter>Source Files\Structures\ShapeDiameterFunction</Filter>
     </ClCompile>
     <ClCompile Include="src\Helpers\MathHelper.cpp">
+      <Filter>Source Files\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="SDFOpenCL.cpp">
+      <Filter>Source Files\Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenCLDebug.cpp">
       <Filter>Source Files\Helpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -150,6 +159,12 @@
       <Filter>Header Files\Structures\ShapeDiameterFunction</Filter>
     </ClInclude>
     <ClInclude Include="src\Helpers\MathHelper.h">
+      <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="SDFOpenCL.h">
+      <Filter>Header Files\Controllers</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenCLDebug.h">
       <Filter>Header Files\Helpers</Filter>
     </ClInclude>
   </ItemGroup>

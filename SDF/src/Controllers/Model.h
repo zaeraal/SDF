@@ -27,6 +27,7 @@ namespace ModelController
 		//float GetSDF(const struct aiFace* face, bool smoothed);
 		float* GetSDF(int& size, bool smoothed);
 		void ResetSettings();
+		void AssignNumber();
 		void ComputeBoundary();
 		void CreateOctree();
 		void SetColors();
@@ -39,7 +40,7 @@ namespace ModelController
 		int getDrawMode();
 		int GetTriangleCount();
 		void ProcessPick(int x, int y);
-		void ComputeSDF();
+		void ComputeSDF(bool on_GPU);
 
 		bool loaded;
 		bool show_octree;

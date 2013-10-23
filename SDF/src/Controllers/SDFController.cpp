@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "SDFController.h"
 #include "MathHelper.h"
+#include "SDFOpenCL.h"
 
 #define FLOAT_MAX  99999.0
 #define FLD_NODE 0
@@ -20,11 +21,12 @@ namespace SDFController
 	{
 		diagonal = dia;
 		loggger = logg;
+		prealocated_space = 1;
 		fc_list = new LinkedList<Face>();
-		fc_list->Preallocate(100);
+		fc_list->Preallocate(prealocated_space);
 		oc_list = new LinkedList<Octree>();
 		oc_list->Preallocate(100);
-		kernel_size = 2;
+		kernel_size = 1;
 		gauss_sus = new LinkedList<Face>*[kernel_size + 1];
 		// preallocate smoothing arrays
 		for(int i=0; i <= kernel_size; i++)				// bacha na posunutie
@@ -51,7 +53,7 @@ namespace SDFController
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
 	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root)
 	{
-		time_t timer1 = time(NULL);
+		int ticks1 = GetTickCount();
 		float min = FLOAT_MAX;
 		float max = 0.0;
 		
@@ -75,6 +77,8 @@ namespace SDFController
 			rndx[i] = float(rand()%(360));
 			if(rndy[i] == 0.0)
 				rndy[i] = 0.5;
+
+			weights.push_back(180.0f - rndy[i]);
 		}
 
 		float dist = FLOAT_MAX;
@@ -94,22 +98,27 @@ namespace SDFController
 			t_mat = Mat4(tangens, normal, binormal);
 
 			rays.clear();
-			weights.clear();
 			for(unsigned int i = 0; i < n_rays; i++)
 			{
 				Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]) * t_mat;
 				ray.Normalize();
 
 				dist = FLOAT_MAX;
+
+				fc_list->Clear();
+				oc_list->Clear();
+				fc_list->InsertToStart(current_face->data);
 				face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				face_list->DeleteFirst();
+
 				intersected_face = face_list->start;
 				while(intersected_face != NULL)
 				{
-					if(current_face == intersected_face)
+					/*if(current_face == intersected_face)
 					{
 						intersected_face = intersected_face->next;
 						continue;
-					}
+					}*/
 
 					dist2 = FLOAT_MAX;
 					intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face->data->v[0]->P, intersected_face->data->v[1]->P, intersected_face->data->v[2]->P, dist2);
@@ -121,14 +130,12 @@ namespace SDFController
 						if((theta < 90.0f) && (dist2 < dist))
 							dist = dist2;
 					}
-
 					intersected_face = intersected_face->next;
 				}
 				if(dist < (FLOAT_MAX - 1.0f))
 				{
 					//loggger->logInfo(MarshalString("pridany ray s dlzkou: " + dist));
 					rays.push_back(dist);
-					weights.push_back(180.0f - rndy[i]);
 				}
 				//if(root != NULL)
 					//delete face_list;						// generated list, bez prealokovania
@@ -149,7 +156,7 @@ namespace SDFController
 		delete [] rndy;
 		delete [] rndx;
 
-		time_t timer2 = time(NULL);
+		int ticks2 = GetTickCount();
 		// postprocessing - smoothing and normalization
 		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
 		float* kernel = ComputeGaussianKernel(kernel_size);
@@ -164,14 +171,319 @@ namespace SDFController
 			current_face = current_face->next;
 		}
 		delete kernel;
-		time_t timer3 = time(NULL);
+		int ticks3 = GetTickCount();
 
-		loggger->logInfo(MarshalString("SDF vypocitane v case: " + (timer2 - timer1)+ "s"));
-		loggger->logInfo(MarshalString("SDF hodnoty vyhladene v case: " + (timer3 - timer2)+ "s"));
-		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (timer3 - timer1)+ "s, pre " + counter + " trojuholnikov"));
+		loggger->logInfo(MarshalString("SDF vypocitane v case: " + (ticks2 - ticks1)+ "ms"));
+		loggger->logInfo(MarshalString("SDF hodnoty vyhladene v case: " + (ticks3 - ticks2)+ "ms"));
+		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (ticks3 - ticks1)+ "ms, pre " + counter + " trojuholnikov"));
 		//loggger->logInfo(MarshalString("pocet: " + counter));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+	}
+
+	// pocitanie funkcie pre vsetky trojuholniky v OpenCL
+	void CSDFController::ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root)
+	{
+		using namespace OpenCLForm;
+		int ticks1 = GetTickCount();
+
+		//-------------------------------------------
+		//---------------INIT OpenCL-------Begin-----
+		//-------------------------------------------
+		COpenCL* OpenCLko = new COpenCL();
+
+		int err = EXIT_SUCCESS;
+		err = OpenCLko->InitOpenCL();
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->LoadKernel("sdf.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->GetGPUVariables();
+		if(!CheckError(err)) return;
+
+		//-------------------------------------------
+		//---------------INIT OpenCL-------End-------
+		//-------------------------------------------
+
+		// IMPORTANT!! Variables for memory allocation
+		size_t n_workitems = OpenCLko->num_1D_work_items / 4;
+		if(OpenCLko->num_ND_work_items[0] < n_workitems)
+			n_workitems = OpenCLko->num_ND_work_items[0] / 4;
+
+		size_t n_workgroups = OpenCLko->num_cores * 2;
+		
+		OpenCLko->global = n_workgroups * n_workitems;
+		OpenCLko->local = n_workitems;
+
+		const unsigned int n_rays = 30;
+		const unsigned int n_prealloc = prealocated_space;
+
+		unsigned int n_triangles = triangles->GetSize();
+		unsigned int n_vertices = points->GetSize();
+
+		unsigned int n_rays_per_kernel = n_workitems * n_workgroups;
+		unsigned int n_triangles_per_kernel = (unsigned int)(n_rays_per_kernel / n_rays);
+		unsigned int n_triangles_at_end = n_triangles % n_triangles_per_kernel;
+		unsigned int n_rays_at_end = n_triangles_at_end * n_rays;
+
+		unsigned int n_kernels = (unsigned int)(n_triangles / n_triangles_per_kernel);
+		if(n_triangles_at_end > 0) n_kernels++;
+
+		//-------------------------------------------
+		//---------------Memory Alloc------Begin-----
+		//-------------------------------------------
+
+		cl_uint3	*c_triangles;			// zoznam trojuholnikov obsahujucich IDX 3 vertexov
+		cl_float4	*c_vertices;			// zoznam vertexov obsahujuci ich poziciu
+		cl_uint4	c_params;				// potrebujem vediet n_workitems, n_rays, n_prealloc, max pocet lucov
+		cl_uint		**c_origins;			// zoznamy trojuholnikov na strielanie lucov, ktore sa postupne vkladaju do OpenCL
+		cl_float4	**c_rays;				// zoznamy lucov, ktore sa postupne vkladaju do OpenCL
+		cl_uint		**c_targets;			// zoznamy trojuholnikov na kontrolu, ktore sa postupne vkladaju do OpenCL
+		cl_float	**c_outputs;			// vzdialenost a vaha pre kazdy luc, ktore je mojim vysledkom co si zapisem
+
+		unsigned int s_triangles = n_triangles * sizeof(cl_uint3);									// pocet trojuholnikov * 4 (nie 3!) * int
+		unsigned int s_vertices = n_vertices * sizeof(cl_float4);									// pocet vertexov * 4 * float
+		unsigned int s_origins = n_triangles_per_kernel * sizeof(cl_uint);							// trojuholniky pre kernel * int
+		unsigned int s_rays = n_triangles_per_kernel * n_rays * sizeof(cl_float4);					// trojuholniky pre kernel * 30 * 4 * float
+		unsigned int s_targets = n_triangles_per_kernel * n_rays * n_prealloc * sizeof(cl_uint);	// trojuholniky pre kernel * 30 * 100 * int
+		unsigned int s_outputs = n_triangles_per_kernel * n_rays * sizeof(cl_float);				// trojuholniky pre kernel * 30  * float
+
+		int ticks2 = GetTickCount();
+		err = OpenCLko->SetupMemory(s_triangles, s_vertices, s_origins, s_rays, s_targets, s_outputs);
+		if(!CheckError(err)) return;
+		int ticks3 = GetTickCount();
+
+		c_triangles = (cl_uint3*) malloc(s_triangles);
+		c_vertices = (cl_float4*) malloc(s_vertices);
+		c_origins = (cl_uint**) calloc(n_kernels, sizeof(cl_uint*));
+		c_rays = (cl_float4**) calloc(n_kernels, sizeof(cl_float4*));
+		c_targets = (cl_uint**) calloc(n_kernels, sizeof(cl_uint*));
+		c_outputs = (cl_float**) calloc(n_kernels, sizeof(cl_float*));
+
+		for(unsigned int i = 0; i < n_kernels; i++)
+		{
+			c_origins[i] = (cl_uint*) calloc(s_origins, 1);
+			c_rays[i] = (cl_float4*) calloc(s_rays, 1);
+			c_targets[i] = (cl_uint*) calloc(s_targets, 1);
+			c_outputs[i] = (cl_float*) calloc(s_outputs, 1);
+		}
+		//-------------------------------------------
+		//---------------Memory Alloc------End-------
+		//-------------------------------------------
+
+		//------------------prealocated variables------------------	
+		float angle = 120.0f;
+		std::vector<float> weights;
+
+		Vector4 tangens, normal, binormal;
+		Mat4 t_mat;
+
+		// precompute those N rays
+		srand (123);											// initial seed for random number generator
+		float* rndy = new float[n_rays];
+		float* rndx = new float[n_rays];
+		for(unsigned int i = 0; i < n_rays; i++)
+		{
+			rndy[i] = float(rand()%int(angle / 2));
+			rndx[i] = float(rand()%(360));
+			if(rndy[i] == 0.0)
+				rndy[i] = 0.5;
+
+			weights.push_back(180.0f - rndy[i]);
+		}
+
+		//------------------prealocated variables------------------
+
+		// -----------------------------------------------
+		// vypocitaj dopredu zoznamy trojuholnikov a lucov
+		// -----------------------------------------------
+		int ticks4 = GetTickCount();
+		//---------------copy variables--------------
+		unsigned int pocet = 0;
+		LinkedList<Face>::Cell<Face>* tmp_face = triangles->start;
+		while(tmp_face != NULL)
+		{
+			c_triangles[pocet].s[0] = tmp_face->data->v[0]->number;
+			c_triangles[pocet].s[1] = tmp_face->data->v[1]->number;
+			c_triangles[pocet].s[2] = tmp_face->data->v[2]->number;
+			tmp_face = tmp_face->next;
+			pocet++;
+		}
+
+		pocet = 0;
+		LinkedList<Vertex>::Cell<Vertex>* tmp_points = points->start;
+		while(tmp_points != NULL)
+		{
+			c_vertices[pocet].s[0] = tmp_points->data->P.X;
+			c_vertices[pocet].s[1] = tmp_points->data->P.Y;
+			c_vertices[pocet].s[2] = tmp_points->data->P.Z;
+			c_vertices[pocet].s[3] = tmp_points->data->P.W;
+			tmp_points = tmp_points->next;
+			pocet++;
+		}
+		//---------------copy variables--------------
+		int ticks5 = GetTickCount();
+		pocet = 0;
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		while(current_face != NULL)
+		{
+			unsigned int kernel_num = (unsigned int)(pocet / n_triangles_per_kernel);
+			unsigned int in_kernel_num = (unsigned int)(pocet % n_triangles_per_kernel);
+
+			// TODO: zjednodusit
+			c_origins[kernel_num][in_kernel_num] = pocet;
+
+			// vypocet TNB vektorov a matice
+			ComputeTNB(current_face->data, tangens, normal, binormal);
+			t_mat = Mat4(tangens, normal, binormal);
+
+			for(unsigned int i = 0; i < n_rays; i++)
+			{
+				Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]) * t_mat;
+				ray.Normalize();
+
+				c_rays[kernel_num][i+(n_rays*in_kernel_num)].s[0] = ray.X;
+				c_rays[kernel_num][i+(n_rays*in_kernel_num)].s[1] = ray.Y;
+				c_rays[kernel_num][i+(n_rays*in_kernel_num)].s[2] = ray.Z;
+				c_rays[kernel_num][i+(n_rays*in_kernel_num)].s[3] = ray.W;
+
+				fc_list->Clear();
+				oc_list->Clear();
+				fc_list->InsertToStart(current_face->data);
+				LinkedList<Face>* face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				face_list->DeleteFirst();
+
+				tmp_face = face_list->start;
+				unsigned int c_pocet = 0;
+				while(tmp_face != NULL)
+				{
+					c_targets[kernel_num][c_pocet+(i+(n_rays*in_kernel_num))*n_prealloc] = tmp_face->data->number + 1;		// naschval posunute
+					tmp_face = tmp_face->next;
+					c_pocet++;
+					if(c_pocet == 100) break;
+				}
+			}
+			pocet = pocet + 1;
+			current_face = current_face->next;
+		}
+		fc_list->Clear();
+		oc_list->Clear();
+		delete [] rndy;
+		delete [] rndx;
+		// -----------------------------------------------
+		// vypocitaj dopredu zoznamy trojuholnikov a lucov
+		// -----------------------------------------------
+
+
+		// v tomto bode je uz pamet pripravena a nacitana
+		// je nutne poslat ju do OpenCL a zahajit vypocet
+		int ticks6 = GetTickCount();
+		unsigned int pocet_trojuholnikov = n_triangles_per_kernel;
+		for(unsigned int i = 0; i < n_kernels; i++)
+		{
+			if(i == (n_kernels-1)) 
+				pocet_trojuholnikov = n_triangles_at_end;
+			c_params.s[0] = n_workitems; c_params.s[1] = n_rays; c_params.s[2] = n_prealloc; c_params.s[3] = pocet_trojuholnikov;
+			err = OpenCLko->LaunchKernel(c_triangles, c_vertices, c_origins[i], c_rays[i], c_targets[i], c_outputs[i], c_params);
+			if(!CheckError(err)) return;
+		}
+		OpenCLko->WaitForFinish();
+
+		int ticks7 = GetTickCount();
+
+		// spracuj ziskane hodnoty
+		float min = FLOAT_MAX;
+		float max = 0.0;
+		unsigned int cpocet = 0;
+		pocet_trojuholnikov = n_triangles_per_kernel;
+		std::vector<float> rays;
+		std::vector<float> weightsx;
+		current_face = triangles->start;
+		for(unsigned int i = 0; i < n_kernels; i++)
+		{
+			if(i == (n_kernels-1)) 
+				pocet_trojuholnikov = n_triangles_at_end;
+
+			for(unsigned int j = 0; j < pocet_trojuholnikov; j++)
+			{
+				for(unsigned int k = 0; k < n_rays; k++)
+				{
+					float dist = c_outputs[i][k+j*n_rays];
+					//loggger->logInfo(MarshalString("triangle: "+(i*n_triangles_per_kernel + j)+ " val: " + dist));
+					if(dist < (FLOAT_MAX - 1.0f))
+					{
+						rays.push_back(c_outputs[i][k+j*n_rays]);
+						weightsx.push_back(weights[k]);
+					}
+				}
+				if(rays.size() > 0)
+				{
+					current_face->data->ComputeSDFValue(rays, weightsx);
+					if(current_face->data->diameter->value < min)
+						min = current_face->data->diameter->value;
+					if(current_face->data->diameter->value > max)
+						max = current_face->data->diameter->value;
+				}
+				cpocet++;
+				current_face = current_face->next;
+				rays.clear();
+				weightsx.clear();
+			}
+		}
+		int ticks8 = GetTickCount();
+
+		// postprocessing - smoothing and normalization
+		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		float* kernel = ComputeGaussianKernel(kernel_size);
+		current_face = triangles->start;
+		while(current_face != NULL)
+		{
+			Smooth(current_face->data, kernel, kernel_size);
+			current_face->data->diameter->Normalize1(min, max, 4.0);
+			current_face->data->diameter->Normalize2(0, max, 4.0);
+			//tmp->data->diameter->Normalize2(0, diagonal, 4.0);
+
+			current_face = current_face->next;
+		}
+		delete kernel;
+		int ticks9 = GetTickCount();
+
+
+		loggger->logInfo(MarshalString("Inicializacia OpenCL: " + (ticks2 - ticks1)+ "ms"));
+		loggger->logInfo(MarshalString("Alokovanie pamete v OpenCL: " + (ticks3 - ticks2)+ "ms"));
+		loggger->logInfo(MarshalString("Alokovanie pamete v PC: " + (ticks4 - ticks3)+ "ms"));
+		loggger->logInfo(MarshalString("Nacitanie zoznamu trojuholnikov: " + (ticks5 - ticks4)+ "ms"));
+		loggger->logInfo(MarshalString("Prehladavanie Octree: " + (ticks6 - ticks5)+ "ms"));
+		loggger->logInfo(MarshalString("!!VYPOCET OpenCL!!: " + (ticks7 - ticks6)+ "ms"));
+		loggger->logInfo(MarshalString("Spracovanie: " + (ticks8 - ticks7)+ "ms"));
+		loggger->logInfo(MarshalString("Smoothing: " + (ticks9 - ticks8)+ "ms"));
+		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (ticks9 - ticks1)+ "ms, pre " + pocet + " trojuholnikov"));
+		//loggger->logInfo(MarshalString("pocet: " + pocet));
+		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
+		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+
+
+		// Delete OpenCL to free GPU
+		delete OpenCLko;
+
+		// Free host memory
+		for(unsigned int i = 0; i < n_kernels; i++)
+		{
+			free(c_origins[i]);
+			free(c_rays[i]);
+			free(c_targets[i]);
+			free(c_outputs[i]);
+		}
+		free(c_triangles);
+		free(c_vertices);
+		free(c_origins);
+		free(c_rays);
+		free(c_targets);
+		free(c_outputs);
 	}
 
 	// vypocitaj normalizovany 1D kernel pre gaussian
@@ -259,8 +571,8 @@ namespace SDFController
 
 		LinkedList<Octree>* octrees = oc_list;
 		LinkedList<Face>* faces = fc_list;
-		octrees->Clear();
-		faces->Clear();
+		//octrees->Clear();
+		//faces->Clear();
 		//center = center - (ray * diagonal);						// hack
 
 		ray_octree_traversal(root, ray, center, octrees);
@@ -562,4 +874,28 @@ namespace SDFController
 			proc_subtree2(newState.tx0, newState.ty0, newState.tz0, newState.tx1, newState.ty1, newState.tz1,node->son[stateLookUp], octrees);
 		} while (currNode < 8);
 	}
+
+	bool CSDFController::CheckError(int err, std::string extra_debug)
+	{
+		switch(err)
+		{
+			case 0: return true;
+			case 1: loggger->logInfo("Error: Failed to find a platform!"); return false;
+			case 2: loggger->logInfo("Error: Failed to create a device group!"); return false;
+			case 3: loggger->logInfo("Error: Failed to create a compute context!"); return false;
+			case 4: loggger->logInfo("Error: Failed to create a command commands!"); return false;
+			case 5: loggger->logInfo("Error: Failed to create compute program!"); return false;
+			case 6: loggger->logInfo("Error: Failed to build program executable!"); loggger->logInfo(extra_debug); return false;
+			case 7: loggger->logInfo("Error: Failed to create compute kernel!"); return false;
+			case 8: loggger->logInfo("Error: Failed to get device info!"); return false;
+			case 9: loggger->logInfo("Error: Failed to allocate memory!"); return false;
+			case 10: loggger->logInfo("Error: Failed to write to source array!"); return false;
+			case 11: loggger->logInfo("Error: Failed to set kernel arguments!"); return false;
+			case 12: loggger->logInfo("Error: Failed to execute kernel!"); return false;
+			case 13: loggger->logInfo("Error: Failed to Load .cl file!"); return false;
+			case 14: loggger->logInfo("Error: Failed to read from source array!"); return false;
+			default: return true;
+		}
+	}
+
 }

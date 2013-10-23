@@ -356,6 +356,6 @@ namespace OpenGLForm
 		glViewport(0,0,width,height);						// Reset The Current Viewport
 
 		ZoomAndRotate();
-		control->logDebug(str_format("ReSizeGLScene width: %d, height: %d",width,height));
+		//control->logDebug(str_format("ReSizeGLScene width: %d, height: %d",width,height));
 	}	
 }

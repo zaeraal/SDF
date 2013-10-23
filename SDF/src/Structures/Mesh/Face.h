@@ -26,6 +26,7 @@ namespace MeshStructures
 		Vector4					center;
 		int						farba;						// pre picking
 		CSDF*					diameter;
+		unsigned int			number;						// cislo v zozname
 	private:
 		LinkedList<Face>* susedia;
 		//const struct aiFace*	assimp_ref;

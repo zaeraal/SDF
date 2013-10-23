@@ -22,14 +22,14 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110_xp</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110_xp</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -43,15 +43,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
-    <LibraryPath>lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\VC\include;src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\VC\lib;lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
-    <LibraryPath>lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\VC\include;src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\VC\lib;lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -61,11 +61,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -75,11 +75,11 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -94,10 +94,13 @@
   <ItemGroup>
     <None Include="app.ico" />
     <None Include="ReadMe.txt" />
+    <None Include="sdf.cl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="OpenCLDebug.cpp" />
     <ClCompile Include="SDF.cpp" />
+    <ClCompile Include="SDFOpenCL.cpp" />
     <ClCompile Include="SettingsForm.cpp" />
     <ClCompile Include="src\Controllers\Assimp.cpp" />
     <ClCompile Include="src\Controllers\Model.cpp" />
@@ -118,7 +121,9 @@
     <ClInclude Include="Form1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="OpenCLDebug.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SDFOpenCL.h" />
     <ClInclude Include="SettingsForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>

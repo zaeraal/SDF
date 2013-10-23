@@ -67,8 +67,8 @@ namespace SDF {
 	private: System::Windows::Forms::ToolStripMenuItem^  exitToolStripMenuItem;
 
 	private: System::Windows::Forms::ToolStripMenuItem^  showToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  toolsToolStripMenuItem;
-	private: System::Windows::Forms::ToolStripMenuItem^  optionsToolStripMenuItem;
+
+
 
 
 
@@ -101,7 +101,7 @@ namespace SDF {
 	private: System::Windows::Forms::Label^  LBL_Triangle;
 	private: System::Windows::Forms::TextBox^  TB_Total;
 	private: System::Windows::Forms::Label^  LBL_Total;
-	private: System::Windows::Forms::ToolStripMenuItem^  computeSDFToolStripMenuItem;
+
 
 
 	private: System::Windows::Forms::ToolStripMenuItem^  octreeToolStripMenuItem;
@@ -114,7 +114,18 @@ namespace SDF {
 	private: System::Windows::Forms::TextBox^  TB_Status;
 	private: System::Windows::Forms::Label^  LBL_Status;
 	private: System::Windows::Forms::ToolStripMenuItem^  normalsToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  toolsToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  computeSDFToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  exportToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  optionsToolStripMenuItem;
+private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
+private: System::Windows::Forms::ToolStripMenuItem^  GPU_MenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^  CPU_MenuItem;
+
+
+
+
+
 
 
 	private: System::ComponentModel::IContainer^  components;
@@ -147,7 +158,11 @@ namespace SDF {
 			this->normalsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->computeSDFToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->exportToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->optionsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolStripSeparator3 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->CPU_MenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->GPU_MenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->helpToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->aboutToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
@@ -163,7 +178,6 @@ namespace SDF {
 			this->LBL_Triangle = (gcnew System::Windows::Forms::Label());
 			this->TB_Filename = (gcnew System::Windows::Forms::TextBox());
 			this->LBL_Filename = (gcnew System::Windows::Forms::Label());
-			this->exportToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->SuspendLayout();
@@ -287,8 +301,8 @@ namespace SDF {
 			// 
 			// toolsToolStripMenuItem
 			// 
-			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->computeSDFToolStripMenuItem, 
-				this->exportToolStripMenuItem, this->optionsToolStripMenuItem});
+			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->computeSDFToolStripMenuItem, 
+				this->exportToolStripMenuItem, this->optionsToolStripMenuItem, this->toolStripSeparator3, this->CPU_MenuItem, this->GPU_MenuItem});
 			this->toolsToolStripMenuItem->Enabled = false;
 			this->toolsToolStripMenuItem->Name = L"toolsToolStripMenuItem";
 			this->toolsToolStripMenuItem->Size = System::Drawing::Size(48, 20);
@@ -301,12 +315,40 @@ namespace SDF {
 			this->computeSDFToolStripMenuItem->Text = L"&Compute SDF";
 			this->computeSDFToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::computeSDFToolStripMenuItem_Click);
 			// 
+			// exportToolStripMenuItem
+			// 
+			this->exportToolStripMenuItem->Name = L"exportToolStripMenuItem";
+			this->exportToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->exportToolStripMenuItem->Text = L"&Export";
+			this->exportToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::exportToolStripMenuItem_Click);
+			// 
 			// optionsToolStripMenuItem
 			// 
 			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
 			this->optionsToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->optionsToolStripMenuItem->Text = L"&Options";
 			this->optionsToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::optionsToolStripMenuItem_Click);
+			// 
+			// toolStripSeparator3
+			// 
+			this->toolStripSeparator3->Name = L"toolStripSeparator3";
+			this->toolStripSeparator3->Size = System::Drawing::Size(149, 6);
+			// 
+			// CPU_MenuItem
+			// 
+			this->CPU_MenuItem->Name = L"CPU_MenuItem";
+			this->CPU_MenuItem->Size = System::Drawing::Size(152, 22);
+			this->CPU_MenuItem->Text = L"&CPU";
+			this->CPU_MenuItem->Click += gcnew System::EventHandler(this, &Form1::CPU_MenuItem_Click);
+			// 
+			// GPU_MenuItem
+			// 
+			this->GPU_MenuItem->Checked = true;
+			this->GPU_MenuItem->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->GPU_MenuItem->Name = L"GPU_MenuItem";
+			this->GPU_MenuItem->Size = System::Drawing::Size(152, 22);
+			this->GPU_MenuItem->Text = L"&GPU";
+			this->GPU_MenuItem->Click += gcnew System::EventHandler(this, &Form1::GPU_MenuItem_Click);
 			// 
 			// helpToolStripMenuItem
 			// 
@@ -444,13 +486,6 @@ namespace SDF {
 			this->LBL_Filename->Size = System::Drawing::Size(49, 13);
 			this->LBL_Filename->TabIndex = 0;
 			this->LBL_Filename->Text = L"Filename";
-			// 
-			// exportToolStripMenuItem
-			// 
-			this->exportToolStripMenuItem->Name = L"exportToolStripMenuItem";
-			this->exportToolStripMenuItem->Size = System::Drawing::Size(152, 22);
-			this->exportToolStripMenuItem->Text = L"&Export";
-			this->exportToolStripMenuItem->Click += gcnew System::EventHandler(this, &Form1::exportToolStripMenuItem_Click);
 			// 
 			// Form1
 			// 
@@ -617,7 +652,7 @@ namespace SDF {
 		SetCheckedDrawMode(2);
 		MController->setDrawMode(2);
 		MController->logInfo("Compute SDF");
-		MController->ComputeSDF();
+		MController->ComputeSDF(GPU_MenuItem->Checked);
 		TB_Status->Text = "SDF Computed";
 
 		timer1->Enabled = true;
@@ -645,6 +680,16 @@ namespace SDF {
 		delete [] values1;
 		delete [] values2;
 		timer1->Enabled = true;
+	}
+	private: System::Void GPU_MenuItem_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		GPU_MenuItem->Checked = true;
+		CPU_MenuItem->Checked = false;
+	}
+	private: System::Void CPU_MenuItem_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		CPU_MenuItem->Checked = true;
+		GPU_MenuItem->Checked = false;
 	}
 };
 }

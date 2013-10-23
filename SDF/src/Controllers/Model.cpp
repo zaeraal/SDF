@@ -52,7 +52,7 @@ namespace ModelController
 	// nacita subor
 	void CModel::LoadFile(std::string Filename)
 	{
-		time_t timer1 = time(NULL);
+		int ticks1 = GetTickCount();
 		ResetSettings();
 
 		// ak znovu nacitavame, premaz povodne udaje
@@ -73,30 +73,32 @@ namespace ModelController
 		SDF_control = NULL;
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
-		time_t timer2 = time(NULL);
+		int ticks2 = GetTickCount();
 
 		Assimp->Import3DFromFile(Filename);
 
-		time_t timer3 = time(NULL);
+		int ticks3 = GetTickCount();
 		Assimp->LoadData(triangles, points);
 		loaded = true;
 
-		time_t timer4 = time(NULL);
+		int ticks4 = GetTickCount();
 		ComputeBoundary();
 		CreateOctree();
-		time_t timer5 = time(NULL);
+
+		int ticks5 = GetTickCount();
 
 		SetColors();
 		ComputeSusedov();
+		AssignNumber();
 
-		time_t timer6 = time(NULL);
+		int ticks6 = GetTickCount();
 
-		logInfo(MarshalString("Vycistenie starych zaznamov: " + (timer2 - timer1)+ "s"));
-		logInfo(MarshalString("Nacitanie modelu do Assimpu: " + (timer3 - timer2)+ "s"));
-		logInfo(MarshalString("Nacitanie Assimpu do mojich objektov: " + (timer4 - timer3)+ "s"));
-		logInfo(MarshalString("Vytvorenie Octree: " + (timer5 - timer4)+ "s"));
-		logInfo(MarshalString("Vytvorenie susedov: " + (timer6 - timer5)+ "s"));
-		logInfo(MarshalString("Celkovy cas nacitania: " + (timer6 - timer1)+ "s"));
+		logInfo(MarshalString("Vycistenie starych zaznamov: " + (ticks2 - ticks1)+ "ms"));
+		logInfo(MarshalString("Nacitanie modelu do Assimpu: " + (ticks3 - ticks2)+ "ms"));
+		logInfo(MarshalString("Nacitanie Assimpu do mojich objektov: " + (ticks4 - ticks3)+ "ms"));
+		logInfo(MarshalString("Vytvorenie Octree: " + (ticks5 - ticks4)+ "ms"));
+		logInfo(MarshalString("Vytvorenie susedov: " + (ticks6 - ticks5)+ "ms"));
+		logInfo(MarshalString("Celkovy cas nacitania: " + (ticks6 - ticks1)+ "ms"));
 	}
 
 	// nacita priamo Assimp
@@ -131,6 +133,7 @@ namespace ModelController
 		CreateOctree();
 		SetColors();
 		ComputeSusedov();
+		AssignNumber();
 	}
 
 	/*float CModel::GetSDF(const struct aiFace* face, bool smoothed)
@@ -187,6 +190,27 @@ namespace ModelController
 		b_size = 0.0;
 		b_sf = 1.0;
 		b_max = 0.0;
+	}
+
+	// priradi poradie
+	void CModel::AssignNumber()
+	{
+		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
+		int pocet = 0;
+		while(tmp1 != NULL)
+		{
+			tmp1->data->number = pocet;
+			tmp1 = tmp1->next;
+			pocet++;
+		}
+		LinkedList<Face>::Cell<Face>* tmp2 = triangles->start;
+		pocet = 0;
+		while(tmp2 != NULL)
+		{
+			tmp2->data->number = pocet;
+			tmp2 = tmp2->next;
+			pocet++;
+		}
 	}
 
 	// vypocita rozmery modelu
@@ -595,8 +619,11 @@ namespace ModelController
 			}
 		}
 	}
-	void CModel::ComputeSDF()
+	void CModel::ComputeSDF(bool on_GPU)
 	{
-		SDF_control->Compute(triangles, m_root);
+		if(on_GPU)
+			SDF_control->ComputeOpenCL(points, triangles, m_root);
+		else
+			SDF_control->Compute(triangles, m_root);
 	}
 }

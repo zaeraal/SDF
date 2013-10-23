@@ -34,3 +34,6 @@
 #include "assimp/Scene.h"
 #include "assimp/DefaultLogger.hpp"
 #include "assimp/LogStream.hpp"
+
+// Opencl
+#include "CL/opencl.h"
