@@ -21,7 +21,7 @@ namespace SDFController
 	{
 		diagonal = dia;
 		loggger = logg;
-		prealocated_space = 1;
+		prealocated_space = 100;
 		fc_list = new LinkedList<Face>();
 		fc_list->Preallocate(prealocated_space);
 		oc_list = new LinkedList<Octree>();
