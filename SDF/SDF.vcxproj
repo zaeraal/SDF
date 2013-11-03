@@ -133,6 +133,7 @@
     <ClInclude Include="src\Controllers\SDFController.h" />
     <ClInclude Include="src\Helpers\MathHelper.h" />
     <ClInclude Include="src\Helpers\StringHelper.h" />
+    <ClInclude Include="src\Structures\Generic\HashTable.h" />
     <ClInclude Include="src\Structures\Generic\LinkedList.h" />
     <ClInclude Include="src\Structures\Math\Mat4.h" />
     <ClInclude Include="src\Structures\Math\Vector4.h" />

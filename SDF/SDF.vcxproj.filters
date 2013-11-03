@@ -167,6 +167,9 @@
     <ClInclude Include="OpenCLDebug.h">
       <Filter>Header Files\Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="src\Structures\Generic\HashTable.h">
+      <Filter>Header Files\Structures\Generic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc">

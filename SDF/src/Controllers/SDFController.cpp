@@ -22,8 +22,9 @@ namespace SDFController
 		diagonal = dia;
 		loggger = logg;
 		prealocated_space = 100;
-		fc_list = new LinkedList<Face>();
-		fc_list->Preallocate(prealocated_space);
+		/*fc_list = new LinkedList<Face>();
+		fc_list->Preallocate(prealocated_space);*/
+		fc_list = new HashTable<Face>(prealocated_space * 1);
 		oc_list = new LinkedList<Octree>();
 		oc_list->Preallocate(100);
 		kernel_size = 1;
@@ -86,8 +87,8 @@ namespace SDFController
 		float theta = 0.0f;
 		bool intersected = false;
 
-		LinkedList<Face>* face_list = NULL;
-		LinkedList<Face>::Cell<Face>* intersected_face = NULL;
+		HashTable<Face>* face_list = NULL;
+		Face** intersected_face = NULL;
 		//------------------prealocated variables------------------
 
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
@@ -107,30 +108,30 @@ namespace SDFController
 
 				fc_list->Clear();
 				oc_list->Clear();
-				fc_list->InsertToStart(current_face->data);
+				//fc_list->InsertToStart(current_face->data);
+				fc_list->Insert(current_face->data);
 				face_list = GetFaceList(triangles, root, current_face->data->center, ray);
-				face_list->DeleteFirst();
+				face_list->Delete(current_face->data);
 
 				intersected_face = face_list->start;
-				while(intersected_face != NULL)
+				if(face_list->GetSize() > 0)
 				{
-					/*if(current_face == intersected_face)
-					{
-						intersected_face = intersected_face->next;
-						continue;
-					}*/
-
-					dist2 = FLOAT_MAX;
-					intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face->data->v[0]->P, intersected_face->data->v[1]->P, intersected_face->data->v[2]->P, dist2);
-					if(intersected == true)
-					{
-						theta = acos( (ray * (current_face->data->normal * (-1))) / (ray.Length() * current_face->data->normal.Length()) );
-						theta = theta * float(180.0 / M_PI);
-						//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
-						if((theta < 90.0f) && (dist2 < dist))
-							dist = dist2;
+					for(unsigned int idx = 0; idx < face_list->prealocated; idx++)
+					{				
+						if(intersected_face[idx] == NULL)
+							continue;
+						dist2 = FLOAT_MAX;
+						intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face[idx]->v[0]->P, intersected_face[idx]->v[1]->P, intersected_face[idx]->v[2]->P, dist2);
+						if(intersected == true)
+						{
+							theta = acos( (ray * (current_face->data->normal * (-1))) / (ray.Length() * current_face->data->normal.Length()) );
+							theta = theta * float(180.0 / M_PI);
+							//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
+							if((theta < 90.0f) && (dist2 < dist))
+								dist = dist2;
+						}
+						//intersected_face = intersected_face->next;
 					}
-					intersected_face = intersected_face->next;
 				}
 				if(dist < (FLOAT_MAX - 1.0f))
 				{
@@ -329,6 +330,7 @@ namespace SDFController
 		int ticks5 = GetTickCount();
 		pocet = 0;
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		Face** tmp_faces = NULL;
 		while(current_face != NULL)
 		{
 			unsigned int kernel_num = (unsigned int)(pocet / n_triangles_per_kernel);
@@ -353,18 +355,25 @@ namespace SDFController
 
 				fc_list->Clear();
 				oc_list->Clear();
-				fc_list->InsertToStart(current_face->data);
-				LinkedList<Face>* face_list = GetFaceList(triangles, root, current_face->data->center, ray);
-				face_list->DeleteFirst();
+				//fc_list->InsertToStart(current_face->data);
+				fc_list->Insert(current_face->data);
+				HashTable<Face>* face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				face_list->Delete(current_face->data);
 
-				tmp_face = face_list->start;
+				tmp_faces = face_list->start;
 				unsigned int c_pocet = 0;
-				while(tmp_face != NULL)
+				if(face_list->GetSize() > 0)
 				{
-					c_targets[kernel_num][c_pocet+(i+(n_rays*in_kernel_num))*n_prealloc] = tmp_face->data->number + 1;		// naschval posunute
-					tmp_face = tmp_face->next;
-					c_pocet++;
-					if(c_pocet == 100) break;
+					for(unsigned int idx = 0; idx < face_list->prealocated; idx++)
+					{	
+						if(tmp_faces[idx] != NULL)
+						{
+							c_targets[kernel_num][c_pocet+(i+(n_rays*in_kernel_num))*n_prealloc] = tmp_faces[idx]->number + 1;		// naschval posunute
+							//tmp_face = tmp_face->next;
+							c_pocet++;
+							if(c_pocet == prealocated_space) break;
+						}
+					}
 				}
 			}
 			pocet = pocet + 1;
@@ -564,13 +573,13 @@ namespace SDFController
 		tmp->diameter->Smooth(_values, _weights);
 	}
 
-	LinkedList<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray)
+	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray)
 	{
-		if (root == NULL)
-			return triangles;
+		/*if (root == NULL)
+			return triangles;*/
 
 		LinkedList<Octree>* octrees = oc_list;
-		LinkedList<Face>* faces = fc_list;
+		HashTable<Face>* faces = fc_list;
 		//octrees->Clear();
 		//faces->Clear();
 		//center = center - (ray * diagonal);						// hack
@@ -583,9 +592,13 @@ namespace SDFController
 		{
 			for(unsigned int i = 0; i < tmp->data->count; i++)
 			{
-				if(!faces->Contains(tmp->data->triangles[i]))
-					faces->InsertToEnd(tmp->data->triangles[i]);
+				if(faces->GetSize() >= prealocated_space)
+					break;
+				//if(!faces->Contains(tmp->data->triangles[i]))
+				faces->Insert(tmp->data->triangles[i]);
 			}
+			if(faces->GetSize() >= prealocated_space)
+				break;
 			tmp = tmp->next;
 		}
 		//delete octrees;								// bez prealokovania

@@ -2,7 +2,7 @@
 #pragma once
 #include "Assimp.h"
 #include "Octree.h"
-
+#include "HashTable.h"
 
 namespace SDFController
 {
@@ -19,7 +19,7 @@ namespace SDFController
 		void ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root);
 		float* ComputeGaussianKernel(int radius);
 		void Smooth(Face* tmp, float* kernel, int kernel_size);
-		LinkedList<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray);
+		HashTable<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray);
 		void ComputeTNB(Face* tmp, Vector4& tang, Vector4& norm, Vector4& binor);
 		int first_node(float tx0, float ty0, float tz0, float txm, float tym, float tzm);
 		int new_node(float txm, int x, float tym, int y, float tzm, int z);
@@ -31,7 +31,8 @@ namespace SDFController
 		float diagonal;
 		unsigned char a;					// for octree traveersal
 		CAssimp* loggger;
-		LinkedList<Face>* fc_list;			// prealokovany list facov
+		HashTable<Face>* fc_list;			// hashovacia tabulka facov
+		//LinkedList<Face>* fc_list;			// prealokovany list facov
 		LinkedList<Octree>* oc_list;		// prealokovany list octree
 		int kernel_size;					// velkost gaussianu pri vyhladeni
 		LinkedList<Face>** gauss_sus;
