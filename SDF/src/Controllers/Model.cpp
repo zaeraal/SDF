@@ -275,7 +275,7 @@ namespace ModelController
 		unsigned int siz = triangles->GetSize();
 		if(siz > 0)
 		{
-			Face** tria = new Face* [siz];
+			/*Face** tria = new Face* [siz];
 			LinkedList<Face>::Cell<Face>* tmp2 = triangles->start;
 			int i = 0;
 			while(tmp2 != NULL)
@@ -284,7 +284,21 @@ namespace ModelController
 				tmp2 = tmp2->next;
 				i++;
 			}
-			m_root->Build(tria, siz);
+			m_root->Build(tria, siz);*/
+			Face** tria = new Face* [siz];
+			unsigned int* mtria = new unsigned int [siz];
+			LinkedList<Face>::Cell<Face>* tmp2 = triangles->start;
+			int i = 0;
+			while(tmp2 != NULL)
+			{
+				tria[i] = tmp2->data;
+				mtria[i] = 0;
+				tmp2 = tmp2->next;
+				i++;
+			}
+			m_root->Build2(tria, mtria, 0, siz);
+			delete [] tria;
+			delete mtria;
 		}
 		else
 			m_root->Build(NULL, 0);

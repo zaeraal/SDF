@@ -92,6 +92,9 @@ namespace SDFController
 		//------------------prealocated variables------------------
 
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		int min_tri = 99999;
+		int max_tri = 0;
+		float avg = 0;
 		while(current_face != NULL)
 		{
 			// vypocet TNB vektorov a matice
@@ -112,6 +115,13 @@ namespace SDFController
 				fc_list->Insert(current_face->data);
 				face_list = GetFaceList(triangles, root, current_face->data->center, ray);
 				face_list->Delete(current_face->data);
+
+				int sizi = face_list->GetSize();
+				if(sizi < min_tri)
+					min_tri = sizi;
+				if(sizi > max_tri)
+					max_tri = sizi;
+				avg += sizi;
 
 				intersected_face = face_list->start;
 				if(face_list->GetSize() > 0)
@@ -180,6 +190,10 @@ namespace SDFController
 		//loggger->logInfo(MarshalString("pocet: " + counter));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+		avg = avg / (triangles->GetSize() * n_rays);
+		loggger->logInfo(MarshalString("min trianglov na luc: " + min_tri));
+		loggger->logInfo(MarshalString("max trianglov na luc: " + max_tri));
+		loggger->logInfo(MarshalString("avg trianglov na luc: " + avg));
 	}
 
 	// pocitanie funkcie pre vsetky trojuholniky v OpenCL
@@ -577,6 +591,8 @@ namespace SDFController
 	{
 		/*if (root == NULL)
 			return triangles;*/
+		if (root == NULL)
+			return NULL;
 
 		LinkedList<Octree>* octrees = oc_list;
 		HashTable<Face>* faces = fc_list;
@@ -669,7 +685,8 @@ namespace SDFController
 		if(node->isLeaf)
 		{
 			//loggger->logInfo("Reached leaf node");
-			octrees->InsertToEnd(node);
+			if(node->count > 0)
+				octrees->InsertToEnd(node);
 			return;
 		}
 		

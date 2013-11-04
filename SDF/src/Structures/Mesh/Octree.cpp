@@ -15,6 +15,33 @@ namespace MeshStructures
 	};
 	Octree::Octree(const int dep, const float siz, Vector4 ori, Octree* par)
 	{
+		// Front half			Back half (viewed from front)
+		// -----------------	-----------------
+		// |       |       |	|       |       |
+		// |   2   |   6   |	|   3   |   7   |
+		// |       |       |	|       |       |
+		// -----------------	-----------------
+		// |       |       |	|       |       |
+		// |   0   |   4   |	|   1   |   5   |
+		// |       |       |	|       |       |
+		// -----------------	-----------------
+		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
+		// tabulka offsetov
+		float Table2[8][3] =
+        {
+            {-1.0, -1.0, -1.0},
+            {-1.0, -1.0, +1.0},
+            {-1.0, +1.0, -1.0},
+            {-1.0, +1.0, +1.0},
+            {+1.0, -1.0, -1.0},
+            {+1.0, -1.0, +1.0},
+            {+1.0, +1.0, -1.0},
+            {+1.0, +1.0, +1.0}
+        };
+		for(int i = 0; i < 8; i++)
+			for(int j = 0; j < 3; j++)
+				Table[i][j] = Table2[i][j];
+
 		isLeaf = true;
 		depth = dep;
 		size = siz;
@@ -46,29 +73,6 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
-		// Front half			Back half (viewed from front)
-		// -----------------	-----------------
-		// |       |       |	|       |       |
-		// |   2   |   6   |	|   3   |   7   |
-		// |       |       |	|       |       |
-		// -----------------	-----------------
-		// |       |       |	|       |       |
-		// |   0   |   4   |	|   1   |   5   |
-		// |       |       |	|       |       |
-		// -----------------	-----------------
-		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
-		// tabulka offsetov
-		float Table[8][3] =
-        {
-            {-1.0, -1.0, -1.0},
-            {-1.0, -1.0, +1.0},
-            {-1.0, +1.0, -1.0},
-            {-1.0, +1.0, +1.0},
-            {+1.0, -1.0, -1.0},
-            {+1.0, -1.0, +1.0},
-            {+1.0, +1.0, -1.0},
-            {+1.0, +1.0, +1.0}
-        };
 		if((depth >= max_depth) || (length <= min_count))
 		{
 			count = length;
@@ -145,19 +149,6 @@ namespace MeshStructures
 					}
 				}
 			}
-			/*
-			// old tabulka offsetov
-			float Table[8][3] =
-            {
-                {-1.0, -1.0, -1.0},
-                {+1.0, -1.0, -1.0},
-                {-1.0, +1.0, -1.0},
-                {+1.0, +1.0, -1.0},
-                {-1.0, -1.0, +1.0},
-                {+1.0, -1.0, +1.0},
-                {-1.0, +1.0, +1.0},
-                {+1.0, +1.0, +1.0}
-            };*/
 
 			// vytvor octree a uloz ich tam
 			for(int i = 0; i < 8; i++)
@@ -196,6 +187,165 @@ namespace MeshStructures
 		}
 	}
 
+	void Octree::Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length)
+	{
+		if(length == 0)
+			return;
+
+		if((depth >= max_depth) || (length <= min_count))
+		{
+			count = length;
+			triangles = new Face* [length];
+			for(unsigned int i = start; i < start+length; i++)
+				triangles[i - start] = tria[i];
+			isLeaf = true;
+		}
+		else
+		{
+			isLeaf = false;
+			count = 0;
+			int new_depth = depth + 1;
+			float new_size = size / 2.0f;
+
+			int tabulka[8][2];			// start, size
+			for(unsigned int i = 0; i < 8; i++)
+			{
+				tabulka[i][0] = start;
+				tabulka[i][1] = 0;
+			}
+			// zisti kam patria trojuholniky
+			unsigned int cislo = (unsigned int)pow(2, depth);
+			for(unsigned int i = start; i < start+length; i++)
+			{
+				byte code1 = GetCode(tria[i]->v[0]->P);
+				byte code2 = GetCode(tria[i]->v[1]->P);
+				byte code3 = GetCode(tria[i]->v[2]->P);
+				byte code = FLAG8;
+
+				if((code1 == code2) && (code1 == code3))
+				{
+					code = code1;
+					InserToEnd(tria, mtria, i, code, tabulka);
+				}
+				else
+				{
+					for(byte j = 0; j < 8; j++)
+					{
+						Vector4 tmpv = Vector4(origin.X + new_size*Table[j][0],
+											   origin.Y + new_size*Table[j][1],
+											   origin.Z + new_size*Table[j][2]);
+						if(triBoxOverlap(tmpv, new_size, tria[i]->v[0]->P, tria[i]->v[1]->P, tria[i]->v[2]->P))
+						{
+							code = j;
+							mtria[i] += cislo;
+							InserToEnd(tria, mtria, i, code, tabulka);
+							break;
+						}
+					}
+				}
+			}
+
+			// vytvor octree a uloz ich tam
+			for(unsigned int i = 0; i < 8; i++)
+			{
+				Vector4 tmpv = Vector4(origin.X + new_size*Table[i][0],
+									   origin.Y + new_size*Table[i][1],
+									   origin.Z + new_size*Table[i][2]);
+				son[i] = new Octree(new_depth, new_size, tmpv, this);
+				if(i > 0)
+					Check(tria, mtria, i, tabulka, new_size, cislo);
+
+				son[i]->Build2(tria, mtria, tabulka[i][0], tabulka[i][1]);
+			}
+		}
+	}
+
+	void Octree::InserToEnd(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2])
+	{
+		Face* ftmp = tria[tabulka[code][0]];
+		unsigned int itmp = mtria[tabulka[code][0]];
+
+		tria[tabulka[code][0]] = tria[idx];
+		mtria[tabulka[code][0]] = mtria[idx];
+
+		tria[idx] = ftmp;
+		mtria[idx] = itmp;
+
+		tabulka[code][1] += 1;
+		FwdMove(tria, mtria, idx, code+1, tabulka);
+	}
+
+	void Octree::InserToStart(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2])
+	{
+		if(tabulka[code][0] == idx)
+			return;
+
+		tabulka[code][1] += 1;
+		tabulka[code][0] -= 1;
+
+		Face* ftmp = tria[tabulka[code][0]];
+		unsigned int itmp = mtria[tabulka[code][0]];
+
+		tria[tabulka[code][0]] = tria[idx];
+		mtria[tabulka[code][0]] = mtria[idx];
+
+		tria[idx] = ftmp;
+		mtria[idx] = itmp;
+
+		tabulka[code-1][1] -= 1;
+		//BwdMove(tria, mtria, idx, code+1, tabulka);
+	}
+
+	void Octree::FwdMove(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2])
+	{
+		if(code >= 8)
+			return;
+
+		if(tabulka[code][1] > 0)
+		{
+			Face* ftmp = tria[tabulka[code][0]];
+			unsigned int itmp = mtria[tabulka[code][0]];
+
+			tria[tabulka[code][0]] = tria[idx];
+			mtria[tabulka[code][0]] = mtria[idx];
+
+			tria[idx] = ftmp;
+			mtria[idx] = itmp;
+		}
+		tabulka[code][0] += 1;
+		FwdMove(tria, mtria, idx, code+1, tabulka);
+	}
+
+	void Octree::Check(Face** tria, unsigned int* mtria, unsigned int idx, int (&tabulka)[8][2], float new_size, unsigned int cislo)
+	{
+		int length = 0;
+		for(unsigned int j = 0; j < idx; j++)
+		{
+			length += tabulka[j][1];
+		}
+
+		// zisti kam patria trojuholniky
+		int i = tabulka[0][0];
+		int koniec = tabulka[0][0]+length;
+		while(i < koniec)
+		{
+			// musime skontrolovat
+			if(mtria[i] & cislo)
+			{
+				Vector4 tmpv = Vector4(origin.X + new_size*Table[idx][0],
+										origin.Y + new_size*Table[idx][1],
+										origin.Z + new_size*Table[idx][2]);
+				if(triBoxOverlap(tmpv, new_size, tria[i]->v[0]->P, tria[i]->v[1]->P, tria[i]->v[2]->P))
+				{
+					InserToStart(tria, mtria, i, idx, tabulka);
+					i--;
+					koniec--;
+				}
+			}
+			i++;
+		}
+	}
+
 	// vrati poziciu v octree
 	byte Octree::GetCode(const Vector4 pt)
 	{
@@ -221,17 +371,6 @@ namespace MeshStructures
 			return;
 
 		glBegin(GL_LINES);
-			float Table[8][3] =
-			{
-				{-1.0, -1.0, -1.0},
-				{-1.0, -1.0, +1.0},
-				{-1.0, +1.0, -1.0},
-				{-1.0, +1.0, +1.0},
-				{+1.0, -1.0, -1.0},
-				{+1.0, -1.0, +1.0},
-				{+1.0, +1.0, -1.0},
-				{+1.0, +1.0, +1.0}
-			};
 			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
 			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
 
