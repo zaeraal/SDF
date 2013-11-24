@@ -56,7 +56,7 @@ namespace VCGFileHandler
 				tmp_points[i]->quality->Normalize(q_min, q_max, 4.0);
 			}
 			Nastavenia->DEBUG_Min_SDF = q_min;
-			Nastavenia->DEBUG_Min_SDF = q_max;
+			Nastavenia->DEBUG_Max_SDF = q_max;
 		}
 
 		i = 0;
