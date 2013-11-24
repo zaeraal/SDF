@@ -799,7 +799,7 @@ namespace SDF {
 			this->TB_Radius->RightToLeft = System::Windows::Forms::RightToLeft::No;
 			this->TB_Radius->Size = System::Drawing::Size(136, 20);
 			this->TB_Radius->TabIndex = 15;
-			this->TB_Radius->Text = L"3";
+			this->TB_Radius->Text = L"2";
 			this->TB_Radius->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			this->TB_Radius->TextChanged += gcnew System::EventHandler(this, &Form1::TB_Radius_TextChanged);
 			// 
@@ -1202,6 +1202,7 @@ namespace SDF {
 			case VISUAL_PICKING:	TSMI_Picking_Hodnoty->Checked = true; break;
 			default: break;
 		}
+		Nastavenia->VISUAL_State = d_mode;
 	}
 	private: System::Void MyThreadProcedure()  
 	{ 
@@ -1304,8 +1305,8 @@ namespace SDF {
 		Double value = 0;
 		if(System::Double::TryParse(TB_Cone->Text, value))
 		{
-			if(value < 1.0)
-				value = 1.0;
+			if(value < 2.0)
+				value = 2.0;
 			if(value > 360.0)
 				value = 360.0;
 			Nastavenia->SDF_Cone = (float)value;
@@ -1328,7 +1329,7 @@ namespace SDF {
 		}
 		else
 		{
-			Nastavenia->SDF_Smoothing_Radius = 3;
+			Nastavenia->SDF_Smoothing_Radius = 2;
 		}
 	}
 	private: System::Void CHB_Reverted_Rays_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
@@ -1499,6 +1500,10 @@ namespace SDF {
 			this->TB_Max_SDF->Text = "0";
 			this->showToolStripMenuItem->Enabled = true;
 			this->toolsToolStripMenuItem->Enabled = true;
+			Nastavenia->DEBUG_Min_SDF = 0;
+			Nastavenia->DEBUG_Max_SDF = 0;
+			this->TB_Min_SDF->Text = "0";
+			this->TB_Max_SDF->Text = "0";
 
 			MController->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
 			TB_Status->Text = "File Loaded";
@@ -1597,6 +1602,9 @@ namespace SDF {
 	}
 	private: System::Void TSMI_Compute_SDF_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		progressBar->Value = 0;
+		TB_Min_SDF->Text = "0";
+		TB_Max_SDF->Text = "0";
 		// bezi v threade aby som mohol updatovat popis
 		MController->logInfo("Compute SDF");
 		myThread = gcnew Thread(gcnew ThreadStart(this,&Form1::MyThreadProcedure));  

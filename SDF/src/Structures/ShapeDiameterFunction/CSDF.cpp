@@ -12,6 +12,8 @@ namespace SDFStructures
 		smoothed = 0.0;
 		normalized1 = 0.0;
 		normalized2 = 0.0;
+		normalized3 = 0.0;
+		normalized4 = 0.0;
 	}
 
 	//destruktor
@@ -102,15 +104,22 @@ namespace SDFStructures
 	}
 	void CSDF::Normalize(float min, float max, float alfa)
 	{
-		normalized1 = Normalize_(0, FLOAT_MAX, alfa);
-		normalized2 = Normalize_(min, FLOAT_MAX, alfa);
+		float maximum = FLOAT_MAX;
+		if(max < 10000.0f)	maximum = 10000.0f;
+		if(max < 1000.0f)	maximum = 1000.0f;
+		if(max < 100.0f)	maximum = 100.0f;
+		if(max < 10.0f)		maximum = 10.0f;
+		if(max < 1.0f)		maximum = 1.0f;
+
+		normalized1 = Normalize_(0, maximum, alfa);
+		normalized2 = Normalize_(min, maximum, alfa);
 		normalized3 = Normalize_(0, max, alfa);
 		normalized4 = Normalize_(min, max, alfa);
 	}
 
 	float CSDF::Normalize_(float min, float max, float alfa)
 	{
-		return log(((value - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
+		return log(((smoothed - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
 	}
 
 	void CSDF::Smooth(const std::vector<float> values, const std::vector<float> weights)

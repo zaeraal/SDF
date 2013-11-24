@@ -27,21 +27,7 @@ namespace SDFController
 		fc_list = new HashTable<Face>(prealocated_space * 1);
 		oc_list = new LinkedList<Octree>();
 		oc_list->Preallocate(100);
-		kernel_size = 1;
-		gauss_sus = new LinkedList<Face>*[kernel_size + 1];
-		// preallocate smoothing arrays
-		for(int i=0; i <= kernel_size; i++)				// bacha na posunutie
-		{
-			gauss_sus[i] = new LinkedList<Face>();
-			switch(i)
-			{
-				case 0: gauss_sus[i]->Preallocate(1); break;
-				case 1: gauss_sus[i]->Preallocate(10); break;
-				case 2: gauss_sus[i]->Preallocate(100); break;
-				default: gauss_sus[i]->Preallocate(1000); break;
-			}
-			
-		}
+		InitKernel();
 		//loggger->logInfo(MarshalString("diagonal: " + diagonal));
 	}
 
@@ -51,11 +37,7 @@ namespace SDFController
 		delete fc_list;
 		delete oc_list;
 
-		for(int i=0; i <= kernel_size; i++)
-		{
-			delete gauss_sus[i];
-		}
-		delete [] gauss_sus;
+		EraseKernel();
 	}
 		
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
@@ -65,8 +47,8 @@ namespace SDFController
 		float min = FLOAT_MAX;
 		float max = 0.0;
 		
-		unsigned int n_rays = 30;
-		float angle = 120.0f;
+		const unsigned int n_rays = Nastavenia->SDF_Rays;
+		const float angle = Nastavenia->SDF_Cone;
 		unsigned int counter = 0;
 
 		//------------------prealocated variables------------------
@@ -77,9 +59,12 @@ namespace SDFController
 
 		float* rndy = new float[n_rays];
 		float* rndx = new float[n_rays];
-		UniformPointsOnSphere(rndx, rndy);
+		if(Nastavenia->SDF_Distribution == true)
+			UniformPointsOnSphere(rndx, rndy);
+		else
+			RandomPointsOnSphere(rndx, rndy);
 
-		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
+		for(unsigned int i = 0; i < n_rays; i++)
 		{
 			weights.push_back(180.0f - rndy[i]);
 		}
@@ -172,6 +157,8 @@ namespace SDFController
 		int ticks2 = GetTickCount();
 		// postprocessing - smoothing and normalization
 		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		EraseKernel();
+		InitKernel();
 		float* kernel = ComputeGaussianKernel(kernel_size);
 		current_face = triangles->start;
 		while(current_face != NULL)
@@ -183,6 +170,8 @@ namespace SDFController
 
 			current_face = current_face->next;
 		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
 		delete kernel;
 		int ticks3 = GetTickCount();
 
@@ -227,16 +216,16 @@ namespace SDFController
 		//-------------------------------------------
 
 		// IMPORTANT!! Variables for memory allocation
-		size_t n_workitems = OpenCLko->num_1D_work_items / 4;
+		size_t n_workitems = (size_t)(OpenCLko->num_1D_work_items * Nastavenia->GPU_Work_Items);
 		if(OpenCLko->num_ND_work_items[0] < n_workitems)
-			n_workitems = OpenCLko->num_ND_work_items[0] / 4;
+			n_workitems = (size_t)(OpenCLko->num_ND_work_items[0] * Nastavenia->GPU_Work_Items);
 
-		size_t n_workgroups = OpenCLko->num_cores * 2;
+		size_t n_workgroups = (size_t)(OpenCLko->num_cores * Nastavenia->GPU_Work_Groups);
 		
 		OpenCLko->global = n_workgroups * n_workitems;
 		OpenCLko->local = n_workitems;
 
-		const unsigned int n_rays = 30;
+		const unsigned int n_rays = Nastavenia->SDF_Rays;
 		const unsigned int n_prealloc = prealocated_space;
 
 		unsigned int n_triangles = triangles->GetSize();
@@ -293,7 +282,7 @@ namespace SDFController
 		//-------------------------------------------
 
 		//------------------prealocated variables------------------	
-		float angle = 120.0f;
+		const float angle = Nastavenia->SDF_Cone;
 		std::vector<float> weights;
 
 		Vector4 tangens, normal, binormal;
@@ -301,7 +290,10 @@ namespace SDFController
 
 		float* rndy = new float[n_rays];
 		float* rndx = new float[n_rays];
-		UniformPointsOnSphere(rndx, rndy);
+		if(Nastavenia->SDF_Distribution == true)
+			UniformPointsOnSphere(rndx, rndy);
+		else
+			RandomPointsOnSphere(rndx, rndy);
 
 		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
 		{
@@ -458,6 +450,8 @@ namespace SDFController
 
 		// postprocessing - smoothing and normalization
 		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		EraseKernel();
+		InitKernel();
 		float* kernel = ComputeGaussianKernel(kernel_size);
 		current_face = triangles->start;
 		while(current_face != NULL)
@@ -469,6 +463,8 @@ namespace SDFController
 
 			current_face = current_face->next;
 		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
 		delete kernel;
 		int ticks9 = GetTickCount();
 
@@ -510,6 +506,11 @@ namespace SDFController
 	float* CSDFController::ComputeGaussianKernel(int radius)
 	{
 		float* matrix = new float [radius*2+1];
+		if(radius == 0)
+		{
+			matrix[0] = 1.0f;
+			return matrix;
+		}
 		float sigma = (float)radius/2.0f;
 		float norm = 1.0f / float(sqrt(2*M_PI) * sigma);
 		float coeff = 2*sigma*sigma;
@@ -967,7 +968,32 @@ namespace SDFController
 				rndy[i] = 0.5;
 		}
 	}
-
+	void CSDFController::InitKernel()
+	{
+		kernel_size = Nastavenia->SDF_Smoothing_Radius;
+		gauss_sus = new LinkedList<Face>*[kernel_size + 1];
+		// preallocate smoothing arrays
+		for(int i=0; i <= kernel_size; i++)				// bacha na posunutie
+		{
+			gauss_sus[i] = new LinkedList<Face>();
+			switch(i)
+			{
+				case 0: gauss_sus[i]->Preallocate(1); break;
+				case 1: gauss_sus[i]->Preallocate(10); break;
+				case 2: gauss_sus[i]->Preallocate(100); break;
+				default: gauss_sus[i]->Preallocate(1000); break;
+			}
+		}
+	}
+	void CSDFController::EraseKernel()
+	{
+		// delete smoothing arrays
+		for(int i=0; i <= kernel_size; i++)
+		{
+			delete gauss_sus[i];
+		}
+		delete [] gauss_sus;
+	}
 /*int __float_as_int(float in)
 {
      union fi { int i; float f; } conv;

@@ -7,9 +7,6 @@ namespace MeshStructures
 	using namespace std;
 	using namespace GenericStructures;
 
-	const int max_depth = 8;
-	const int min_count = 2;
-
 	public class Octree
 	{
 	public:
@@ -26,13 +23,14 @@ namespace MeshStructures
 		bool isLeaf;
 		void GetBoundary(float &siz, float &x, float &y, float &z);
 		void DrawOctree(bool recursive);
+		void DrawAxes();
 
 		Octree* parent;						// otec, NULL ak sme hlavny vrchol
 		Octree** son;						// synovia
 		Face** triangles;					// nase trojuholnicky
-		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je min_count
+		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je Nastavenia->OCTREE_Threshold
 	private:
-		int depth;							// ako hlboko sme v octree, max je max_depth
+		unsigned int depth;					// ako hlboko sme v octree, max je Nastavenia->OCTREE_Depth
 		float size;							// hranica kocky
 		Vector4 origin;						// stred kocky
 		float Table[8][3];					// tabulka offsetov

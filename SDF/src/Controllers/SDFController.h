@@ -29,6 +29,8 @@ namespace SDFController
 		bool CheckError(int err, std::string extra_debug = "");
 		void UniformPointsOnSphere(float* rndx, float * rndy);
 		void RandomPointsOnSphere(float* rndx, float * rndy);
+		void InitKernel();
+		void EraseKernel();
 	private:
 		float diagonal;
 		unsigned char a;					// for octree traveersal

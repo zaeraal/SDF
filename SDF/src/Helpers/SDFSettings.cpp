@@ -9,7 +9,7 @@ CSettings::CSettings()
 	SDF_Mode = SDF_GPU;
 	SDF_Rays = 30;
 	SDF_Cone = 120.0f;
-	SDF_Smoothing_Radius = 3;
+	SDF_Smoothing_Radius = 2;
 	SDF_Revert_Rays = false;
 	SDF_Distribution = true;
 	OCTREE_Depth = 8;
@@ -20,7 +20,7 @@ CSettings::CSettings()
 	VISUAL_State = VISUAL_DEFAULT;
 	VISUAL_Octree = false;
 	VISUAL_Normals = false;
-	VISUAL_Axes = true;
+	VISUAL_Axes = false;
 	VISUAL_Points = false;
 	VISUAL_Smoothed = true;
 	VISUAL_Alpha = 255;

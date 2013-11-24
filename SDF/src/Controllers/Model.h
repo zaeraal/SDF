@@ -36,8 +36,6 @@ namespace ModelController
 		void DrawModel();
 		void ColorToRGB(int color, GLubyte &R, GLubyte &G, GLubyte &B);
 		void HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
-		void setDrawMode(int mode);
-		int getDrawMode();
 		void ProcessPick(int x, int y);
 		void ComputeSDF();
 		void TriangulatePoints();
@@ -54,7 +52,6 @@ namespace ModelController
 		LinkedList<Face>* triangles;
 		LinkedList<Vertex>* points;
 		Octree* m_root;
-		int draw_mode;						// 0 picking (default), 1 selected triangle, 2 SDF, 3 wireframe
 
 		// rozmery modelu
 		Vector4		b_stred;				// center of minN - maxN

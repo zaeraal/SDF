@@ -18,8 +18,6 @@
 #define EXIT_FAIL_LOAD			13
 #define EXIT_FAIL_READ			14
 
-//#define DEBUG_OPENCL
-
 namespace OpenCLForm
 {
 	
@@ -257,46 +255,50 @@ namespace OpenCLForm
 		err = CL_SUCCESS;
 		cl_uint n = 0;
 
-#ifndef DEBUG_OPENCL
-		err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_vertices);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_origins);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_targets);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_uint4), &c_params);
-		err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
-		if (err != CL_SUCCESS)
+		if(Nastavenia->SDF_Mode == SDF_GPU)
 		{
-			//"Error: Failed to set kernel arguments! " << err << endl;
-			return EXIT_FAIL_ARGUMENTS;
+			err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_vertices);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_origins);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_targets);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint4), &c_params);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to set kernel arguments! " << err << endl;
+				return EXIT_FAIL_ARGUMENTS;
+			}
+
+			// Execute the kernel
+			err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
+			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+			{
+				//"Error: Failed to execute kernel!"
+				return EXIT_FAIL_EXECUTE;
+			}
+
+			err = clEnqueueReadBuffer(commands, b_outputs, CL_FALSE, 0, s_outputs, c_outputs, 0, NULL, NULL );
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to read from source array!"
+				return(EXIT_FAIL_READ);//CL_OUT_OF_RESOURCES
+			}
+		}
+		else
+		{
+			debugger->SetArgSize(7);
+			debugger->SetArgValue(n++, c_triangles);
+			debugger->SetArgValue(n++, c_vertices);
+			debugger->SetArgValue(n++, c_origins);
+			debugger->SetArgValue(n++, c_rays);
+			debugger->SetArgValue(n++, c_targets);
+			debugger->SetArgValue(n++, &c_params);
+			debugger->SetArgValue(n++, c_outputs);
+
+			debugger->ExecuteKernel(global, local);
 		}
 
-		// Execute the kernel
-		err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
-		if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
-		{
-			//"Error: Failed to execute kernel!"
-			return EXIT_FAIL_EXECUTE;
-		}
-
-		err = clEnqueueReadBuffer(commands, b_outputs, CL_FALSE, 0, s_outputs, c_outputs, 0, NULL, NULL );
-		if (err != CL_SUCCESS)
-		{
-			//"Error: Failed to read from source array!"
-			return(EXIT_FAIL_READ);//CL_OUT_OF_RESOURCES
-		}
-#else
-		debugger->SetArgSize(7);
-		debugger->SetArgValue(n++, c_triangles);
-		debugger->SetArgValue(n++, c_vertices);
-		debugger->SetArgValue(n++, c_origins);
-		debugger->SetArgValue(n++, c_rays);
-		debugger->SetArgValue(n++, c_targets);
-		debugger->SetArgValue(n++, &c_params);
-		debugger->SetArgValue(n++, c_outputs);
-
-		debugger->ExecuteKernel(global, local);
-#endif
 		return EXIT_SUCCESS;
 	}
 

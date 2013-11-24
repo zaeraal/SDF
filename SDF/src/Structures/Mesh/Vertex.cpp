@@ -17,6 +17,7 @@ namespace MeshStructures
 		P = position;
 		P.W = 1.0;		// preistotu.. toto su body a teda W = 1
 		susedia = new LinkedList<void>();
+		quality = new CSDF();
 	}
 
 	// destruktor

@@ -190,9 +190,6 @@ namespace ModelController
 	void CModel::ResetSettings()
 	{
 		loaded = false;
-		draw_mode = 1;
-		show_octree = false;
-		show_normals = false;
 		selected = NULL;
 
 		b_size = 0.0;
@@ -360,17 +357,18 @@ namespace ModelController
 	// vykresli CModel
 	void CModel::DrawModel()
 	{
-		if((draw_mode == 1) || (draw_mode == 3))
+		if((Nastavenia->VISUAL_State == VISUAL_DEFAULT) || (Nastavenia->VISUAL_State == VISUAL_SDF))
 			glEnable(GL_LIGHTING);
 		else
 			glDisable(GL_LIGHTING);
 
-		if(draw_mode == 4)
+		if(Nastavenia->VISUAL_State == VISUAL_PICKING)
 			glDisable(GL_DITHER);
 		else
 			glEnable(GL_DITHER);
 
-		glColor3f(1.0f,1.0f,1.0f);							// biela farba
+		float alpha = (float)Nastavenia->VISUAL_Alpha / 255.0f;
+		glColor4f(1.0f,1.0f,1.0f, alpha);							// biela farba
 		{
 			LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 			while(tmp != NULL)
@@ -382,15 +380,15 @@ namespace ModelController
 				}
 
 				// nech vykresli selectnuty trojuholnik
-				if(draw_mode == 1)
+				if(Nastavenia->VISUAL_State == VISUAL_DEFAULT)
 				{
 					if(tmp->data == selected)
-						glColor3f(1.0f,0.5f,0.0f);		// orange
+						glColor4f(1.0f,0.5f,0.0f,alpha);		// orange
 					else
-						glColor3f(1.0f,1.0f,1.0f);		// white
+						glColor4f(1.0f,1.0f,1.0f,alpha);		// white
 				}
 				// nech zorbazi picking hodnoty
-				else if((draw_mode == 0) || (draw_mode == 4))
+				else if(Nastavenia->VISUAL_State == VISUAL_PICKING)
 				{
 					GLubyte r = 0, g = 0, b = 0;
 					ColorToRGB(tmp->data->farba, r,g,b);
@@ -398,46 +396,61 @@ namespace ModelController
 					//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
 				}
 				// nech vykresli hodnoty SDF funkcie
-				else if(draw_mode == 2)
+				else if(Nastavenia->VISUAL_State == VISUAL_SDF)
 				{
 					GLubyte r = 0, g = 0, b = 0;
-					HLSToRGB(tmp->data->quality->normalized2, r, g, b);
-					glColor3ub(r, g, b);
-				}
-
-				glBegin(draw_mode == 3 ? GL_LINE_LOOP : GL_TRIANGLES);
-					glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
-					for(unsigned int i = 0; i < 3; i++)
+					switch(Nastavenia->VISUAL_SDF_Type)
 					{
-						glVertex3d(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
+						case VISUAL_NORMALIZED_0_1: HLSToRGB(tmp->data->quality->normalized1, r, g, b); break;
+						case VISUAL_NORMALIZED_MIN_1: HLSToRGB(tmp->data->quality->normalized2, r, g, b); break;
+						case VISUAL_NORMALIZED_0_MAX: HLSToRGB(tmp->data->quality->normalized3, r, g, b); break;
+						case VISUAL_NORMALIZED_MIN_MAX: HLSToRGB(tmp->data->quality->normalized4, r, g, b); break;
+						default: break;
 					}
-				glEnd();
-				if((show_normals == true) && (draw_mode != 4))
+					glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
+				}
+				if(Nastavenia->VISUAL_State != VISUAL_NONE)
+				{
+					glBegin(Nastavenia->VISUAL_State == VISUAL_WIREFRAME ? GL_LINE_LOOP : GL_TRIANGLES);
+						glNormal3f(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
+						for(unsigned int i = 0; i < 3; i++)
+						{
+							glVertex3f(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
+						}
+					glEnd();
+				}
+				if((Nastavenia->VISUAL_Normals == true) && (Nastavenia->VISUAL_State != VISUAL_PICKING))
 				{
 					glDisable(GL_LIGHTING);
-					glColor3f(1.0f,0.0f,0.0f);		// red
+					glColor4f(1.0f,0.0f,0.0f,1.0f);		// red
 					glBegin(GL_LINES);
-						//glNormal3d(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
-						glVertex3d(tmp->data->center.X, tmp->data->center.Y, tmp->data->center.Z);
-						glVertex3d( tmp->data->normal.X * b_sf + tmp->data->center.X,
+						//glNormal3f(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
+						glVertex3f(tmp->data->center.X, tmp->data->center.Y, tmp->data->center.Z);
+						glVertex3f( tmp->data->normal.X * b_sf + tmp->data->center.X,
 									tmp->data->normal.Y * b_sf + tmp->data->center.Y,
 									tmp->data->normal.Z * b_sf + tmp->data->center.Z);
 					glEnd();
-					glColor3f(1.0f,1.0f,1.0f);		// biela farba
-					if((draw_mode == 1) || (draw_mode == 3))
+					glColor4f(1.0f,1.0f,1.0f, alpha);		// biela farba
+					if((Nastavenia->VISUAL_State == VISUAL_DEFAULT) || (Nastavenia->VISUAL_State == VISUAL_WIREFRAME))
 						glEnable(GL_LIGHTING);
 				}
 				tmp = tmp->next;
 			}
 		}
-		if(draw_mode != 4)
+		glDisable(GL_LIGHTING);
+		if(Nastavenia->VISUAL_State != VISUAL_PICKING)
 		{
-			glDisable(GL_LIGHTING);
-			glColor3f(0.5f,0.5f,0.5f);							// seda farba
-			if(show_octree == true)
+			if(Nastavenia->VISUAL_Octree == true)
+			{
+				glColor3f(0.5f,0.5f,0.5f);							// seda farba
 				m_root->DrawOctree(true);
+			}
+			if(Nastavenia->VISUAL_Axes == true)
+			{
+				m_root->DrawAxes();
+			}
 		}
-		if(selected != NULL)
+		if((selected != NULL) && (Nastavenia->VISUAL_State != VISUAL_PICKING))
 		{
 			Vector4 U = Vector4(selected->v[1]->P - selected->v[0]->P);
 			Vector4 V = Vector4(selected->v[2]->P - selected->v[0]->P);
@@ -451,54 +464,59 @@ namespace ModelController
 			Mat4 t_mat= Mat4(tangens, normal, binormal);
 			glColor3f(0.0f,1.0f,0.0f);
 			glBegin(GL_LINES);
-				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( normal.X * 5.0 + selected->center.X,
-							normal.Y * 5.0 + selected->center.Y,
-							normal.Z * 5.0 + selected->center.Z);
-				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( binormal.X * b_sf + selected->center.X,
+				glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3f( normal.X * 5.0f + selected->center.X,
+							normal.Y * 5.0f + selected->center.Y,
+							normal.Z * 5.0f + selected->center.Z);
+				glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3f( binormal.X * b_sf + selected->center.X,
 							binormal.Y * b_sf + selected->center.Y,
 							binormal.Z * b_sf + selected->center.Z);
-				glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-				glVertex3d( tangens.X * b_sf + selected->center.X,
+				glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
+				glVertex3f( tangens.X * b_sf + selected->center.X,
 							tangens.Y * b_sf + selected->center.Y,
 							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
 
 			glColor3f(0.5f,0.5f,1.0f);
 			glBegin(GL_LINES);
-				unsigned int n_rays = 30;
-				float N = (float)n_rays;
-
-				float inc = (float)M_PI * (3.0f - sqrt(5.0f));
-				float del = (360.0f / 120) * 2;
-				float off = (2.0f / N) / del;
-				for(unsigned int k = 0; k < n_rays; k++)
+				unsigned int n_rays = Nastavenia->SDF_Rays;
+				if(Nastavenia->SDF_Distribution == true)
 				{
-					float y = k * off - 1 + (off / 2.0f) * del;
-					float r = sqrt(1 - y*y);
-					float phi = k * inc;
-					Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r) * t_mat;
-					ray.Normalize();
-					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-					glVertex3d( ray.X *  b_sf + selected->center.X,
-								ray.Y *  b_sf + selected->center.Y,
-								ray.Z *  b_sf + selected->center.Z);
+					float N = (float)n_rays;
+
+					float inc = (float)M_PI * (3.0f - sqrt(5.0f));
+					float del = (360.0f / Nastavenia->SDF_Cone) * 2;
+					float off = (2.0f / N) / del;
+					for(unsigned int k = 0; k < n_rays; k++)
+					{
+						float y = k * off - 1 + (off / 2.0f) * del;
+						float r = sqrt(1 - y*y);
+						float phi = k * inc;
+						Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r) * t_mat;
+						ray.Normalize();
+						glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
+						glVertex3f( ray.X *  b_sf + selected->center.X,
+									ray.Y *  b_sf + selected->center.Y,
+									ray.Z *  b_sf + selected->center.Z);
+					}
 				}
-
-				srand (123);	
-				for(int i = 0; i < 30; i++)
+				else
 				{
-					float rndy = rand()%int(120 / 2);
-					float rndx = rand()%(360);
-					if(rndy < 0.5)
-						rndy = 0.5;
-					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
-					ray.Normalize();
-					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
-					glVertex3d( ray.X *  b_sf + selected->center.X,
-								ray.Y *  b_sf + selected->center.Y,
-								ray.Z *  b_sf + selected->center.Z);
+					srand (123);	
+					for(unsigned int i = 0; i < n_rays; i++)
+					{
+						float rndy = (float)(rand()%int(Nastavenia->SDF_Cone / 2.0f));
+						float rndx = (float)(rand()%(360));
+						if(rndy < 0.5)
+							rndy = 0.5;
+						Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
+						ray.Normalize();
+						glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
+						glVertex3f( ray.X *  b_sf + selected->center.X,
+									ray.Y *  b_sf + selected->center.Y,
+									ray.Z *  b_sf + selected->center.Z);
+					}
 				}
 			glEnd();
 
@@ -549,15 +567,6 @@ namespace ModelController
 		//logInfo(MarshalString("value: " + SDF_value + ", R: " + R + ", G: "+G+", B: "+B));
 	}
 
-	void CModel::setDrawMode(int mode)
-	{
-		draw_mode = mode;
-	}
-	int CModel::getDrawMode()
-	{
-		return draw_mode;
-	}
-
 	void CModel::ProcessPick(int x, int y)
 	{
 		GLint viewport[4];
@@ -589,10 +598,14 @@ namespace ModelController
 	}
 	void CModel::ComputeSDF()
 	{
+		Nastavenia->SDF_STATUS = 0;
+
 		if(Nastavenia->SDF_Mode == SDF_CPU)
 			SDF_control->Compute(triangles, m_root);
 		else
-			SDF_control->ComputeOpenCL(points, triangles, m_root);		
+			SDF_control->ComputeOpenCL(points, triangles, m_root);
+
+		Nastavenia->SDF_STATUS = 100;
 	}
 	void CModel::TriangulatePoints()
 	{

@@ -73,7 +73,7 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
-		if((depth >= max_depth) || (length <= min_count))
+		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold))
 		{
 			count = length;
 			triangles = tria;
@@ -199,7 +199,7 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
-		if((depth >= max_depth) || (length <= min_count))
+		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold))
 		{
 			count = length;
 			triangles = new Face* [length];
@@ -401,43 +401,45 @@ namespace MeshStructures
 	{
 		if((recursive == true) && (depth > 5))
 			return;
+		if((count == 0) && (isLeaf == true))
+			return;
 
 		glBegin(GL_LINES);
-			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
-			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
+			glVertex3f(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
+			glVertex3f(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
 
-			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
-			glVertex3d(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
+			glVertex3f(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
+			glVertex3f(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
 
-			glVertex3d(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
-			glVertex3d(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
+			glVertex3f(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
+			glVertex3f(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 
-			glVertex3d(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
-			glVertex3d(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
+			glVertex3f(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
+			glVertex3f(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
 			
-			glVertex3d(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
-			glVertex3d(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
+			glVertex3f(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
+			glVertex3f(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
 
-			glVertex3d(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
-			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
+			glVertex3f(origin.X + size*Table[3][0], origin.Y + size*Table[3][1], origin.Z + size*Table[3][2]);
+			glVertex3f(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
 
-			glVertex3d(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
-			glVertex3d(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
+			glVertex3f(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
+			glVertex3f(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
 
-			glVertex3d(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
-			glVertex3d(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
+			glVertex3f(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
+			glVertex3f(origin.X + size*Table[2][0], origin.Y + size*Table[2][1], origin.Z + size*Table[2][2]);
 
-			glVertex3d(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
-			glVertex3d(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
+			glVertex3f(origin.X + size*Table[6][0], origin.Y + size*Table[6][1], origin.Z + size*Table[6][2]);
+			glVertex3f(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 
-			glVertex3d(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
-			glVertex3d(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
+			glVertex3f(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
+			glVertex3f(origin.X + size*Table[7][0], origin.Y + size*Table[7][1], origin.Z + size*Table[7][2]);
 
-			glVertex3d(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
-			glVertex3d(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
+			glVertex3f(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
+			glVertex3f(origin.X + size*Table[1][0], origin.Y + size*Table[1][1], origin.Z + size*Table[1][2]);
 
-			glVertex3d(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
-			glVertex3d(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
+			glVertex3f(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
+			glVertex3f(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 		glEnd();
 
 		if((isLeaf == false) && (recursive == true))
@@ -447,5 +449,21 @@ namespace MeshStructures
 				son[i]->DrawOctree(recursive);
 			}
 		}
+	}
+	void Octree::DrawAxes()
+	{
+		glBegin(GL_LINES);
+			glColor3f(1.0f,0.0f,0.0f);							// cervena farba
+			glVertex3f(origin.X, origin.Y, origin.Z);
+			glVertex3f(origin.X + 2.0f * size, origin.Y, origin.Z);
+
+			glColor3f(0.0f,1.0f,0.0f);							// zelena farba
+			glVertex3f(origin.X, origin.Y, origin.Z);
+			glVertex3f(origin.X, origin.Y + 2.0f * size, origin.Z);
+
+			glColor3f(0.0f,0.0f,1.0f);							// modra farba
+			glVertex3f(origin.X, origin.Y, origin.Z);
+			glVertex3f(origin.X, origin.Y, origin.Z + 2.0f * size);
+		glEnd();
 	}
 }
