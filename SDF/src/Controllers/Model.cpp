@@ -1,6 +1,7 @@
 // Model.cpp : subor pre kontrolu modelov
 #include "stdafx.h"
 #include "Model.h"
+#include "PointCloudTriangulation.h"
 
 namespace ModelController
 {
@@ -9,6 +10,7 @@ namespace ModelController
 		Assimp = new CAssimp();
 		SDF_control = NULL;
 		m_root = NULL;
+//		transform_matica = 
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
 		ResetSettings();
@@ -82,6 +84,7 @@ namespace ModelController
 		loaded = true;
 
 		int ticks4 = GetTickCount();
+		AssignNumber();
 		ComputeBoundary();
 		CreateOctree();
 
@@ -89,7 +92,6 @@ namespace ModelController
 
 		SetColors();
 		ComputeSusedov();
-		AssignNumber();
 
 		int ticks6 = GetTickCount();
 
@@ -99,6 +101,9 @@ namespace ModelController
 		logInfo(MarshalString("Vytvorenie Octree: " + (ticks5 - ticks4)+ "ms"));
 		logInfo(MarshalString("Vytvorenie susedov: " + (ticks6 - ticks5)+ "ms"));
 		logInfo(MarshalString("Celkovy cas nacitania: " + (ticks6 - ticks1)+ "ms"));
+
+		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
+		Nastavenia->INFO_Total_Vertices = points->GetSize();
 	}
 
 	// nacita priamo Assimp
@@ -129,11 +134,14 @@ namespace ModelController
 		Assimp->LoadData(triangles, points);
 		loaded = true;
 
+		AssignNumber();
 		ComputeBoundary();
 		CreateOctree();
 		SetColors();
 		ComputeSusedov();
-		AssignNumber();
+
+		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
+		Nastavenia->INFO_Total_Vertices = points->GetSize();
 	}
 
 	/*float CModel::GetSDF(const struct aiFace* face, bool smoothed)
@@ -166,9 +174,9 @@ namespace ModelController
 			while(tm != NULL)
 			{
 				if(smoothed)
-					hodnota += ((Face*)tm->data)->diameter->smoothed;
+					hodnota += ((Face*)tm->data)->quality->smoothed;
 				else
-					hodnota += ((Face*)tm->data)->diameter->value;
+					hodnota += ((Face*)tm->data)->quality->value;
 				tm = tm->next;
 			}
 			hodnota = hodnota / total;
@@ -258,6 +266,8 @@ namespace ModelController
 			sizez = abs(minz+maxz);
 		else
 			sizez = abs(minz-maxz);
+
+		//NormalizeMatrix(
 		b_size = max(max(sizex, sizey), sizez);
 
 		b_sf = b_size / 10.0f;											// 1 / 10 velkosti modelu budu tie vektory
@@ -270,7 +280,7 @@ namespace ModelController
 	// vytvori Octree strukturu
 	void CModel::CreateOctree()
 	{
-		m_root = new Octree(0, b_size, b_stred, NULL);
+		m_root = new Octree(1, b_size, b_stred, NULL);
 
 		unsigned int siz = triangles->GetSize();
 		if(siz > 0)
@@ -296,6 +306,7 @@ namespace ModelController
 				tmp2 = tmp2->next;
 				i++;
 			}
+
 			m_root->Build2(tria, mtria, 0, siz);
 			delete [] tria;
 			delete mtria;
@@ -390,7 +401,7 @@ namespace ModelController
 				else if(draw_mode == 2)
 				{
 					GLubyte r = 0, g = 0, b = 0;
-					HLSToRGB(tmp->data->diameter->normalized2, r, g, b);
+					HLSToRGB(tmp->data->quality->normalized2, r, g, b);
 					glColor3ub(r, g, b);
 				}
 
@@ -454,96 +465,44 @@ namespace ModelController
 							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
 
-			/*glColor3f(0.5f,0.5f,1.0f);
+			glColor3f(0.5f,0.5f,1.0f);
 			glBegin(GL_LINES);
-				for(int i = 0; i < 30; i++)
+				unsigned int n_rays = 30;
+				float N = (float)n_rays;
+
+				float inc = (float)M_PI * (3.0f - sqrt(5.0f));
+				float del = (360.0f / 120) * 2;
+				float off = (2.0f / N) / del;
+				for(unsigned int k = 0; k < n_rays; k++)
 				{
-					float rndy = rand()%int(120 / 2);
-					float rndx = rand()%(360);
-					if(rndy == 180.0)
-						rndy = 179.5;
-					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
-					//Vector4 ray = CalcRayFromAngle(rndx, rndy);
-					ray.Normalize();// ray = ray *  b_sf;
+					float y = k * off - 1 + (off / 2.0f) * del;
+					float r = sqrt(1 - y*y);
+					float phi = k * inc;
+					Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r) * t_mat;
+					ray.Normalize();
 					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
 					glVertex3d( ray.X *  b_sf + selected->center.X,
 								ray.Y *  b_sf + selected->center.Y,
 								ray.Z *  b_sf + selected->center.Z);
 				}
-			glEnd();*/
 
-			Vector4 Center = selected->center;// - (normal * b_max);
-			float o_size = 0.0;
-			float o_X = 0.0;
-			float o_Y = 0.0;
-			float o_Z = 0.0;
-			m_root->GetBoundary(o_size, o_X, o_Y, o_Z);
+				srand (123);	
+				for(int i = 0; i < 30; i++)
+				{
+					float rndy = rand()%int(120 / 2);
+					float rndx = rand()%(360);
+					if(rndy < 0.5)
+						rndy = 0.5;
+					Vector4 ray = (CalcRayFromAngle(rndx, rndy) * t_mat);
+					ray.Normalize();
+					glVertex3d(selected->center.X, selected->center.Y, selected->center.Z);
+					glVertex3d( ray.X *  b_sf + selected->center.X,
+								ray.Y *  b_sf + selected->center.Y,
+								ray.Z *  b_sf + selected->center.Z);
+				}
+			glEnd();
 
-			// fixes for rays with negative direction
-			/*if(normal.X < 0)
-			{
-				Center.X = (o_size) - Center.X;
-				normal.X = - normal.X;
-			}
-			if(normal.Y < 0)
-			{
-				Center.Y = (o_size) - Center.Y;
-				normal.Y = - normal.Y;
-			}
-			if(normal.Z < 0)
-			{
-				Center.Z = (o_size) - Center.Z;
-				normal.Z = - normal.Z;
-			}*/
-
-			float divx = 1 / normal.X; // IEEE stability fix
-			float divy = 1 / normal.Y;
-			float divz = 1 / normal.Z;
-
-			float tx0 = ((o_X - o_size) - Center.X) * divx;
-			float tx1 = ((o_X + o_size) - Center.X) * divx;
-			float ty0 = ((o_Y - o_size) - Center.Y) * divy;
-			float ty1 = ((o_Y + o_size) - Center.Y) * divy;
-			float tz0 = ((o_Z - o_size) - Center.Z) * divz;
-			float tz1 = ((o_Z + o_size) - Center.Z) * divz;
-
-			/*float tx0 = -Center.X * divx;
-			float tx1 = (o_size - Center.X) * divx;
- 
-			float ty0 = -Center.Y * divy;
-			float ty1 = (o_size - Center.Y) * divy;
-
-			float tz0 = -Center.Z * divz;
-			float tz1 = (o_size - Center.Z) * divz;*/
-
-			if (normal.X == 0.0f)
-			{
-					if (tx0 < 0) tx0 = -9.0;
-					else tx0 = 9.0;
-					if (tx1 < 0) tx1 = -9.0;
-					else tx1 = 9.0;
-			}
-			if (normal.Y == 0.0f)
-			{
-					if (ty0 < 0) ty0 = -9.0;
-					else ty0 = 9.0;
-					if (ty1 < 0) ty1 = -9.0;
-					else ty1 = 9.0;
-			}
-			if (normal.Z == 0.0f)
-			{
-					if (tz0 < 0) tz0 = -9.0;
-					else tz0 = 9.0;
-					if (tz1 < 0) tz1 = -9.0;
-					else tz1 = 9.0;
-			}
-
-			/*glBegin(GL_LINES);
-				glVertex3d(tx0, ty0, tz0);
-				glVertex3d(tx1, ty1, tz1);
-			glEnd();*/
-			Vector4 norm = (U % V) * (-1.0);
-			norm.Normalize();
+			Vector4 norm = selected->normal * (-1.0);
 			LinkedList<Octree>* octrees = new LinkedList<Octree>();
 			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees);
 			LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
@@ -599,11 +558,6 @@ namespace ModelController
 		return draw_mode;
 	}
 
-	int CModel::GetTriangleCount()
-	{
-		return triangles->GetSize();
-	}
-
 	void CModel::ProcessPick(int x, int y)
 	{
 		GLint viewport[4];
@@ -633,11 +587,93 @@ namespace ModelController
 			}
 		}
 	}
-	void CModel::ComputeSDF(bool on_GPU)
+	void CModel::ComputeSDF()
 	{
-		if(on_GPU)
-			SDF_control->ComputeOpenCL(points, triangles, m_root);
-		else
+		if(Nastavenia->SDF_Mode == SDF_CPU)
 			SDF_control->Compute(triangles, m_root);
+		else
+			SDF_control->ComputeOpenCL(points, triangles, m_root);		
+	}
+	void CModel::TriangulatePoints()
+	{
+		PointCloudTriangulation::DeleunayTriangulator *pTriangulator = new PointCloudTriangulation::DeleunayTriangulator();
+		//pTriangulator->setKNeighParams(0.02, 8, 12);
+		//pTriangulator->setCenterFactorParams(0.2, 0.5, 2.0);
+
+		int numOfIndices = 0;
+		int * indices = NULL;
+		unsigned int numOfVertices = points->GetSize();
+		Vertex** tmp_points = new Vertex* [numOfVertices];
+
+		// prekopcime do pola, koli lepsiemu pristupu
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		unsigned int i = 0;
+		while(tmp != NULL)
+		{
+			tmp_points[i] = tmp->data;
+			tmp = tmp->next;
+			i++;
+		}
+
+		// zoznam ktory davam do Madovej libky
+		float * verts = new float[numOfVertices * 3];
+		for(unsigned int ii = 0; ii < numOfVertices; ii++)
+		{
+			verts[ii * 3] = tmp_points[ii]->P.X;
+			verts[ii * 3 + 1] = tmp_points[ii]->P.Y;
+			verts[ii * 3 + 2] = tmp_points[ii]->P.Z;
+		}
+
+		// triangulacia v Madovej libke
+		pTriangulator->computeGlobalTriangulationFromPoints(numOfVertices, verts, numOfIndices, &indices);
+		
+		loaded = false;
+
+		// vymazanie struktur
+		for(unsigned int iii = 0; iii < numOfVertices; iii++)
+		{
+			delete tmp_points[iii]->susedia;
+			tmp_points[iii]->susedia = new LinkedList<void>();
+		}
+		selected = NULL;
+
+		if(m_root != NULL)
+			delete m_root;
+
+		triangles->CompleteDelete();
+		delete triangles;
+		triangles = new LinkedList<Face>();
+
+		// prelinkovanie struktur
+		for (int l=0; l<numOfIndices/3; l++)
+		{
+			int v1 = indices[l * 2];
+			int v2 = indices[l * 2 + 2];
+			int v3 = indices[l * 2 + 4];
+			Face* novy_face = new Face(tmp_points[v1], tmp_points[v2], tmp_points[v3]);
+			triangles->InsertToEnd(novy_face);
+			tmp_points[v1]->susedia->InsertToEnd(novy_face);
+			tmp_points[v2]->susedia->InsertToEnd(novy_face);
+			tmp_points[v3]->susedia->InsertToEnd(novy_face);
+		}
+
+		loaded = true;
+
+		// postprocessing ako Octree a pod.
+		AssignNumber();
+		CreateOctree();
+		SetColors();
+		ComputeSusedov();
+
+		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
+	}
+	void CModel::ReloadOctreeData()
+	{
+		if(m_root != NULL)
+			delete m_root;
+
+		m_root = NULL;
+
+		CreateOctree();
 	}
 }

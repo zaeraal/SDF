@@ -1,6 +1,7 @@
 // CSDF.cpp : subor pre pracu so SDF funkciou
 #include "stdafx.h"
 #include "CSDF.h"
+#define FLOAT_MAX  99999.0
 
 namespace SDFStructures
 {
@@ -99,15 +100,17 @@ namespace SDFStructures
 
 		return deviation;
 	}
-
-	void CSDF::Normalize1(float min, float max, float alfa)
+	void CSDF::Normalize(float min, float max, float alfa)
 	{
-		normalized1 = log(((value - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
+		normalized1 = Normalize_(0, FLOAT_MAX, alfa);
+		normalized2 = Normalize_(min, FLOAT_MAX, alfa);
+		normalized3 = Normalize_(0, max, alfa);
+		normalized4 = Normalize_(min, max, alfa);
 	}
 
-	void CSDF::Normalize2(float min, float max, float alfa)
+	float CSDF::Normalize_(float min, float max, float alfa)
 	{
-		normalized2 = log(((smoothed - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
+		return log(((value - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
 	}
 
 	void CSDF::Smooth(const std::vector<float> values, const std::vector<float> weights)

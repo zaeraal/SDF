@@ -9,6 +9,7 @@ namespace MeshStructures
 	{
 		P.Init(x, y, z, 1.0);
 		susedia = new LinkedList<void>();
+		quality = new CSDF();
 	}
 
 	Vertex::Vertex(Vector4 position)
@@ -22,5 +23,6 @@ namespace MeshStructures
 	Vertex::~Vertex()
 	{
 		delete susedia;
+		delete quality;
 	}
 }

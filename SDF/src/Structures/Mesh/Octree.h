@@ -20,8 +20,8 @@ namespace MeshStructures
 		void Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length);
 		void InserToEnd(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2]);
 		void InserToStart(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2]);
-		void FwdMove(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2]);
-		void Check(Face** tria, unsigned int* mtria, unsigned int idx, int (&tabulka)[8][2], float new_size, unsigned int cislo);
+		void FwdMove(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2], bool added);
+		void Check(Face** tria, unsigned int* mtria, byte code, int (&tabulka)[8][2], float new_size, unsigned int cislo);
 		byte GetCode(const Vector4 pt);
 		bool isLeaf;
 		void GetBoundary(float &siz, float &x, float &y, float &z);

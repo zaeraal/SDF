@@ -2,11 +2,13 @@
 #pragma once
 #include "Vector4.h"
 #include "LinkedList.h"
+#include "CSDF.h"
 
 namespace MeshStructures
 {
 	using namespace MathStructures;
 	using namespace GenericStructures;
+	using namespace SDFStructures;
 
 	public class Vertex
 	{
@@ -18,5 +20,6 @@ namespace MeshStructures
 		Vector4 P;
 		LinkedList<void>*		susedia;					// susedia
 		unsigned int			number;						// cislo v zozname
+		CSDF*					quality;
 	};
 }

@@ -29,7 +29,7 @@ Vector4 CalcRayFromAngle(float AngleX, float Angley)
 void CalcAnglesFromRay(Vector4 ray, float& AngleX, float& Angley)
 {
 	float r = sqrt(ray.X*ray.X + ray.Y*ray.Y + ray.Z*ray.Z);
-	AngleX = atan2(ray.Z, ray.X);
+	AngleX = atan2(ray.X, ray.Z);
 	Angley = acos(ray.Y / r);
 }
 

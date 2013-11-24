@@ -83,7 +83,7 @@ namespace AssimpFileHandler
 
 	void CAssimp::RecursiveLoad (const struct aiScene *sc, const struct aiNode* nd, LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
-		// mozno prerobit cez Matrix4f class a nie cez Opengl?
+		// TODO: mozno prerobit cez Matrix4f class a nie cez Opengl?
 		glPushMatrix();
 			aiMatrix4x4 matica = nd->mTransformation;
 			matica.Transpose();

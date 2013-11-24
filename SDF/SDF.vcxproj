@@ -43,14 +43,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\VC\include;src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files %28x86%29\VC\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\VC\lib;lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\VC\include;src\AssimpFileHandler;src\OpenGLForm;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files %28x86%29\VC\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\VC\lib;lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
@@ -61,11 +61,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;PointCloudTriangulation_Debug.lib;fade2D_vc10_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -75,11 +75,11 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;freeglut.lib;assimp.lib;shlwapi.lib;OpenCL.lib;PointCloudTriangulation_Release.lib;fade2D_vc10_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
@@ -107,6 +107,7 @@
     <ClCompile Include="src\Controllers\OpenGL.cpp" />
     <ClCompile Include="src\Controllers\SDFController.cpp" />
     <ClCompile Include="src\Helpers\MathHelper.cpp" />
+    <ClCompile Include="src\Helpers\SDFSettings.cpp" />
     <ClCompile Include="src\Helpers\StringHelper.cpp" />
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
@@ -132,7 +133,9 @@
     <ClInclude Include="src\Controllers\OpenGL.h" />
     <ClInclude Include="src\Controllers\SDFController.h" />
     <ClInclude Include="src\Helpers\MathHelper.h" />
+    <ClInclude Include="src\Helpers\SDFSettings.h" />
     <ClInclude Include="src\Helpers\StringHelper.h" />
+    <ClInclude Include="src\Include\PointCloudTriangulation.h" />
     <ClInclude Include="src\Structures\Generic\HashTable.h" />
     <ClInclude Include="src\Structures\Generic\LinkedList.h" />
     <ClInclude Include="src\Structures\Math\Mat4.h" />

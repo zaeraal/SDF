@@ -1,7 +1,7 @@
 // Face.h : subor pre pracu s facetmi
 #pragma once
+//#include "CSDF.h"
 #include "Vertex.h"
-#include "CSDF.h"
 
 namespace MeshStructures
 {
@@ -25,7 +25,7 @@ namespace MeshStructures
 		Vector4					normal;
 		Vector4					center;
 		int						farba;						// pre picking
-		CSDF*					diameter;
+		CSDF*					quality;
 		unsigned int			number;						// cislo v zozname
 	private:
 		LinkedList<Face>* susedia;

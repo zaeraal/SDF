@@ -108,6 +108,9 @@
     <ClCompile Include="OpenCLDebug.cpp">
       <Filter>Source Files\Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="src\Helpers\SDFSettings.cpp">
+      <Filter>Source Files\Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -169,6 +172,12 @@
     </ClInclude>
     <ClInclude Include="src\Structures\Generic\HashTable.h">
       <Filter>Header Files\Structures\Generic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Helpers\SDFSettings.h">
+      <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Include\PointCloudTriangulation.h">
+      <Filter>Header Files\Controllers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

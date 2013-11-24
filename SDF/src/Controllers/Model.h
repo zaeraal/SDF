@@ -38,9 +38,10 @@ namespace ModelController
 		void HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
 		void setDrawMode(int mode);
 		int getDrawMode();
-		int GetTriangleCount();
 		void ProcessPick(int x, int y);
-		void ComputeSDF(bool on_GPU);
+		void ComputeSDF();
+		void TriangulatePoints();
+		void ReloadOctreeData();
 
 		bool loaded;
 		bool show_octree;

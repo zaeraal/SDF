@@ -33,7 +33,14 @@ namespace SDFController
 		for(int i=0; i <= kernel_size; i++)				// bacha na posunutie
 		{
 			gauss_sus[i] = new LinkedList<Face>();
-			gauss_sus[i]->Preallocate(10^i);
+			switch(i)
+			{
+				case 0: gauss_sus[i]->Preallocate(1); break;
+				case 1: gauss_sus[i]->Preallocate(10); break;
+				case 2: gauss_sus[i]->Preallocate(100); break;
+				default: gauss_sus[i]->Preallocate(1000); break;
+			}
+			
 		}
 		//loggger->logInfo(MarshalString("diagonal: " + diagonal));
 	}
@@ -68,17 +75,12 @@ namespace SDFController
 		std::vector<float> rays;
 		std::vector<float> weights;
 
-		// precompute those N rays
-		srand (123);											// initial seed for random number generator
 		float* rndy = new float[n_rays];
 		float* rndx = new float[n_rays];
-		for(unsigned int i = 0; i < n_rays; i++)
-		{
-			rndy[i] = float(rand()%int(angle / 2));
-			rndx[i] = float(rand()%(360));
-			if(rndy[i] == 0.0)
-				rndy[i] = 0.5;
+		UniformPointsOnSphere(rndx, rndy);
 
+		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
+		{
 			weights.push_back(180.0f - rndy[i]);
 		}
 
@@ -98,7 +100,7 @@ namespace SDFController
 		while(current_face != NULL)
 		{
 			// vypocet TNB vektorov a matice
-			ComputeTNB(current_face->data, tangens, normal, binormal);
+			ComputeTNB(current_face->data, tangens, binormal, normal);
 			t_mat = Mat4(tangens, normal, binormal);
 
 			rays.clear();
@@ -154,10 +156,10 @@ namespace SDFController
 			if(rays.size() > 0)
 			{
 				current_face->data->ComputeSDFValue(rays, weights);
-				if(current_face->data->diameter->value < min)
-					min = current_face->data->diameter->value;
-				if(current_face->data->diameter->value > max)
-					max = current_face->data->diameter->value;
+				if(current_face->data->quality->value < min)
+					min = current_face->data->quality->value;
+				if(current_face->data->quality->value > max)
+					max = current_face->data->quality->value;
 			}
 			counter = counter + 1;
 			current_face = current_face->next;
@@ -175,9 +177,9 @@ namespace SDFController
 		while(current_face != NULL)
 		{
 			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->diameter->Normalize1(min, max, 4.0);
-			current_face->data->diameter->Normalize2(0, max, 4.0);
-			//tmp->data->diameter->Normalize2(0, diagonal, 4.0);
+			current_face->data->quality->Normalize(min, max, 4.0);
+			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
+			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
 
 			current_face = current_face->next;
 		}
@@ -297,17 +299,12 @@ namespace SDFController
 		Vector4 tangens, normal, binormal;
 		Mat4 t_mat;
 
-		// precompute those N rays
-		srand (123);											// initial seed for random number generator
 		float* rndy = new float[n_rays];
 		float* rndx = new float[n_rays];
-		for(unsigned int i = 0; i < n_rays; i++)
-		{
-			rndy[i] = float(rand()%int(angle / 2));
-			rndx[i] = float(rand()%(360));
-			if(rndy[i] == 0.0)
-				rndy[i] = 0.5;
+		UniformPointsOnSphere(rndx, rndy);
 
+		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
+		{
 			weights.push_back(180.0f - rndy[i]);
 		}
 
@@ -354,7 +351,7 @@ namespace SDFController
 			c_origins[kernel_num][in_kernel_num] = pocet;
 
 			// vypocet TNB vektorov a matice
-			ComputeTNB(current_face->data, tangens, normal, binormal);
+			ComputeTNB(current_face->data, tangens, binormal, normal);
 			t_mat = Mat4(tangens, normal, binormal);
 
 			for(unsigned int i = 0; i < n_rays; i++)
@@ -446,10 +443,10 @@ namespace SDFController
 				if(rays.size() > 0)
 				{
 					current_face->data->ComputeSDFValue(rays, weightsx);
-					if(current_face->data->diameter->value < min)
-						min = current_face->data->diameter->value;
-					if(current_face->data->diameter->value > max)
-						max = current_face->data->diameter->value;
+					if(current_face->data->quality->value < min)
+						min = current_face->data->quality->value;
+					if(current_face->data->quality->value > max)
+						max = current_face->data->quality->value;
 				}
 				cpocet++;
 				current_face = current_face->next;
@@ -466,9 +463,9 @@ namespace SDFController
 		while(current_face != NULL)
 		{
 			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->diameter->Normalize1(min, max, 4.0);
-			current_face->data->diameter->Normalize2(0, max, 4.0);
-			//tmp->data->diameter->Normalize2(0, diagonal, 4.0);
+			current_face->data->quality->Normalize(min, max, 4.0);
+			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
+			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
 
 			current_face = current_face->next;
 		}
@@ -575,7 +572,7 @@ namespace SDFController
 				LinkedList<Face>::Cell<Face>* tc = gauss_sus[i]->start;
 				while(tc != NULL)
 				{
-					_values.push_back(tc->data->diameter->value);
+					_values.push_back(tc->data->quality->value);
 					_weights.push_back(_weight);
 					tc = tc->next;
 				}
@@ -584,7 +581,7 @@ namespace SDFController
 		}
 		//delete [] gauss_sus;
 
-		tmp->diameter->Smooth(_values, _weights);
+		tmp->quality->Smooth(_values, _weights);
 	}
 
 	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray)
@@ -621,13 +618,14 @@ namespace SDFController
 		return faces;
 	}
 
-	void CSDFController::ComputeTNB(Face* tmp, Vector4& tang, Vector4& norm, Vector4& binor)
+	void CSDFController::ComputeTNB(Face* tmp, Vector4& tang, Vector4& binor, Vector4& norm)
 	{
 		// compute tanget space matrix
-		Vector4 U = Vector4(tmp->v[1]->P - tmp->v[0]->P);
+		/*Vector4 U = Vector4(tmp->v[1]->P - tmp->v[0]->P);
 		Vector4 V = Vector4(tmp->v[2]->P - tmp->v[0]->P);
 		norm = (U % V) * (-1.0);
-		norm.Normalize();
+		norm.Normalize();*/
+		norm = tmp->normal * (-1.0);
 
 		tang = Vector4(tmp->v[0]->P - tmp->v[2]->P);
 		tang.Normalize();
@@ -677,6 +675,9 @@ namespace SDFController
 
 	void CSDFController::proc_subtree (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
+		if(node == NULL)
+			return;
+
 		float txm, tym, tzm;
 		int currNode;
 
@@ -817,6 +818,9 @@ namespace SDFController
 	};
 	void CSDFController::proc_subtree2 (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
+		if(node == NULL)
+			return;
+
 		if((tx1 < 0.0) || (ty1 < 0.0) || (tz1 < 0.0)) return;
 
 		if(node->isLeaf)
@@ -927,5 +931,337 @@ namespace SDFController
 			default: return true;
 		}
 	}
+
+	void CSDFController::UniformPointsOnSphere(float* rndx, float * rndy)
+	{
+		unsigned int n_rays = Nastavenia->SDF_Rays;
+		float N = (float)n_rays;
+
+		float inc = (float)M_PI * (3.0f - sqrt(5.0f));
+		float del = (360.0f / Nastavenia->SDF_Cone);
+		float off = (2.0f / N) / del;
+		for(unsigned int k = 0; k < n_rays; k++)
+		{
+			float y = k * off - 1 + (off / 2.0f) * del;
+			float r = sqrt(1 - y*y);
+			float phi = k * inc;
+			Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r);
+			ray.Normalize();
+			CalcAnglesFromRay(ray, rndx[k], rndy[k]);
+			GetDegrees(rndx[k], rndy[k]);
+			if(rndy[k] < 0.5)
+				rndy[k] = 0.5;
+		}
+	}
+
+	void CSDFController::RandomPointsOnSphere(float* rndx, float * rndy)
+	{
+		unsigned int n_rays = Nastavenia->SDF_Rays;
+		// precompute those N rays
+		srand (123);											// initial seed for random number generator
+		for(unsigned int i = 0; i < n_rays; i++)
+		{
+			rndy[i] = float(rand()%int(Nastavenia->SDF_Cone / 2));
+			rndx[i] = float(rand()%(360));
+			if(rndy[i] < 0.5)
+				rndy[i] = 0.5;
+		}
+	}
+
+/*int __float_as_int(float in)
+{
+     union fi { int i; float f; } conv;
+     conv.f = in;
+     return conv.i;
+}
+float __int_as_float(int a)
+{
+union {int a; float b;} u;
+u.a = a;
+return u.b;
+}
+#define CAST_STACK_DEPTH        23
+#define MAX_RAYCAST_ITERATIONS  10000
+struct cll_float3
+{
+    float       x;
+    float       y;
+    float       z;
+};
+struct Ray
+{
+    cll_float3      orig;
+    float       orig_sz;
+    cll_float3      dir;
+    float       dir_sz;
+};
+struct CastResult
+{
+    float       t;
+    cll_float3      pos;
+    int         iter;
+
+    void*        node;
+    int         childIdx;
+    int         stackPtr;
+};
+
+//------------------------------------------------------------------------
+
+class CastStack
+{
+public:
+    CastStack   (void)                          {}
+
+    __device__ S32* read        (int idx, F32& tmax) const      { U64 e = stack[idx]; tmax = __int_as_float((U32)(e >> 32)); return (S32*)(U32)e; }
+    __device__ void write       (int idx, S32* node, F32 tmax)  { stack[idx] = (U32)node | ((U64)__float_as_int(tmax) << 32); }
+
+private:
+                    CastStack   (CastStack& other); // forbidden
+    CastStack&      operator=   (CastStack& other); // forbidden
+    void*             stack[CAST_STACK_DEPTH + 1];
+};
+float copysignf(float a, float b)
+{
+	if(b < 0)
+		return -a;
+	else
+		return a;
+};
+float fmaxf(float a, float b)
+{
+	if(a > b)
+		return a;
+	else
+		return b;
+};
+float fminf(float a, float b)
+{
+	if(a < b)
+		return a;
+	else
+		return b;
+};
+void CSDFController::proc_subtree3 (CastResult& res, CastStack& stack, volatile Ray& ray)
+{
+    const float epsilon = 0.000001;
+    //float ray_orig_sz = ray.orig_sz;
+    int iter = 0;
+
+    // Get rid of small ray direction components to avoid division by zero.
+
+    if (fabsf(ray.dir.x) < epsilon) ray.dir.x = copysignf(epsilon, ray.dir.x);
+    if (fabsf(ray.dir.y) < epsilon) ray.dir.y = copysignf(epsilon, ray.dir.y);
+    if (fabsf(ray.dir.z) < epsilon) ray.dir.z = copysignf(epsilon, ray.dir.z);
+
+    // Precompute the coefficients of tx(x), ty(y), and tz(z).
+    // The octree is assumed to reside at coordinates [1, 2].
+
+    float tx_coef = 1.0f / -fabs(ray.dir.x);
+    float ty_coef = 1.0f / -fabs(ray.dir.y);
+    float tz_coef = 1.0f / -fabs(ray.dir.z);
+
+    float tx_bias = tx_coef * ray.orig.x;
+    float ty_bias = ty_coef * ray.orig.y;
+    float tz_bias = tz_coef * ray.orig.z;
+
+    // Select octant mask to mirror the coordinate system so
+    // that ray direction is negative along each axis.
+
+    int octant_mask = 7;
+    if (ray.dir.x > 0.0f) octant_mask ^= 1, tx_bias = 3.0f * tx_coef - tx_bias;
+    if (ray.dir.y > 0.0f) octant_mask ^= 2, ty_bias = 3.0f * ty_coef - ty_bias;
+    if (ray.dir.z > 0.0f) octant_mask ^= 4, tz_bias = 3.0f * tz_coef - tz_bias;
+
+    // Initialize the active span of t-values.
+
+    float t_min = fmaxf(fmaxf(2.0f * tx_coef - tx_bias, 2.0f * ty_coef - ty_bias), 2.0f * tz_coef - tz_bias);
+    float t_max = fminf(fminf(tx_coef - tx_bias, ty_coef - ty_bias), tz_coef - tz_bias);
+    float h = t_max;
+    t_min = fmaxf(t_min, 0.0f);
+    t_max = fminf(t_max, 1.0f);
+
+    // Initialize the current voxel to the first child of the root.
+
+    int*   parent           = (int*)getInput().rootNode;
+    cll_int2   child_descriptor = make_int2(0, 0); // invalid until fetched
+    int    idx              = 0;
+    cll_float3 pos              = make_float3(1.0f, 1.0f, 1.0f);
+    int    scale            = CAST_STACK_DEPTH - 1;
+    float  scale_exp2       = 0.5f; // exp2f(scale - s_max)
+
+    if (1.5f * tx_coef - tx_bias > t_min) idx ^= 1, pos.x = 1.5f;
+    if (1.5f * ty_coef - ty_bias > t_min) idx ^= 2, pos.y = 1.5f;
+    if (1.5f * tz_coef - tz_bias > t_min) idx ^= 4, pos.z = 1.5f;
+
+    // Traverse voxels along the ray as long as the current voxel
+    // stays within the octree.
+
+    while (scale < CAST_STACK_DEPTH)
+    {
+        iter++;
+        if (iter > MAX_RAYCAST_ITERATIONS)
+            break;
+
+        // Fetch child descriptor unless it is already valid.
+
+        if (child_descriptor.x == 0)
+        {
+            child_descriptor = *(int2*)parent;
+        }
+
+        // Determine maximum t-value of the cube by evaluating
+        // tx(), ty(), and tz() at its corner.
+
+        float tx_corner = pos.x * tx_coef - tx_bias;
+        float ty_corner = pos.y * ty_coef - ty_bias;
+        float tz_corner = pos.z * tz_coef - tz_bias;
+        float tc_max = fminf(fminf(tx_corner, ty_corner), tz_corner);
+
+        // Process voxel if the corresponding bit in valid mask is set
+        // and the active t-span is non-empty.
+
+        int child_shift = idx ^ octant_mask; // permute child slots based on the mirroring
+        int child_masks = child_descriptor.x << child_shift;
+        if ((child_masks & 0x8000) != 0 && t_min <= t_max)
+        {
+            // Terminate if the voxel is small enough.
+
+            /*if (tc_max * ray.dir_sz + ray_orig_sz >= scale_exp2)
+                break; // at t_min*//*
+
+            // INTERSECT
+            // Intersect active t-span with the cube and evaluate
+            // tx(), ty(), and tz() at the center of the voxel.
+
+            float tv_max = fminf(t_max, tc_max);
+            float half = scale_exp2 * 0.5f;
+            float tx_center = half * tx_coef + tx_corner;
+            float ty_center = half * ty_coef + ty_corner;
+            float tz_center = half * tz_coef + tz_corner;
+
+            // Descend to the first child if the resulting t-span is non-empty.
+
+            if (t_min <= tv_max)
+            {
+                // Terminate if the corresponding bit in the non-leaf mask is not set.
+
+                if ((child_masks & 0x0080) == 0)
+                    break; // at t_min (overridden with tv_min).
+
+                // PUSH
+                // Write current parent to the stack.
+
+                if (tc_max < h)
+                {
+                    stack.write(scale, parent, t_max);
+                }
+                h = tc_max;
+
+                // Find child descriptor corresponding to the current voxel.
+
+                int ofs = (unsigned int)child_descriptor.x >> 17; // child pointer
+                if ((child_descriptor.x & 0x10000) != 0) // far
+                {
+                    ofs = parent[ofs * 2]; // far pointer
+                }
+                ofs += popc8(child_masks & 0x7F);
+                parent += ofs * 2;
+
+                // Select child voxel that the ray enters first.
+
+                idx = 0;
+                scale--;
+                scale_exp2 = half;
+
+                if (tx_center > t_min) idx ^= 1, pos.x += scale_exp2;
+                if (ty_center > t_min) idx ^= 2, pos.y += scale_exp2;
+                if (tz_center > t_min) idx ^= 4, pos.z += scale_exp2;
+
+                // Update active t-span and invalidate cached child descriptor.
+
+                t_max = tv_max;
+                child_descriptor.x = 0;
+                continue;
+            }
+        }
+
+        // ADVANCE
+        // Step along the ray.
+
+
+        int step_mask = 0;
+        if (tx_corner <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
+        if (ty_corner <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
+        if (tz_corner <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
+
+        // Update active t-span and flip bits of the child slot index.
+
+        t_min = tc_max;
+        idx ^= step_mask;
+
+        // Proceed with pop if the bit flips disagree with the ray direction.
+
+        if ((idx & step_mask) != 0)
+        {
+            // POP
+            // Find the highest differing bit between the two positions.
+
+            unsigned int differing_bits = 0;
+            if ((step_mask & 1) != 0) differing_bits |= __float_as_int(pos.x) ^ __float_as_int(pos.x + scale_exp2);
+            if ((step_mask & 2) != 0) differing_bits |= __float_as_int(pos.y) ^ __float_as_int(pos.y + scale_exp2);
+            if ((step_mask & 4) != 0) differing_bits |= __float_as_int(pos.z) ^ __float_as_int(pos.z + scale_exp2);
+            scale = (__float_as_int((float)differing_bits) >> 23) - 127; // position of the highest bit
+            scale_exp2 = __int_as_float((scale - CAST_STACK_DEPTH + 127) << 23); // exp2f(scale - s_max)
+
+            // Restore parent voxel from the stack.
+
+            parent = stack.read(scale, t_max);
+
+            // Round cube position and extract child slot index.
+
+            int shx = __float_as_int(pos.x) >> scale;
+            int shy = __float_as_int(pos.y) >> scale;
+            int shz = __float_as_int(pos.z) >> scale;
+            pos.x = __int_as_float(shx << scale);
+            pos.y = __int_as_float(shy << scale);
+            pos.z = __int_as_float(shz << scale);
+            idx  = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
+
+            // Prevent same parent from being stored again and invalidate cached child descriptor.
+
+            h = 0.0f;
+            child_descriptor.x = 0;
+        }
+    }
+
+    // Indicate miss if we are outside the octree.
+
+#if (MAX_RAYCAST_ITERATIONS > 0)
+    if (scale >= CAST_STACK_DEPTH || iter > MAX_RAYCAST_ITERATIONS)
+#else
+    if (scale >= CAST_STACK_DEPTH)
+#endif
+    {
+        t_min = 2.0f;
+    }
+
+    // Undo mirroring of the coordinate system.
+
+    if ((octant_mask & 1) == 0) pos.x = 3.0f - scale_exp2 - pos.x;
+    if ((octant_mask & 2) == 0) pos.y = 3.0f - scale_exp2 - pos.y;
+    if ((octant_mask & 4) == 0) pos.z = 3.0f - scale_exp2 - pos.z;
+
+    // Output results.
+
+    res.t = t_min;
+    res.iter = iter;
+    res.pos.x = fminf(fmaxf(ray.orig.x + t_min * ray.dir.x, pos.x + epsilon), pos.x + scale_exp2 - epsilon);
+    res.pos.y = fminf(fmaxf(ray.orig.y + t_min * ray.dir.y, pos.y + epsilon), pos.y + scale_exp2 - epsilon);
+    res.pos.z = fminf(fmaxf(ray.orig.z + t_min * ray.dir.z, pos.z + epsilon), pos.z + scale_exp2 - epsilon);
+    res.node = parent;
+    res.childIdx = idx ^ octant_mask ^ 7;
+    res.stackPtr = scale;
+}*/
 
 }

@@ -12,7 +12,7 @@ namespace MeshStructures
 		v[2] = v3;
 		farba = 0;
 		ComputeNormal();
-		diameter = new CSDF();
+		quality = new CSDF();
 		//assimp_ref = NULL;
 	}
 
@@ -20,7 +20,7 @@ namespace MeshStructures
 	Face::~Face()
 	{
 		// osetrene v LinkdListe ze sa zmaze cely
-		delete diameter;
+		delete quality;
 	}
 
 	void Face::ComputeNormal()
@@ -44,7 +44,7 @@ namespace MeshStructures
 
 	void Face::ComputeSDFValue(const std::vector<float> values, const std::vector<float> inverse_Yangles)
 	{
-		diameter->ComputeValue(values, inverse_Yangles);
+		quality->ComputeValue(values, inverse_Yangles);
 	}
 
 	LinkedList<Face>* Face::GetSusedia()

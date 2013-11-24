@@ -37,3 +37,6 @@
 
 // Opencl
 #include "CL/opencl.h"
+
+// nastavenia programu
+#include "SDFSettings.h"
