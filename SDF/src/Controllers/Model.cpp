@@ -8,6 +8,7 @@ namespace ModelController
 	CModel::CModel()
 	{
 		Assimp = new CAssimp();
+		VCGlib = new CVCG();
 		SDF_control = NULL;
 		m_root = NULL;
 //		transform_matica = 
@@ -19,6 +20,7 @@ namespace ModelController
 	CModel::~CModel()
 	{
 		delete Assimp;
+		delete VCGlib;
 		delete SDF_control;
 
 		/*
@@ -51,7 +53,7 @@ namespace ModelController
 		Assimp->logDebug(logString);
 	}
 
-	// nacita subor
+	// nacita subor cez assimp
 	void CModel::LoadFile(std::string Filename)
 	{
 		int ticks1 = GetTickCount();
@@ -81,6 +83,62 @@ namespace ModelController
 
 		int ticks3 = GetTickCount();
 		Assimp->LoadData(triangles, points);
+		loaded = true;
+
+		int ticks4 = GetTickCount();
+		AssignNumber();
+		ComputeBoundary();
+		CreateOctree();
+
+		int ticks5 = GetTickCount();
+
+		SetColors();
+		ComputeSusedov();
+
+		int ticks6 = GetTickCount();
+
+		logInfo(MarshalString("Vycistenie starych zaznamov: " + (ticks2 - ticks1)+ "ms"));
+		logInfo(MarshalString("Nacitanie modelu do Assimpu: " + (ticks3 - ticks2)+ "ms"));
+		logInfo(MarshalString("Nacitanie Assimpu do mojich objektov: " + (ticks4 - ticks3)+ "ms"));
+		logInfo(MarshalString("Vytvorenie Octree: " + (ticks5 - ticks4)+ "ms"));
+		logInfo(MarshalString("Vytvorenie susedov: " + (ticks6 - ticks5)+ "ms"));
+		logInfo(MarshalString("Celkovy cas nacitania: " + (ticks6 - ticks1)+ "ms"));
+
+		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
+		Nastavenia->INFO_Total_Vertices = points->GetSize();
+	}
+
+	// nacita subor cez VCG lib
+	void CModel::LoadFileVCG(std::string Filename)
+	{
+		int ticks1 = GetTickCount();
+		ResetSettings();
+
+		// ak znovu nacitavame, premaz povodne udaje
+		if(m_root != NULL)
+			delete m_root;
+
+		if(SDF_control != NULL)
+			delete SDF_control;
+
+		// delete actual faces and vertices
+		triangles->CompleteDelete();
+		delete triangles;
+
+		points->CompleteDelete();
+		delete points;
+
+		m_root = NULL;
+		SDF_control = NULL;
+		triangles = new LinkedList<Face>();
+		points = new LinkedList<Vertex>();
+		int ticks2 = GetTickCount();
+
+		VCGlib->Import3DFromFile(Filename);
+
+		int ticks3 = GetTickCount();
+		VCGlib->LoadData(triangles, points);
+		CopySDF_Vertices_to_Faces();
 		loaded = true;
 
 		int ticks4 = GetTickCount();
@@ -152,9 +210,9 @@ namespace ModelController
 			if(tmp->data->assimp_ref == face)
 			{
 				if(smoothed)
-					return tmp->data->diameter->smoothed;
+					return tmp->data->quality->smoothed;
 				else
-					return tmp->data->diameter->value;
+					return tmp->data->quality->value;
 			}
 			tmp = tmp->next;
 		}
@@ -168,24 +226,95 @@ namespace ModelController
 		float* values = new float[size];
 		for(int i = 0; i < size; i++)
 		{
-			float hodnota = 0;
-			float total = float(tmp->data->susedia->GetSize());
-			LinkedList<void>::Cell<void>* tm = tmp->data->susedia->start;
-			while(tm != NULL)
-			{
-				if(smoothed)
-					hodnota += ((Face*)tm->data)->quality->smoothed;
-				else
-					hodnota += ((Face*)tm->data)->quality->value;
-				tm = tm->next;
-			}
-			hodnota = hodnota / total;
-			values[i] = hodnota;
+			if(smoothed)
+				values[i] = tmp->data->quality->smoothed;
+			else
+				values[i] = tmp->data->quality->value;
 			tmp = tmp->next;
 		}
 		return values;
 	}
 
+	void CModel::CopySDF_Vertices_to_Faces()
+	{
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			float h_smoothed	= 0;
+			float h_value		= 0;
+			float h_normalized1 = 0;
+			float h_normalized2 = 0;
+			float h_normalized3 = 0;
+			float h_normalized4 = 0;
+
+			float total = 3.0f;
+			for(int i = 0; i<3; i++)
+			{
+				h_smoothed += tmp->data->v[i]->quality->smoothed;
+				h_value += tmp->data->v[i]->quality->value;
+				h_normalized1 += tmp->data->v[i]->quality->normalized1;
+				h_normalized2 += tmp->data->v[i]->quality->normalized2;
+				h_normalized3 += tmp->data->v[i]->quality->normalized3;
+				h_normalized4 += tmp->data->v[i]->quality->normalized4;
+			}
+			h_smoothed = h_smoothed / total;
+			h_value = h_value / total;
+			h_normalized1 = h_normalized1 / total;
+			h_normalized2 = h_normalized2 / total;
+			h_normalized3 = h_normalized3 / total;
+			h_normalized4 = h_normalized4 / total;
+
+			tmp->data->quality->smoothed = h_smoothed;
+			tmp->data->quality->value = h_value;
+			tmp->data->quality->normalized1 = h_normalized1;
+			tmp->data->quality->normalized2 = h_normalized2;
+			tmp->data->quality->normalized3 = h_normalized3;
+			tmp->data->quality->normalized4 = h_normalized4;
+
+			tmp = tmp->next;
+		}
+	}
+	void CModel::CopySDF_Faces_to_Vertices()
+	{
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		while(tmp != NULL)
+		{
+			float h_smoothed	= 0;
+			float h_value		= 0;
+			float h_normalized1 = 0;
+			float h_normalized2 = 0;
+			float h_normalized3 = 0;
+			float h_normalized4 = 0;
+
+			float total = float(tmp->data->susedia->GetSize());
+			LinkedList<void>::Cell<void>* tm = tmp->data->susedia->start;
+			while(tm != NULL)
+			{
+				h_smoothed += ((Face*)tm->data)->quality->smoothed;
+				h_value += ((Face*)tm->data)->quality->value;
+				h_normalized1 += ((Face*)tm->data)->quality->normalized1;
+				h_normalized2 += ((Face*)tm->data)->quality->normalized2;
+				h_normalized3 += ((Face*)tm->data)->quality->normalized3;
+				h_normalized4 += ((Face*)tm->data)->quality->normalized4;
+				tm = tm->next;
+			}
+			h_smoothed = h_smoothed / total;
+			h_value = h_value / total;
+			h_normalized1 = h_normalized1 / total;
+			h_normalized2 = h_normalized2 / total;
+			h_normalized3 = h_normalized3 / total;
+			h_normalized4 = h_normalized4 / total;
+
+			tmp->data->quality->smoothed = h_smoothed;
+			tmp->data->quality->value = h_value;
+			tmp->data->quality->normalized1 = h_normalized1;
+			tmp->data->quality->normalized2 = h_normalized2;
+			tmp->data->quality->normalized3 = h_normalized3;
+			tmp->data->quality->normalized4 = h_normalized4;
+
+			tmp = tmp->next;
+		}
+	}
 	// resetuje "show" nastavenia
 	void CModel::ResetSettings()
 	{
@@ -396,7 +525,7 @@ namespace ModelController
 					//logInfo(MarshalString("red: "+r+", green: "+g+", blue: "+b));
 				}
 				// nech vykresli hodnoty SDF funkcie
-				else if(Nastavenia->VISUAL_State == VISUAL_SDF)
+				else if((Nastavenia->VISUAL_State == VISUAL_SDF) && (Nastavenia->VISUAL_Smoothed == false))
 				{
 					GLubyte r = 0, g = 0, b = 0;
 					switch(Nastavenia->VISUAL_SDF_Type)
@@ -415,6 +544,19 @@ namespace ModelController
 						glNormal3f(tmp->data->normal.X, tmp->data->normal.Y, tmp->data->normal.Z);
 						for(unsigned int i = 0; i < 3; i++)
 						{
+							if((Nastavenia->VISUAL_State == VISUAL_SDF) && (Nastavenia->VISUAL_Smoothed == true))
+							{
+								GLubyte r = 0, g = 0, b = 0;
+								switch(Nastavenia->VISUAL_SDF_Type)
+								{
+									case VISUAL_NORMALIZED_0_1: HLSToRGB(tmp->data->v[i]->quality->normalized1, r, g, b); break;
+									case VISUAL_NORMALIZED_MIN_1: HLSToRGB(tmp->data->v[i]->quality->normalized2, r, g, b); break;
+									case VISUAL_NORMALIZED_0_MAX: HLSToRGB(tmp->data->v[i]->quality->normalized3, r, g, b); break;
+									case VISUAL_NORMALIZED_MIN_MAX: HLSToRGB(tmp->data->v[i]->quality->normalized4, r, g, b); break;
+									default: break;
+								}
+								glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
+							}
 							glVertex3f(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
 						}
 					glEnd();
@@ -605,6 +747,7 @@ namespace ModelController
 		else
 			SDF_control->ComputeOpenCL(points, triangles, m_root);
 
+		CopySDF_Faces_to_Vertices();
 		Nastavenia->SDF_STATUS = 100;
 	}
 	void CModel::TriangulatePoints()

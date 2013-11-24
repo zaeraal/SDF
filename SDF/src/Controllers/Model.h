@@ -3,12 +3,14 @@
 #include "Octree.h"
 #include "SDFController.h"
 #include "Assimp.h"
+#include "VCG_lib.h"
 #include "MathHelper.h"
 
 namespace ModelController
 {
 	using namespace std;
 	using namespace AssimpFileHandler;
+	using namespace VCGFileHandler;
 	using namespace SDFController;
 
 	const int color_step = 4;
@@ -23,9 +25,12 @@ namespace ModelController
 		void logDebug(string logString);
 
 		void LoadFile(string Filename);
+		void LoadFileVCG(string Filename);
 		void LoadAssimp(aiScene* scene);
 		//float GetSDF(const struct aiFace* face, bool smoothed);
 		float* GetSDF(int& size, bool smoothed);
+		void CopySDF_Vertices_to_Faces();
+		void CopySDF_Faces_to_Vertices();
 		void ResetSettings();
 		void AssignNumber();
 		void ComputeBoundary();
@@ -48,6 +53,7 @@ namespace ModelController
 
 	private:
 		CAssimp* Assimp;
+		CVCG* VCGlib;
 		CSDFController* SDF_control;
 		LinkedList<Face>* triangles;
 		LinkedList<Vertex>* points;

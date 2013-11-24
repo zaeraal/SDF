@@ -257,7 +257,7 @@ namespace OpenGLForm
 			PFD_TYPE_RGBA,                    // RGBA type 
 			24,                               // 24-bit color depth 
 			0, 0, 0, 0, 0, 0,                 // color bits ignored 
-			0,                                // no alpha buffer 
+			0,                               // 32-bit alpha buffer //fuuuuu
 			0,                                // shift bit ignored 
 			0,                                // no accumulation buffer 
 			0, 0, 0, 0,                       // accum bits ignored 
@@ -319,8 +319,8 @@ namespace OpenGLForm
 		glClearDepth(1.0f);									// Depth buffer setup
 		glEnable(GL_DEPTH_TEST);							// Enables depth testing
 		glDepthFunc(GL_LEQUAL);								// The type of depth testing to do
-		//glEnable (GL_BLEND);								// Enables Aplpha Blending
-		//glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	// Set Aplpha Function
+		glEnable (GL_BLEND);								// Enables Aplpha Blending
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	// Set Aplpha Function
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really nice perspective calculations
 
 		// lighting

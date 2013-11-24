@@ -1478,6 +1478,7 @@ namespace SDF {
 		// Displays an OpenFileDialog so the user can select a model.
 		OpenFileDialog ^openFileDialog1 = gcnew OpenFileDialog();
 		openFileDialog1->Filter =	"Common 3D Model Formats|*.obj;*.3ds;*.dae;*.blend;*.ase;*.ifc;*.xgl;*.zgl;*.ply;*.dxf;*.lwo;*.lws;*.lxo;*.stl;*.x;*.ac;*.ms3d;*.cob;*.scn"+
+									"|VCG Format|*.ply;"+
 									"|Motion Capture Formats|*.bvh;*.csm"+
 									"|Graphics Engine Formats|*.xml;*.irrmesh;*.irr"+
 									"|Game File Formats|*.mdl;*.md2;*.md3;*.pk3;*.mdc;*.md5;*.smd;*.vta;*.m3;*.3d"+
@@ -1490,8 +1491,15 @@ namespace SDF {
 		// a .xml file was selected, open it.
 		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{
+			Nastavenia->DEBUG_Min_SDF = 0;
+			Nastavenia->DEBUG_Max_SDF = 0;
 			TB_Status->Text = "Loading File";
-			MController->LoadFile(MarshalString(openFileDialog1->FileName));
+			String^ extension = System::IO::Path::GetExtension(openFileDialog1->FileName);
+			//if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
+			if(extension == ".ply")
+				MController->LoadFileVCG(MarshalString(openFileDialog1->FileName));
+			else
+				MController->LoadFile(MarshalString(openFileDialog1->FileName));
 			OpenGL->ReloadBoundary();
 			this->TB_Filename->Text = System::IO::Path::GetFileName(openFileDialog1->FileName);
 			this->TB_Total_Triangles->Text = ""+Nastavenia->INFO_Total_Triangles;
@@ -1500,10 +1508,9 @@ namespace SDF {
 			this->TB_Max_SDF->Text = "0";
 			this->showToolStripMenuItem->Enabled = true;
 			this->toolsToolStripMenuItem->Enabled = true;
-			Nastavenia->DEBUG_Min_SDF = 0;
-			Nastavenia->DEBUG_Max_SDF = 0;
-			this->TB_Min_SDF->Text = "0";
-			this->TB_Max_SDF->Text = "0";
+
+			this->TB_Min_SDF->Text = ""+Nastavenia->DEBUG_Min_SDF;
+			this->TB_Max_SDF->Text = ""+Nastavenia->DEBUG_Max_SDF;
 
 			MController->logInfo("File: "+ MarshalString(openFileDialog1->FileName) + " Loaded");
 			TB_Status->Text = "File Loaded";
@@ -1514,6 +1521,7 @@ namespace SDF {
 	private: System::Void TSMI_Save_Click(System::Object^  sender, System::EventArgs^  e)
 	{
 		//TODO cez tu druhu libku
+		//PLY, STL, OFF, OBJ, 3DS, COLLADA, VRML, DXF, GTS, U3D, IDTF, X3D
 	}
 	private: System::Void TSMI_Save_As_Click(System::Object^  sender, System::EventArgs^  e)
 	{

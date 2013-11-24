@@ -43,7 +43,7 @@ public:
 	bool				VISUAL_Normals;			// ci kreslim normaly
 	bool				VISUAL_Axes;			// ci kreslim axe
 	bool				VISUAL_Points;			// ci kreslim projektnute body						x
-	bool				VISUAL_Smoothed;		// ci kreslim sdf na facoch alebo vertexoch			x
+	bool				VISUAL_Smoothed;		// ci kreslim sdf na facoch alebo vertexoch
 	unsigned int		VISUAL_Alpha;			// alpha vykreslenych hodnot
 	VISUAL_SDF_TYPE		VISUAL_SDF_Type;		// ktore normalizovanie sdf kreslim
 

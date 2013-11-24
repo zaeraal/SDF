@@ -111,6 +111,12 @@
     <ClCompile Include="src\Helpers\SDFSettings.cpp">
       <Filter>Source Files\Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="src\Controllers\VCG_lib.cpp">
+      <Filter>Source Files\Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VCGlib\wrap\ply\plylib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -176,7 +182,7 @@
     <ClInclude Include="src\Helpers\SDFSettings.h">
       <Filter>Header Files\Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="src\Include\PointCloudTriangulation.h">
+    <ClInclude Include="src\Controllers\VCG_lib.h">
       <Filter>Header Files\Controllers</Filter>
     </ClInclude>
   </ItemGroup>

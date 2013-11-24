@@ -61,7 +61,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\VCGlib;src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -75,7 +75,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\VCGlib;src\Include;src\Controllers;src\Structures;src\Structures\Generic;src\Structures\Math;src\Structures\Mesh;src\Structures\ShapeDiameterFunction;src\Helpers;..\SDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -106,6 +106,7 @@
     <ClCompile Include="src\Controllers\Model.cpp" />
     <ClCompile Include="src\Controllers\OpenGL.cpp" />
     <ClCompile Include="src\Controllers\SDFController.cpp" />
+    <ClCompile Include="src\Controllers\VCG_lib.cpp" />
     <ClCompile Include="src\Helpers\MathHelper.cpp" />
     <ClCompile Include="src\Helpers\SDFSettings.cpp" />
     <ClCompile Include="src\Helpers\StringHelper.cpp" />
@@ -113,6 +114,7 @@
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
     <ClCompile Include="src\Structures\Mesh\Vertex.cpp" />
     <ClCompile Include="src\Structures\ShapeDiameterFunction\CSDF.cpp" />
+    <ClCompile Include="src\VCGlib\wrap\ply\plylib.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -132,10 +134,10 @@
     <ClInclude Include="src\Controllers\Model.h" />
     <ClInclude Include="src\Controllers\OpenGL.h" />
     <ClInclude Include="src\Controllers\SDFController.h" />
+    <ClInclude Include="src\Controllers\VCG_lib.h" />
     <ClInclude Include="src\Helpers\MathHelper.h" />
     <ClInclude Include="src\Helpers\SDFSettings.h" />
     <ClInclude Include="src\Helpers\StringHelper.h" />
-    <ClInclude Include="src\Include\PointCloudTriangulation.h" />
     <ClInclude Include="src\Structures\Generic\HashTable.h" />
     <ClInclude Include="src\Structures\Generic\LinkedList.h" />
     <ClInclude Include="src\Structures\Math\Mat4.h" />
