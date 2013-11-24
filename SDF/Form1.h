@@ -59,7 +59,7 @@ namespace SDF {
 	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Open;
 	private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator;
 	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Save;
-	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Save_As;
+
 	private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator2;
 	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Exit;
 	private: System::Windows::Forms::ToolStripMenuItem^  showToolStripMenuItem;
@@ -160,7 +160,6 @@ namespace SDF {
 			this->TSMI_Open = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->TSMI_Save = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->TSMI_Save_As = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Export = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator2 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->TSMI_Exit = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -273,8 +272,8 @@ namespace SDF {
 			// 
 			// fileToolStripMenuItem
 			// 
-			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(7) {this->TSMI_Open, 
-				this->toolStripSeparator, this->TSMI_Save, this->TSMI_Save_As, this->TSMI_Export, this->toolStripSeparator2, this->TSMI_Exit});
+			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->TSMI_Open, 
+				this->toolStripSeparator, this->TSMI_Save, this->TSMI_Export, this->toolStripSeparator2, this->TSMI_Exit});
 			this->fileToolStripMenuItem->Name = L"fileToolStripMenuItem";
 			this->fileToolStripMenuItem->Size = System::Drawing::Size(37, 20);
 			this->fileToolStripMenuItem->Text = L"&File";
@@ -285,14 +284,14 @@ namespace SDF {
 			this->TSMI_Open->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Open->Name = L"TSMI_Open";
 			this->TSMI_Open->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::O));
-			this->TSMI_Open->Size = System::Drawing::Size(154, 22);
+			this->TSMI_Open->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Open->Text = L"&Open";
 			this->TSMI_Open->Click += gcnew System::EventHandler(this, &Form1::TSMI_Open_Click);
 			// 
 			// toolStripSeparator
 			// 
 			this->toolStripSeparator->Name = L"toolStripSeparator";
-			this->toolStripSeparator->Size = System::Drawing::Size(151, 6);
+			this->toolStripSeparator->Size = System::Drawing::Size(149, 6);
 			// 
 			// TSMI_Save
 			// 
@@ -300,36 +299,28 @@ namespace SDF {
 			this->TSMI_Save->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Save->Name = L"TSMI_Save";
 			this->TSMI_Save->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::S));
-			this->TSMI_Save->Size = System::Drawing::Size(154, 22);
+			this->TSMI_Save->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Save->Text = L"&Save";
 			this->TSMI_Save->Click += gcnew System::EventHandler(this, &Form1::TSMI_Save_Click);
-			// 
-			// TSMI_Save_As
-			// 
-			this->TSMI_Save_As->Name = L"TSMI_Save_As";
-			this->TSMI_Save_As->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::A));
-			this->TSMI_Save_As->Size = System::Drawing::Size(154, 22);
-			this->TSMI_Save_As->Text = L"Save &as";
-			this->TSMI_Save_As->Click += gcnew System::EventHandler(this, &Form1::TSMI_Save_As_Click);
 			// 
 			// TSMI_Export
 			// 
 			this->TSMI_Export->Name = L"TSMI_Export";
 			this->TSMI_Export->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::E));
-			this->TSMI_Export->Size = System::Drawing::Size(154, 22);
+			this->TSMI_Export->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Export->Text = L"&Export";
 			this->TSMI_Export->Click += gcnew System::EventHandler(this, &Form1::TSMI_Export_Click);
 			// 
 			// toolStripSeparator2
 			// 
 			this->toolStripSeparator2->Name = L"toolStripSeparator2";
-			this->toolStripSeparator2->Size = System::Drawing::Size(151, 6);
+			this->toolStripSeparator2->Size = System::Drawing::Size(149, 6);
 			// 
 			// TSMI_Exit
 			// 
 			this->TSMI_Exit->Name = L"TSMI_Exit";
 			this->TSMI_Exit->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::X));
-			this->TSMI_Exit->Size = System::Drawing::Size(154, 22);
+			this->TSMI_Exit->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Exit->Text = L"E&xit";
 			this->TSMI_Exit->Click += gcnew System::EventHandler(this, &Form1::TSMI_Exit_Click);
 			// 
@@ -1222,6 +1213,8 @@ namespace SDF {
 		this->TB_Face_ID->Text = "0 x" + tmp;
 		if(MController->selected != NULL)
 			this->TB_SDF_Value->Text = "" + MController->selected->quality->value;
+		else
+			this->TB_SDF_Value->Text = "0";
 
 		if(computing_SDF == true)
 		{
@@ -1495,8 +1488,8 @@ namespace SDF {
 			Nastavenia->DEBUG_Max_SDF = 0;
 			TB_Status->Text = "Loading File";
 			String^ extension = System::IO::Path::GetExtension(openFileDialog1->FileName);
-			//if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
-			if(extension == ".ply")
+			if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
+			//if(extension == ".ply")
 				MController->LoadFileVCG(MarshalString(openFileDialog1->FileName));
 			else
 				MController->LoadFile(MarshalString(openFileDialog1->FileName));
@@ -1520,12 +1513,20 @@ namespace SDF {
 	}
 	private: System::Void TSMI_Save_Click(System::Object^  sender, System::EventArgs^  e)
 	{
-		//TODO cez tu druhu libku
+		//cez tu druhu libku
 		//PLY, STL, OFF, OBJ, 3DS, COLLADA, VRML, DXF, GTS, U3D, IDTF, X3D
-	}
-	private: System::Void TSMI_Save_As_Click(System::Object^  sender, System::EventArgs^  e)
-	{
-		//TODO cez tu druhu libku
+		if(this->MController->loaded == false)
+			return;
+
+		SaveFileDialog^ saveFileDialog1 = gcnew SaveFileDialog;
+		saveFileDialog1->Filter = "PLY files (*.ply)|*.ply";
+		saveFileDialog1->Title = "Select New Model";
+		saveFileDialog1->RestoreDirectory = true;
+
+		if ( saveFileDialog1->ShowDialog() == ::DialogResult::OK )
+		{
+			MController->SaveModel(MarshalString(saveFileDialog1->FileName));
+		}
 	}
 	private: System::Void TSMI_Export_Click(System::Object^  sender, System::EventArgs^  e)
 	{

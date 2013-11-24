@@ -201,7 +201,7 @@ static int Save(SaveMeshType &m,  const char * filename, bool binary, PlyInfo &p
 	if(binary) h=hbin;
 	else       h=hasc;
 
-	fpout = fopen(filename,"wb");
+	fopen_s(&fpout, filename,"wb");
 	if(fpout==NULL)	{
 		pi.status=::vcg::ply::E_CANTOPEN;
 		return ::vcg::ply::E_CANTOPEN;

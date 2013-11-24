@@ -656,9 +656,9 @@ static int Open( OpenMeshType &m, const char * filename, PlyInfo &pi )
 
 				if( pi.mask & Mask::IOM_VERTNORMAL )
 				{
-					(*vi).N()[0]=va.n[0];
-					(*vi).N()[1]=va.n[1];
-					(*vi).N()[2]=va.n[2];
+					(*vi).N()[0]=(short)va.n[0];
+					(*vi).N()[1]=(short)va.n[1];
+					(*vi).N()[2]=(short)va.n[2];
 				}
 
 				if( pi.mask & Mask::IOM_VERTTEXCOORD )

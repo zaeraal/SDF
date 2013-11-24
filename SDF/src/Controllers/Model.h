@@ -26,6 +26,7 @@ namespace ModelController
 
 		void LoadFile(string Filename);
 		void LoadFileVCG(string Filename);
+		void SaveModel(string Filename);
 		void LoadAssimp(aiScene* scene);
 		//float GetSDF(const struct aiFace* face, bool smoothed);
 		float* GetSDF(int& size, bool smoothed);

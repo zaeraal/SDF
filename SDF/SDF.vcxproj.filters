@@ -117,6 +117,9 @@
     <ClCompile Include="src\VCGlib\wrap\ply\plylib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\Grid.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -184,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="src\Controllers\VCG_lib.h">
       <Filter>Header Files\Controllers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Mesh\Grid.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

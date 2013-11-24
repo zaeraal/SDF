@@ -164,6 +164,10 @@ namespace ModelController
 		Nastavenia->INFO_Total_Vertices = points->GetSize();
 	}
 
+	void CModel::SaveModel(std::string Filename)
+	{
+		VCGlib->SavetoFile(Filename, triangles, points);
+	}
 	// nacita priamo Assimp
 	void CModel::LoadAssimp(aiScene* scene)
 	{

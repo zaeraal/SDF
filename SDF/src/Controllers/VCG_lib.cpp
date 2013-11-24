@@ -13,17 +13,6 @@ namespace VCGFileHandler
 		vcg::tri::io::Importer<MyMesh>::Open(m, fname);
 		//vcg::tri::UpdateNormal<MyMesh>::PerVertexPerFace(m);
 	}
-	int CVCG::GetPosition(MyMesh::VertexPointer vertex_)
-	{
-		int i = 0;
-		for(MyMesh::VertexIterator it= m.vert.begin(); it != m.vert.end(); it++)
-		{
-			if(&(*it) == vertex_)
-				return i;
-			i++;
-		}
-		return 0;
-	}
 	void CVCG::LoadData(LinkedList<Face>* fc, LinkedList<Vertex>* pts)
 	{
 		float q_min = FLOAT_MAX;
@@ -62,9 +51,9 @@ namespace VCGFileHandler
 		i = 0;
 		for(MyMesh::FaceIterator it = m.face.begin(); it != m.face.end(); it++)
 		{
-			MyMesh::VertexPointer v0 = it->cV(0);
-			MyMesh::VertexPointer v1 = it->cV(1);
-			MyMesh::VertexPointer v2 = it->cV(2);
+			MyMesh::VertexPointer v0 = it->V(0);
+			MyMesh::VertexPointer v1 = it->V(1);
+			MyMesh::VertexPointer v2 = it->V(2);
 			int vv0 = (int)v0->Q();
 			int vv1 = (int)v1->Q();
 			int vv2 = (int)v2->Q();
@@ -85,5 +74,37 @@ namespace VCGFileHandler
 			fc->InsertToEnd(face);
 		}
 		delete [] tmp_points;
+	}
+	void CVCG::SavetoFile(const string filename, LinkedList<Face>* fc, LinkedList<Vertex>* pts)
+	{
+		const unsigned int n_vertices = pts->GetSize();
+		const unsigned int n_faces = fc->GetSize();
+		MyMesh tmp;
+		MyMesh::VertexIterator vi = vcg::tri::Allocator<MyMesh>::AddVertices(tmp,n_vertices);
+		MyMesh::FaceIterator fi = vcg::tri::Allocator<MyMesh>::AddFaces(tmp,n_faces);
+
+		MyMesh::VertexPointer *ivp = new MyMesh::VertexPointer[n_vertices];
+		LinkedList<Vertex>::Cell<Vertex>* tmv = pts->start;
+		for(unsigned int idx = 0; idx < n_vertices; idx++)
+		{
+			ivp[idx]=&*vi;
+			vi->P() = MyMesh::CoordType ( tmv->data->P.X, tmv->data->P.Y, tmv->data->P.Z);
+			vi->Q() = MyMesh::VertexType::QualityType (tmv->data->quality->smoothed);
+			vi++;
+			tmv = tmv->next;
+		}
+		LinkedList<Face>::Cell<Face>* tmf = fc->start;
+		for(unsigned int idx = 0; idx < n_faces; idx++)
+		{
+			fi->V(0)=ivp[tmf->data->v[0]->number];
+			fi->V(1)=ivp[tmf->data->v[1]->number];
+			fi->V(2)=ivp[tmf->data->v[2]->number];
+			fi++;
+			tmf = tmf->next;
+		}
+
+		char *fname = new char [filename.size()+1];
+		strcpy_s (fname, filename.size()+1, filename.c_str());
+		vcg::tri::io::ExporterPLY<MyMesh>::Save(tmp,fname, vcg::tri::io::Mask::IOM_VERTQUALITY, false);
 	}
 }

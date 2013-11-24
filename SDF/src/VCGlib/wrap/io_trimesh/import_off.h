@@ -243,7 +243,7 @@ namespace vcg
 								}
 
 								// Read normal coordinate
-								(*v_iter).N()[j] = (ScalarType) atof(tokens[k].c_str());
+								(*v_iter).N()[j] = (short)((ScalarType) atof(tokens[k].c_str()));
 								k++;
 							}
 						}

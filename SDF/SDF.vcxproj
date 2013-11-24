@@ -111,6 +111,7 @@
     <ClCompile Include="src\Helpers\SDFSettings.cpp" />
     <ClCompile Include="src\Helpers\StringHelper.cpp" />
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
+    <ClCompile Include="src\Structures\Mesh\Grid.cpp" />
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
     <ClCompile Include="src\Structures\Mesh\Vertex.cpp" />
     <ClCompile Include="src\Structures\ShapeDiameterFunction\CSDF.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="src\Structures\Math\Mat4.h" />
     <ClInclude Include="src\Structures\Math\Vector4.h" />
     <ClInclude Include="src\Structures\Mesh\Face.h" />
+    <ClInclude Include="src\Structures\Mesh\Grid.h" />
     <ClInclude Include="src\Structures\Mesh\Octree.h" />
     <ClInclude Include="src\Structures\Mesh\Vertex.h" />
     <ClInclude Include="src\Structures\ShapeDiameterFunction\CSDF.h" />
