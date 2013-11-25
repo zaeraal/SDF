@@ -1,21 +1,22 @@
 // This is the main DLL file.
-#include "stdafx.h"
+
 #include "PointCloudTriangulation.h"
 
 using namespace PointCloudTriangulation;
 
 DeleunayTriangulator::DeleunayTriangulator(){
-	kNeigh_ratio = 0.02f;
+	kNeigh_ratio = 0.02;
 	kNeigh_min = 8;
 	kNeigh_max = 12;
 
-	centerFactor_limit = 0.2f;
+	centerFactor_limit = 0.2;
 	centerFactor_function_offset = 0.5;
 	centerFactor_function_scale = 2.0;
 
 	maxAddedPoints_MoreThanAngleTresh = 10;
 
 	neighVis = new PCTNeighVisualization[0];
+	neighVisSize = 0;
 }
 
 void DeleunayTriangulator::setKNeighParams(float _ratio, int _min, int _max){
@@ -45,19 +46,39 @@ void DeleunayTriangulator::computeLocalTriangulationFromPoints(int index, int nu
 	std::vector<int> v_indices;
 	for (int i=0; i<pMesh->numOfVertices; i++){
 		for (int j=i; j<pMesh->numOfVertices; j++){
-			if (i !=j && E_local[i][j] == true){
-				v_indices.push_back(i);
-				v_indices.push_back(j);
+			if (i !=j && E_local[i][j]){
+				for (int k=0; k<pMesh->numOfVertices; k++){
+					if (i !=k && E_local[i][k] && j !=k && E_local[j][k]){
+						bool addTriangle = true;
+
+						for (int v=0; v<v_indices.size() / 3; v++){
+							int v1 = v_indices[v * 3];
+							int v2 = v_indices[v * 3 + 1];
+							int v3 = v_indices[v * 3 + 2];
+							if ((i == v1 && j == v2 && k == v3) || (i == v2 && j == v1 && k == v3) || (i == v3 && j == v1 && k == v2) || 
+								(i == v1 && j == v3 && k == v2) || (i == v2 && j == v3 && k == v1) || (i == v3 && j == v2 && k == v1)){
+								addTriangle = false;
+								break;
+							}
+						}
+
+						if (addTriangle){
+							v_indices.push_back(i);
+							v_indices.push_back(j);
+							v_indices.push_back(k);
+						}
+					}
+				}
 			}
 		}
 	}
 
 	*indices = new int[v_indices.size()];
-	for (unsigned int i=0; i<v_indices.size(); i++){
+	for (int i=0; i<v_indices.size(); i++){
 		(*indices)[i] = v_indices[i];
 	}
 
-	numOfIndices = v_indices.size() / 2;
+	numOfIndices = v_indices.size() / 3;
 }
 
 void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices){
@@ -74,6 +95,8 @@ void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints,
 	for (int i=0; i<pMesh->numOfVertices; i++){
 		neighVis[i].isE_local_visualize = false;
 	}
+
+	neighVisSize = pMesh->numOfVertices;
 
 	std::vector<std::set<int>> globalNeighbourhoods = computeGlobalNeighbourhood(pMesh);
 	Array2D<bool> E_global = Array2D<bool>(numOfPoints, numOfPoints, false);
@@ -92,19 +115,39 @@ void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints,
 	std::vector<int> v_indices;
 	for (int i=0; i<pMesh->numOfVertices; i++){
 		for (int j=i; j<pMesh->numOfVertices; j++){
-			if (i !=j && E_global[i][j] == true){
-				v_indices.push_back(i);
-				v_indices.push_back(j);
+			if (i !=j && E_global[i][j]){
+				for (int k=0; k<pMesh->numOfVertices; k++){
+					if (i !=k && E_global[i][k] && j !=k && E_global[j][k]){
+						bool addTriangle = true;
+
+						for (int v=0; v<v_indices.size() / 3; v++){
+							int v1 = v_indices[v * 3];
+							int v2 = v_indices[v * 3 + 1];
+							int v3 = v_indices[v * 3 + 2];
+							if ((i == v1 && j == v2 && k == v3) || (i == v2 && j == v1 && k == v3) || (i == v3 && j == v1 && k == v2) || 
+								(i == v1 && j == v3 && k == v2) || (i == v2 && j == v3 && k == v1) || (i == v3 && j == v2 && k == v1)){
+									addTriangle = false;
+									break;
+							}
+						}
+
+						if (addTriangle){
+							v_indices.push_back(i);
+							v_indices.push_back(j);
+							v_indices.push_back(k);
+						}
+					}
+				}
 			}
 		}
 	}
 
 	*indices = new int[v_indices.size()];
-	for (unsigned int i=0; i<v_indices.size(); i++){
+	for (int i=0; i<v_indices.size(); i++){
 		(*indices)[i] = v_indices[i];
 	}
 
-	numOfIndices = v_indices.size() / 2;
+	numOfIndices = v_indices.size() / 3;
 
 }
 
@@ -312,13 +355,13 @@ Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGrap
 
 		   k = 0;
 		   for (std::set<int>::iterator itt=neighs.begin(); itt!=neighs.end(); ++itt){
-				if (Distance(pointsInPlane[k], PCTCVector2((float)p0->x(),(float)p0->y())) < 0.00001){
+				if (Distance(pointsInPlane[k], PCTCVector2(p0->x(),p0->y())) < 0.00001){
 					i0 = *itt;
 				}
-				if (Distance(pointsInPlane[k], PCTCVector2((float)p1->x(),(float)p1->y())) < 0.00001){
+				if (Distance(pointsInPlane[k], PCTCVector2(p1->x(),p1->y())) < 0.00001){
 					i1 = *itt;
 				}
-				if (Distance(pointsInPlane[k], PCTCVector2((float)p2->x(),(float)p2->y())) < 0.00001){
+				if (Distance(pointsInPlane[k], PCTCVector2(p2->x(),p2->y())) < 0.00001){
 					i2 = *itt;
 				}
 				k++;
@@ -337,16 +380,17 @@ Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGrap
 		}
 
 		neighVis[i].E_local_visualize = E_local.copy();
-		neighVis[i].visNormals = new PCTCVector3[4];
 		neighVis[i].visNormals[0] = n;
 		neighVis[i].visNormals[1] = ev1;
 		neighVis[i].visNormals[2] = ev2;
 		neighVis[i].visNormals[3] = ev3;
 
 		neighVis[i].localNeighs = neighs;
-		neighVis[i].pointsInTangentPlane = pointsInPlane;
+		//neighVis[i].pointsInTangentPlane = pointsInPlane;
 		neighVis[i].isE_local_visualize = true;
 
+		//delete[] pointsInPlane;
+		//delete[] neighPoints;
 
 		return E_local;
 }
@@ -410,16 +454,16 @@ bool DeleunayTriangulator::checkLocalNeighAngles(int i, PCTMeshGraph * pMesh, st
 	//vector<int> indices_index2order = std::vector<int>(neighs.size());
 	std::vector<int> indices_order2index = std::vector<int>(neighs.size());
 	int swapIndex;
-	for (unsigned int j=0; j < neighs.size(); j++){
-		float angle = (float)OrientedAngleBetweenVectors(pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[0]], pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[j]]);
+	for (int j=0; j < neighs.size(); j++){
+		float angle = OrientedAngleBetweenVectors(pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[0]], pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[j]]);
 		angles[j] = angle;
 		indices_order2index[j] = j;
 	}
 
 	// sort angles, get indices
-	for (unsigned int j=0; j<neighs.size(); j++){
+	for (int j=0; j<neighs.size(); j++){
 		float minAngle = FLT_MAX;
-		for (unsigned int k=j; k<neighs.size(); k++){
+		for (int k=j; k<neighs.size(); k++){
 			if (angles[k] < minAngle){
 				minAngle = angles[k];
 				swapIndex = k;
@@ -434,7 +478,7 @@ bool DeleunayTriangulator::checkLocalNeighAngles(int i, PCTMeshGraph * pMesh, st
 	}
 
 	// check if there is angle of 2 consequent std::vectors > 90
-	for (unsigned int j=0; j<neighs.size(); j++){
+	for (int j=0; j<neighs.size(); j++){
 		int idx = indices_order2index[j];
 		int nextIdx = indices_order2index[(j + 1) % neighs.size()];
 		//PCTCVector3 vec0 = pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[0]];
@@ -442,7 +486,7 @@ bool DeleunayTriangulator::checkLocalNeighAngles(int i, PCTMeshGraph * pMesh, st
 		PCTCVector3 vec2 = pMesh->pVerts[i] - pMesh->pVerts[vecNeighs[nextIdx]];
 		//float angle01 = AngleBetweenVectors(vec0, vec1);
 		//float angle02 = AngleBetweenVectors(vec0, vec2);
-		float angle = (float)OrientedAngleBetweenVectors(vec1, vec2);
+		float angle = OrientedAngleBetweenVectors(vec1, vec2);
 
 		angles[j] = angle;
 		if (angles[j] > PI / 2)
@@ -469,7 +513,7 @@ std::vector<std::set<int>> DeleunayTriangulator::computeGlobalNeighbourhood(PCTM
 		int neighIndex = -1;
 
 		for (int j=0; j<pMesh->numOfVertices; j++){
-			distances[j] = (int)Distance(pMesh->pVerts[i], pMesh->pVerts[j]);
+			distances[j] = Distance(pMesh->pVerts[i], pMesh->pVerts[j]);
 		}
 
 		PCTCVector3 cm = pMesh->pVerts[i];
@@ -489,14 +533,15 @@ std::vector<std::set<int>> DeleunayTriangulator::computeGlobalNeighbourhood(PCTM
 		//int * neighbours = new int[kneigh];
 		//findNearestKNeighbours(pMesh, i, kneigh, neighbours);
 		globalNeighbourhoods.push_back(neighs);
+
+		delete[] distances;
 	}
 
 	return globalNeighbourhoods;
 }
 
-int DeleunayTriangulator::getKNeigh(PCTMeshGraph * pMesh)
-{
-	return min(max((int)(pMesh->numOfVertices * kNeigh_ratio), kNeigh_min), kNeigh_max);
+int DeleunayTriangulator::getKNeigh(PCTMeshGraph * pMesh){
+	return std::min(std::max((int)(pMesh->numOfVertices * kNeigh_ratio), kNeigh_min), kNeigh_max);
 }
 
 void DeleunayTriangulator::findClosestNeighWithCentering(int i, PCTMeshGraph * pMesh, std::set<int> &neighs, PCTCVector3 &cm, int * distances){
@@ -545,5 +590,5 @@ void DeleunayTriangulator::findClosestNeighWithCentering(int i, PCTMeshGraph * p
 	for (std::set<int>::iterator it=neighs.begin(); it!=neighs.end(); ++it){
 		cm = cm + pMesh->pVerts[*it];
 	}
-	cm = cm / (float)neighs.size();
+	cm = cm / neighs.size();
 }

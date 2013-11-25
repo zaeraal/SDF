@@ -383,17 +383,17 @@ namespace ModelController
 		float sizez = 0;
 
 		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
-			sizex = abs(minx+maxx);
+			sizex = abs(maxx-minx);
 		else
 			sizex = abs(minx-maxx);
 
 		if(((miny<=0.0)&&(maxy<=0.0)) || ((miny>=0.0)&&(maxy>=0.0)))
-			sizey = abs(miny+maxy);
+			sizey = abs(maxy-miny);
 		else
 			sizey = abs(miny-maxy);
 
 		if(((minz<=0.0)&&(maxz<=0.0)) || ((minz>=0.0)&&(maxz>=0.0)))
-			sizez = abs(minz+maxz);
+			sizez = abs(maxz-minz);
 		else
 			sizez = abs(minz-maxz);
 
@@ -402,7 +402,7 @@ namespace ModelController
 
 		b_sf = b_size / 10.0f;											// 1 / 10 velkosti modelu budu tie vektory
 		b_max = sqrt(3.0f) * b_size;									// diagonala kocky
-		b_size = b_size / 2.0f;
+		b_size = b_size / 2.0f + 0.005f;
 
 		SDF_control = new CSDFController(b_max, Assimp);
 	}
@@ -756,12 +756,26 @@ namespace ModelController
 	}
 	void CModel::TriangulatePoints()
 	{
+		loaded = false;
+
+		// vymazanie struktur
+		selected = NULL;
+
+		if(m_root != NULL)
+			delete m_root;
+
+		triangles->CompleteDelete();
+		delete triangles;
+		triangles = new LinkedList<Face>();
+
+		DeleteIdenticalVertices();
+
 		PointCloudTriangulation::DeleunayTriangulator *pTriangulator = new PointCloudTriangulation::DeleunayTriangulator();
 		//pTriangulator->setKNeighParams(0.02, 8, 12);
 		//pTriangulator->setCenterFactorParams(0.2, 0.5, 2.0);
 
-		int numOfIndices = 0;
-		int * indices = NULL;
+		int numOfTriangles = 0;
+		int *triangleverts = NULL;
 		unsigned int numOfVertices = points->GetSize();
 		Vertex** tmp_points = new Vertex* [numOfVertices];
 
@@ -784,32 +798,21 @@ namespace ModelController
 			verts[ii * 3 + 2] = tmp_points[ii]->P.Z;
 		}
 
-		// triangulacia v Madovej libke
-		pTriangulator->computeGlobalTriangulationFromPoints(numOfVertices, verts, numOfIndices, &indices);
-		
-		loaded = false;
-
-		// vymazanie struktur
 		for(unsigned int iii = 0; iii < numOfVertices; iii++)
 		{
 			delete tmp_points[iii]->susedia;
 			tmp_points[iii]->susedia = new LinkedList<void>();
 		}
-		selected = NULL;
 
-		if(m_root != NULL)
-			delete m_root;
-
-		triangles->CompleteDelete();
-		delete triangles;
-		triangles = new LinkedList<Face>();
-
+		// triangulacia v Madovej libke
+		pTriangulator->computeGlobalTriangulationFromPoints(numOfVertices, verts, numOfTriangles, &triangleverts);
+		
 		// prelinkovanie struktur
-		for (int l=0; l<numOfIndices/3; l++)
+		for (int l=0; l<numOfTriangles; l++)
 		{
-			int v1 = indices[l * 2];
-			int v2 = indices[l * 2 + 2];
-			int v3 = indices[l * 2 + 4];
+			int v1 = triangleverts[l * 3 + 0];
+			int v2 = triangleverts[l * 3 + 1];
+			int v3 = triangleverts[l * 3 + 2];
 			Face* novy_face = new Face(tmp_points[v1], tmp_points[v2], tmp_points[v3]);
 			triangles->InsertToEnd(novy_face);
 			tmp_points[v1]->susedia->InsertToEnd(novy_face);
@@ -826,6 +829,40 @@ namespace ModelController
 		ComputeSusedov();
 
 		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
+		Nastavenia->INFO_Total_Vertices = points->GetSize();
+
+		delete pTriangulator;
+		delete [] verts;
+		delete [] triangleverts;
+		delete [] tmp_points;
+	}
+	void CModel::DeleteIdenticalVertices()
+	{
+		float delta = b_size * 2 * 0.00001f;
+		LinkedList<Vertex>* new_vertices = new LinkedList<Vertex>();
+		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
+		while(tmp1 != NULL)
+		{
+			bool add = true;
+			LinkedList<Vertex>::Cell<Vertex>* tmp2 = points->start;
+			while(tmp2 != NULL)
+			{
+				if(tmp1 == tmp2)
+					break;
+				float distance = tmp1->data->P.Dist(tmp2->data->P);
+				if(distance < delta)
+				{
+					add = false;
+					break;
+				}	
+				tmp2 = tmp2->next;
+			}
+			if(add == true)
+				new_vertices->InsertToEnd(tmp1->data);
+			tmp1 = tmp1->next;
+		}
+		delete points;
+		points = new_vertices;
 	}
 	void CModel::ReloadOctreeData()
 	{

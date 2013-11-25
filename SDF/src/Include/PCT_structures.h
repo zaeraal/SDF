@@ -102,7 +102,13 @@ struct PCTNeighVisualization
 	bool isE_local_visualize;
 	PCTCVector3 * visNormals;
 	std::set<int> localNeighs;
-	PCTCVector2 * pointsInTangentPlane;
+	//PCTCVector2 * pointsInTangentPlane;
+	PCTNeighVisualization(){
+		visNormals = new PCTCVector3[4];
+	}
+	~PCTNeighVisualization(){
+		delete[] visNormals;
+	}
 };
 
 struct PCTMeshGraph {

@@ -146,6 +146,7 @@ namespace SDF {
 
 
 #pragma endregion
+
 #pragma region Windows Form Designer generated code
 		/// <summary>
 		/// Required method for Designer support - do not modify
@@ -1209,12 +1210,17 @@ namespace SDF {
 		OpenGL->Render();
 		OpenGL->SwapOpenGLBuffers();
 
-		int tmp = int(static_cast<void*>(MController->selected));
-		this->TB_Face_ID->Text = "0 x" + tmp;
+		
 		if(MController->selected != NULL)
+		{
+			this->TB_Face_ID->Text = "" + MController->selected->number;
 			this->TB_SDF_Value->Text = "" + MController->selected->quality->value;
+		}
 		else
+		{
+			this->TB_Face_ID->Text = "-1";
 			this->TB_SDF_Value->Text = "0";
+		}
 
 		if(computing_SDF == true)
 		{
@@ -1628,6 +1634,7 @@ namespace SDF {
 	{
 		MController->TriangulatePoints();
 		this->TB_Total_Triangles->Text = ""+Nastavenia->INFO_Total_Triangles;
+		this->TB_Total_Vertices->Text = ""+Nastavenia->INFO_Total_Vertices;
 	}
 #pragma endregion
 

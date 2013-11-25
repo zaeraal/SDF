@@ -221,7 +221,7 @@ namespace MeshStructures
 				tabulka[i][1] = 0;
 			}
 			// zisti kam patria trojuholniky
-			unsigned int cislo = (unsigned int)pow(2, depth);
+			unsigned int cislo = (unsigned int)pow((long double)2, (int)depth);
 			for(unsigned int i = start; i < start+length; i++)
 			{
 				byte code1 = GetCode(tria[i]->v[0]->P);

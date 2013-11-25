@@ -46,6 +46,7 @@ namespace ModelController
 		void ComputeSDF();
 		void TriangulatePoints();
 		void ReloadOctreeData();
+		void DeleteIdenticalVertices();
 
 		bool loaded;
 		bool show_octree;

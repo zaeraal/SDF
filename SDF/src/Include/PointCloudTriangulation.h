@@ -17,11 +17,13 @@ namespace PointCloudTriangulation {
 		void setKNeighParams(float _ratio, int _min, int _max);
 		void setCenterFactorParams(float _limit, float _offset, float _scale);
 
-		void computeLocalTriangulationFromPoints(int i, int numOfPoints, float * points, int &numOfIndices, int ** indices, std::vector<std::set<int>> globalNeighbourhoods);
-		void computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices);
+		void computeLocalTriangulationFromPoints(int i, int numOfPoints, float * points, int &numOfTriangles, int ** indices, std::vector<std::set<int>> globalNeighbourhoods);
+		void computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfTriangles, int ** indices);
 		std::vector<std::set<int>> computeGlobalNeighbourhood(PCTMeshGraph * pMesh);
 		int getKNeigh(PCTMeshGraph * pMesh);
 		PCTNeighVisualization * neighVis;
+
+		int neighVisSize;
 		int neighPCIndex;
 	private:
 		float kNeigh_ratio; // ratio of numOfPoints that is taken as one ring neighbourhood

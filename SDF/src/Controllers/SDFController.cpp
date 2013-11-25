@@ -994,300 +994,354 @@ namespace SDFController
 		}
 		delete [] gauss_sus;
 	}
-/*int __float_as_int(float in)
-{
-     union fi { int i; float f; } conv;
-     conv.f = in;
-     return conv.i;
-}
-float __int_as_float(int a)
-{
-union {int a; float b;} u;
-u.a = a;
-return u.b;
-}
-#define CAST_STACK_DEPTH        23
-#define MAX_RAYCAST_ITERATIONS  10000
-struct cll_float3
-{
-    float       x;
-    float       y;
-    float       z;
-};
-struct Ray
-{
-    cll_float3      orig;
-    float       orig_sz;
-    cll_float3      dir;
-    float       dir_sz;
-};
-struct CastResult
-{
-    float       t;
-    cll_float3      pos;
-    int         iter;
-
-    void*        node;
-    int         childIdx;
-    int         stackPtr;
-};
-
-//------------------------------------------------------------------------
-
-class CastStack
-{
-public:
-    CastStack   (void)                          {}
-
-    __device__ S32* read        (int idx, F32& tmax) const      { U64 e = stack[idx]; tmax = __int_as_float((U32)(e >> 32)); return (S32*)(U32)e; }
-    __device__ void write       (int idx, S32* node, F32 tmax)  { stack[idx] = (U32)node | ((U64)__float_as_int(tmax) << 32); }
-
-private:
-                    CastStack   (CastStack& other); // forbidden
-    CastStack&      operator=   (CastStack& other); // forbidden
-    void*             stack[CAST_STACK_DEPTH + 1];
-};
-float copysignf(float a, float b)
-{
-	if(b < 0)
-		return -a;
-	else
-		return a;
-};
-float fmaxf(float a, float b)
-{
-	if(a > b)
-		return a;
-	else
-		return b;
-};
-float fminf(float a, float b)
-{
-	if(a < b)
-		return a;
-	else
-		return b;
-};
-void CSDFController::proc_subtree3 (CastResult& res, CastStack& stack, volatile Ray& ray)
-{
-    const float epsilon = 0.000001;
-    //float ray_orig_sz = ray.orig_sz;
-    int iter = 0;
-
-    // Get rid of small ray direction components to avoid division by zero.
-
-    if (fabsf(ray.dir.x) < epsilon) ray.dir.x = copysignf(epsilon, ray.dir.x);
-    if (fabsf(ray.dir.y) < epsilon) ray.dir.y = copysignf(epsilon, ray.dir.y);
-    if (fabsf(ray.dir.z) < epsilon) ray.dir.z = copysignf(epsilon, ray.dir.z);
-
-    // Precompute the coefficients of tx(x), ty(y), and tz(z).
-    // The octree is assumed to reside at coordinates [1, 2].
-
-    float tx_coef = 1.0f / -fabs(ray.dir.x);
-    float ty_coef = 1.0f / -fabs(ray.dir.y);
-    float tz_coef = 1.0f / -fabs(ray.dir.z);
-
-    float tx_bias = tx_coef * ray.orig.x;
-    float ty_bias = ty_coef * ray.orig.y;
-    float tz_bias = tz_coef * ray.orig.z;
-
-    // Select octant mask to mirror the coordinate system so
-    // that ray direction is negative along each axis.
-
-    int octant_mask = 7;
-    if (ray.dir.x > 0.0f) octant_mask ^= 1, tx_bias = 3.0f * tx_coef - tx_bias;
-    if (ray.dir.y > 0.0f) octant_mask ^= 2, ty_bias = 3.0f * ty_coef - ty_bias;
-    if (ray.dir.z > 0.0f) octant_mask ^= 4, tz_bias = 3.0f * tz_coef - tz_bias;
-
-    // Initialize the active span of t-values.
-
-    float t_min = fmaxf(fmaxf(2.0f * tx_coef - tx_bias, 2.0f * ty_coef - ty_bias), 2.0f * tz_coef - tz_bias);
-    float t_max = fminf(fminf(tx_coef - tx_bias, ty_coef - ty_bias), tz_coef - tz_bias);
-    float h = t_max;
-    t_min = fmaxf(t_min, 0.0f);
-    t_max = fminf(t_max, 1.0f);
-
-    // Initialize the current voxel to the first child of the root.
-
-    int*   parent           = (int*)getInput().rootNode;
-    cll_int2   child_descriptor = make_int2(0, 0); // invalid until fetched
-    int    idx              = 0;
-    cll_float3 pos              = make_float3(1.0f, 1.0f, 1.0f);
-    int    scale            = CAST_STACK_DEPTH - 1;
-    float  scale_exp2       = 0.5f; // exp2f(scale - s_max)
-
-    if (1.5f * tx_coef - tx_bias > t_min) idx ^= 1, pos.x = 1.5f;
-    if (1.5f * ty_coef - ty_bias > t_min) idx ^= 2, pos.y = 1.5f;
-    if (1.5f * tz_coef - tz_bias > t_min) idx ^= 4, pos.z = 1.5f;
-
-    // Traverse voxels along the ray as long as the current voxel
-    // stays within the octree.
-
-    while (scale < CAST_STACK_DEPTH)
-    {
-        iter++;
-        if (iter > MAX_RAYCAST_ITERATIONS)
-            break;
-
-        // Fetch child descriptor unless it is already valid.
-
-        if (child_descriptor.x == 0)
-        {
-            child_descriptor = *(int2*)parent;
-        }
-
-        // Determine maximum t-value of the cube by evaluating
-        // tx(), ty(), and tz() at its corner.
-
-        float tx_corner = pos.x * tx_coef - tx_bias;
-        float ty_corner = pos.y * ty_coef - ty_bias;
-        float tz_corner = pos.z * tz_coef - tz_bias;
-        float tc_max = fminf(fminf(tx_corner, ty_corner), tz_corner);
-
-        // Process voxel if the corresponding bit in valid mask is set
-        // and the active t-span is non-empty.
-
-        int child_shift = idx ^ octant_mask; // permute child slots based on the mirroring
-        int child_masks = child_descriptor.x << child_shift;
-        if ((child_masks & 0x8000) != 0 && t_min <= t_max)
-        {
-            // Terminate if the voxel is small enough.
-
-            /*if (tc_max * ray.dir_sz + ray_orig_sz >= scale_exp2)
-                break; // at t_min*//*
-
-            // INTERSECT
-            // Intersect active t-span with the cube and evaluate
-            // tx(), ty(), and tz() at the center of the voxel.
-
-            float tv_max = fminf(t_max, tc_max);
-            float half = scale_exp2 * 0.5f;
-            float tx_center = half * tx_coef + tx_corner;
-            float ty_center = half * ty_coef + ty_corner;
-            float tz_center = half * tz_coef + tz_corner;
-
-            // Descend to the first child if the resulting t-span is non-empty.
-
-            if (t_min <= tv_max)
-            {
-                // Terminate if the corresponding bit in the non-leaf mask is not set.
-
-                if ((child_masks & 0x0080) == 0)
-                    break; // at t_min (overridden with tv_min).
-
-                // PUSH
-                // Write current parent to the stack.
-
-                if (tc_max < h)
-                {
-                    stack.write(scale, parent, t_max);
-                }
-                h = tc_max;
-
-                // Find child descriptor corresponding to the current voxel.
-
-                int ofs = (unsigned int)child_descriptor.x >> 17; // child pointer
-                if ((child_descriptor.x & 0x10000) != 0) // far
-                {
-                    ofs = parent[ofs * 2]; // far pointer
-                }
-                ofs += popc8(child_masks & 0x7F);
-                parent += ofs * 2;
-
-                // Select child voxel that the ray enters first.
-
-                idx = 0;
-                scale--;
-                scale_exp2 = half;
-
-                if (tx_center > t_min) idx ^= 1, pos.x += scale_exp2;
-                if (ty_center > t_min) idx ^= 2, pos.y += scale_exp2;
-                if (tz_center > t_min) idx ^= 4, pos.z += scale_exp2;
-
-                // Update active t-span and invalidate cached child descriptor.
-
-                t_max = tv_max;
-                child_descriptor.x = 0;
-                continue;
-            }
-        }
-
-        // ADVANCE
-        // Step along the ray.
 
 
-        int step_mask = 0;
-        if (tx_corner <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
-        if (ty_corner <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
-        if (tz_corner <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
 
-        // Update active t-span and flip bits of the child slot index.
+/*	typedef unsigned char       U8;
+	typedef unsigned short      U16;
+	typedef unsigned int        U32;
+	typedef signed char         S8;
+	typedef signed short        S16;
+	typedef signed int          S32;
+	typedef float               F32;
+	typedef double              F64;
+	typedef unsigned long       U64;
+	typedef signed long         S64;
+	typedef void                (*FuncPtr)(void);
+	int c_popc8LUT[] =
+	{
+		0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+		1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+		1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+		1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+		3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+		3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+		4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8,
+	};
+	inline int popc8(U32 mask)
+	{
+		//((void)0);
+		return c_popc8LUT[mask];
+	}
+	int __float_as_int(float in)
+	{
+		union fi { int i; float f; } conv;
+		conv.f = in;
+		return conv.i;
+	}
+	float __int_as_float(int a)
+	{
+		union {int a; float b;} u;
+		u.a = a;
+		return u.b;
+	}
+	#define CAST_STACK_DEPTH        23
+	#define MAX_RAYCAST_ITERATIONS  10000
+	struct cll_float3
+	{
+		float       x;
+		float       y;
+		float       z;
+	};
+	struct cll_int2
+	{
+		int       x;
+		int       y;
+	};
+	cll_float3 make_float3(float xx, float yy, float zz)
+	{
+		cll_float3 result;
+		result.x = xx;
+		result.y = yy;
+		result.z = zz;
+		return result;
+	};
+	cll_int2 make_int2(int xx, int yy)
+	{
+		cll_int2 result;
+		result.x = xx;
+		result.y = yy;
+		return result;
+	};
+	struct Ray
+	{
+		cll_float3      orig;
+		cll_float3      orig_real;
+		cll_float3      dir;
+	};
+	struct CastResult
+	{
+		float       t;
+		cll_float3      pos;
+		int         iter;
 
-        t_min = tc_max;
-        idx ^= step_mask;
+		void*        node;
+		int         childIdx;
+		int         stackPtr;
+	};
 
-        // Proceed with pop if the bit flips disagree with the ray direction.
+	//------------------------------------------------------------------------
 
-        if ((idx & step_mask) != 0)
-        {
-            // POP
-            // Find the highest differing bit between the two positions.
+	class CastStack
+	{
+	public:
+		CastStack   (void)                          {}
 
-            unsigned int differing_bits = 0;
-            if ((step_mask & 1) != 0) differing_bits |= __float_as_int(pos.x) ^ __float_as_int(pos.x + scale_exp2);
-            if ((step_mask & 2) != 0) differing_bits |= __float_as_int(pos.y) ^ __float_as_int(pos.y + scale_exp2);
-            if ((step_mask & 4) != 0) differing_bits |= __float_as_int(pos.z) ^ __float_as_int(pos.z + scale_exp2);
-            scale = (__float_as_int((float)differing_bits) >> 23) - 127; // position of the highest bit
-            scale_exp2 = __int_as_float((scale - CAST_STACK_DEPTH + 127) << 23); // exp2f(scale - s_max)
+		S32* read        (int idx, F32& tmax) const      { U64 e = stack[idx]; tmax = __int_as_float((U32)(e >> 32)); return (S32*)(U32)e; }
+		void write       (int idx, S32* node, F32 tmax)  { stack[idx] = (U32)node | ((U64)__float_as_int(tmax) << 32); }
 
-            // Restore parent voxel from the stack.
+	private:
+		U64             stack[24];
+	};
+	float copysignf(float a, float b)
+	{
+		if(b < 0)
+			return -a;
+		else
+			return a;
+	};
+	float fmaxf(float a, float b)
+	{
+		if(a > b)
+			return a;
+		else
+			return b;
+	};
+	float fminf(float a, float b)
+	{
+		if(a < b)
+			return a;
+		else
+			return b;
+	};
+	void CSDFController::proc_subtree3 (CastResult& res, CastStack& stack, volatile Ray& ray)
+	{
+		const float epsilon = 0.000001;
+		//float ray_orig_sz = ray.orig_sz;
+		int iter = 0;
 
-            parent = stack.read(scale, t_max);
+		// Get rid of small ray direction components to avoid division by zero.
 
-            // Round cube position and extract child slot index.
+		if (fabsf(ray.dir.x) < epsilon) ray.dir.x = copysignf(epsilon, ray.dir.x);
+		if (fabsf(ray.dir.y) < epsilon) ray.dir.y = copysignf(epsilon, ray.dir.y);
+		if (fabsf(ray.dir.z) < epsilon) ray.dir.z = copysignf(epsilon, ray.dir.z);
 
-            int shx = __float_as_int(pos.x) >> scale;
-            int shy = __float_as_int(pos.y) >> scale;
-            int shz = __float_as_int(pos.z) >> scale;
-            pos.x = __int_as_float(shx << scale);
-            pos.y = __int_as_float(shy << scale);
-            pos.z = __int_as_float(shz << scale);
-            idx  = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
+		// Precompute the coefficients of tx(x), ty(y), and tz(z).
+		// The octree is assumed to reside at coordinates [1, 2].
 
-            // Prevent same parent from being stored again and invalidate cached child descriptor.
+		float tx_coef = 1.0f / -fabs(ray.dir.x);
+		float ty_coef = 1.0f / -fabs(ray.dir.y);
+		float tz_coef = 1.0f / -fabs(ray.dir.z);
 
-            h = 0.0f;
-            child_descriptor.x = 0;
-        }
-    }
+		float tx_bias = tx_coef * ray.orig.x;
+		float ty_bias = ty_coef * ray.orig.y;
+		float tz_bias = tz_coef * ray.orig.z;
 
-    // Indicate miss if we are outside the octree.
+		// Select octant mask to mirror the coordinate system so
+		// that ray direction is negative along each axis.
 
-#if (MAX_RAYCAST_ITERATIONS > 0)
-    if (scale >= CAST_STACK_DEPTH || iter > MAX_RAYCAST_ITERATIONS)
-#else
-    if (scale >= CAST_STACK_DEPTH)
-#endif
-    {
-        t_min = 2.0f;
-    }
+		int octant_mask = 7;
+		if (ray.dir.x > 0.0f) octant_mask ^= 1, tx_bias = 3.0f * tx_coef - tx_bias;
+		if (ray.dir.y > 0.0f) octant_mask ^= 2, ty_bias = 3.0f * ty_coef - ty_bias;
+		if (ray.dir.z > 0.0f) octant_mask ^= 4, tz_bias = 3.0f * tz_coef - tz_bias;
 
-    // Undo mirroring of the coordinate system.
+		// Initialize the active span of t-values.
 
-    if ((octant_mask & 1) == 0) pos.x = 3.0f - scale_exp2 - pos.x;
-    if ((octant_mask & 2) == 0) pos.y = 3.0f - scale_exp2 - pos.y;
-    if ((octant_mask & 4) == 0) pos.z = 3.0f - scale_exp2 - pos.z;
+		float t_min = fmaxf(fmaxf(2.0f * tx_coef - tx_bias, 2.0f * ty_coef - ty_bias), 2.0f * tz_coef - tz_bias);
+		float t_max = fminf(fminf(tx_coef - tx_bias, ty_coef - ty_bias), tz_coef - tz_bias);
+		float h = t_max;
+		t_min = fmaxf(t_min, 0.0f);
+		t_max = fminf(t_max, 1.0f);
 
-    // Output results.
+		// Initialize the current voxel to the first child of the root.
+		// sme prvym synom roota, tj parent = m_root, zistime ktory sme az neskor
+		int*   parent           = (int*)getInput().rootNode;
+		int child_descriptor = 0; // invalid until fetched
+		int    idx              = 0;
+		cll_float3 pos          = make_float3(1.0f, 1.0f, 1.0f);
+		int    scale            = CAST_STACK_DEPTH - 1;
+		float  scale_exp2       = 0.5f; // exp2f(scale - s_max)
 
-    res.t = t_min;
-    res.iter = iter;
-    res.pos.x = fminf(fmaxf(ray.orig.x + t_min * ray.dir.x, pos.x + epsilon), pos.x + scale_exp2 - epsilon);
-    res.pos.y = fminf(fmaxf(ray.orig.y + t_min * ray.dir.y, pos.y + epsilon), pos.y + scale_exp2 - epsilon);
-    res.pos.z = fminf(fmaxf(ray.orig.z + t_min * ray.dir.z, pos.z + epsilon), pos.z + scale_exp2 - epsilon);
-    res.node = parent;
-    res.childIdx = idx ^ octant_mask ^ 7;
-    res.stackPtr = scale;
-}*/
+		if (1.5f * tx_coef - tx_bias > t_min) idx ^= 1, pos.x = 1.5f;
+		if (1.5f * ty_coef - ty_bias > t_min) idx ^= 2, pos.y = 1.5f;
+		if (1.5f * tz_coef - tz_bias > t_min) idx ^= 4, pos.z = 1.5f;
 
+		// Traverse voxels along the ray as long as the current voxel
+		// stays within the octree.
+
+		while (scale < CAST_STACK_DEPTH)
+		{
+			iter++;
+			if (iter > MAX_RAYCAST_ITERATIONS)
+				break;
+
+			// Fetch child descriptor unless it is already valid.
+			// nacitame si hodnoty nasho otca, tj link na prveho syna a ci su synovia validny/listnaty
+			if (child_descriptor == 0)
+			{
+				child_descriptor = (*parent)<<24;
+			}
+			if (child_descriptor == 0)
+			{
+				//sme v leafe
+				// ray intersect
+			}
+			// Determine maximum t-value of the cube by evaluating
+			// tx(), ty(), and tz() at its corner.
+
+			float tx_corner = pos.x * tx_coef - tx_bias;
+			float ty_corner = pos.y * ty_coef - ty_bias;
+			float tz_corner = pos.z * tz_coef - tz_bias;
+			float tc_max = fminf(fminf(tx_corner, ty_corner), tz_corner);
+
+			// Process voxel if the corresponding bit in valid mask is set
+			// and the active t-span is non-empty.
+
+			int child_shift = idx ^ octant_mask; // permute child slots based on the mirroring
+			int child_masks = child_descriptor << child_shift;
+			if (((child_masks & 0x0080) != 0) && (t_min <= t_max))
+			{
+				// Terminate if the voxel is small enough.
+
+				/*if (tc_max * ray.dir_sz + ray_orig_sz >= scale_exp2)
+					break; // at t_min*//*
+
+				// INTERSECT
+				// Intersect active t-span with the cube and evaluate
+				// tx(), ty(), and tz() at the center of the voxel.
+
+				float tv_max = fminf(t_max, tc_max);
+				float half = scale_exp2 * 0.5f;
+				float tx_center = half * tx_coef + tx_corner;
+				float ty_center = half * ty_coef + ty_corner;
+				float tz_center = half * tz_coef + tz_corner;
+
+				// Descend to the first child if the resulting t-span is non-empty.
+
+				if (t_min <= tv_max)
+				{
+					// Terminate if the corresponding bit in the non-leaf mask is not set.
+					// sme v dakom leafe
+					/*if (child_descriptor == 0)
+						break; // at t_min (overridden with tv_min).*//*
+
+					// PUSH
+					// Write current parent to the stack.
+
+					if (tc_max < h)
+					{
+						stack.write(scale, parent, t_max);
+					}
+					h = tc_max;
+
+					// Find child descriptor corresponding to the current voxel.
+
+					int ofs = (unsigned int)(*parent) >> 8; // child pointer
+					ofs += popc8((child_masks<<8) & 0x7F);
+					parent += ofs;
+
+					// Select child voxel that the ray enters first.
+
+					idx = 0;
+					scale--;
+					scale_exp2 = half;
+
+					if (tx_center > t_min) idx ^= 1, pos.x += scale_exp2;
+					if (ty_center > t_min) idx ^= 2, pos.y += scale_exp2;
+					if (tz_center > t_min) idx ^= 4, pos.z += scale_exp2;
+
+					// Update active t-span and invalidate cached child descriptor.
+
+					t_max = tv_max;
+					child_descriptor = 0;
+					continue;
+				}
+			}
+
+			// ADVANCE
+			// Step along the ray.
+
+
+			int step_mask = 0;
+			if (tx_corner <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
+			if (ty_corner <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
+			if (tz_corner <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
+
+			// Update active t-span and flip bits of the child slot index.
+
+			t_min = tc_max;
+			idx ^= step_mask;
+
+			// Proceed with pop if the bit flips disagree with the ray direction.
+
+			if ((idx & step_mask) != 0)
+			{
+				// POP
+				// Find the highest differing bit between the two positions.
+
+				unsigned int differing_bits = 0;
+				if ((step_mask & 1) != 0) differing_bits |= __float_as_int(pos.x) ^ __float_as_int(pos.x + scale_exp2);
+				if ((step_mask & 2) != 0) differing_bits |= __float_as_int(pos.y) ^ __float_as_int(pos.y + scale_exp2);
+				if ((step_mask & 4) != 0) differing_bits |= __float_as_int(pos.z) ^ __float_as_int(pos.z + scale_exp2);
+				scale = (__float_as_int((float)differing_bits) >> 23) - 127; // position of the highest bit
+				scale_exp2 = __int_as_float((scale - CAST_STACK_DEPTH + 127) << 23); // exp2f(scale - s_max)
+
+				// Restore parent voxel from the stack.
+
+				parent = stack.read(scale, t_max);
+
+				// Round cube position and extract child slot index.
+
+				int shx = __float_as_int(pos.x) >> scale;
+				int shy = __float_as_int(pos.y) >> scale;
+				int shz = __float_as_int(pos.z) >> scale;
+				pos.x = __int_as_float(shx << scale);
+				pos.y = __int_as_float(shy << scale);
+				pos.z = __int_as_float(shz << scale);
+				idx  = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
+
+				// Prevent same parent from being stored again and invalidate cached child descriptor.
+
+				h = 0.0f;
+				child_descriptor = 0;
+			}
+		}
+
+		// Indicate miss if we are outside the octree.
+
+	#if (MAX_RAYCAST_ITERATIONS > 0)
+		if (scale >= CAST_STACK_DEPTH || iter > MAX_RAYCAST_ITERATIONS)
+	#else
+		if (scale >= CAST_STACK_DEPTH)
+	#endif
+		{
+			t_min = 2.0f;
+		}
+
+		// Undo mirroring of the coordinate system.
+
+		if ((octant_mask & 1) == 0) pos.x = 3.0f - scale_exp2 - pos.x;
+		if ((octant_mask & 2) == 0) pos.y = 3.0f - scale_exp2 - pos.y;
+		if ((octant_mask & 4) == 0) pos.z = 3.0f - scale_exp2 - pos.z;
+
+		// Output results.
+
+		res.t = t_min;
+		res.iter = iter;
+		res.pos.x = fminf(fmaxf(ray.orig.x + t_min * ray.dir.x, pos.x + epsilon), pos.x + scale_exp2 - epsilon);
+		res.pos.y = fminf(fmaxf(ray.orig.y + t_min * ray.dir.y, pos.y + epsilon), pos.y + scale_exp2 - epsilon);
+		res.pos.z = fminf(fmaxf(ray.orig.z + t_min * ray.dir.z, pos.z + epsilon), pos.z + scale_exp2 - epsilon);
+		res.node = parent;
+		res.childIdx = idx ^ octant_mask ^ 7;
+		res.stackPtr = scale;
+	}*/
 }

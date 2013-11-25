@@ -25,6 +25,14 @@ namespace MathStructures
 
         float Length () { return sqrt(X * X + Y * Y + Z * Z); }
 
+		float Dist (Vector4 a)
+		{
+			float xd = X - a.X;
+			float yd = Y - a.Y;
+			float zd = Z - a.Z;
+			return sqrt(xd*xd + yd*yd  + zd*zd);
+		}
+
 		void Normalize ()
 		{
 			float length = Length();
