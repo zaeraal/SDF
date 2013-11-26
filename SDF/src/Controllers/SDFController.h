@@ -25,6 +25,7 @@ namespace SDFController
 		int new_node(float txm, int x, float tym, int y, float tzm, int z);
 		void proc_subtree (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees);
 		void proc_subtree2 (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees);
+		void proc_subtree3 (Vector4 o, Vector4 or, Vector4 d, Octree* node, LinkedList<Octree>* octrees);
 		void ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees);
 		bool CheckError(int err, std::string extra_debug = "");
 		void UniformPointsOnSphere(float* rndx, float * rndy);

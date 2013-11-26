@@ -997,7 +997,7 @@ namespace SDFController
 
 
 
-/*	typedef unsigned char       U8;
+	typedef unsigned char       U8;
 	typedef unsigned short      U16;
 	typedef unsigned int        U32;
 	typedef signed char         S8;
@@ -1123,8 +1123,14 @@ namespace SDFController
 		else
 			return b;
 	};
-	void CSDFController::proc_subtree3 (CastResult& res, CastStack& stack, volatile Ray& ray)
+	void CSDFController::proc_subtree3 (Vector4 o, Vector4 or, Vector4 d, Octree* node, LinkedList<Octree>* octrees)
 	{
+		Ray ray;
+		ray.orig.x = o.X; ray.orig.y = o.Y; ray.orig.z = o.Z;
+		ray.orig_real.x = or.X; ray.orig_real.y = or.Y; ray.orig_real.z = or.Z;
+		ray.dir.x = d.X; ray.dir.y = d.Y; ray.dir.z = d.Z;
+
+		CastStack stack;
 		const float epsilon = 0.000001;
 		//float ray_orig_sz = ray.orig_sz;
 		int iter = 0;
@@ -1164,7 +1170,7 @@ namespace SDFController
 
 		// Initialize the current voxel to the first child of the root.
 		// sme prvym synom roota, tj parent = m_root, zistime ktory sme az neskor
-		int*   parent           = (int*)getInput().rootNode;
+		int*   parent           = 0;//(int*)getInput().rootNode;
 		int child_descriptor = 0; // invalid until fetched
 		int    idx              = 0;
 		cll_float3 pos          = make_float3(1.0f, 1.0f, 1.0f);
@@ -1213,7 +1219,7 @@ namespace SDFController
 				// Terminate if the voxel is small enough.
 
 				/*if (tc_max * ray.dir_sz + ray_orig_sz >= scale_exp2)
-					break; // at t_min*//*
+					break; // at t_min*/
 
 				// INTERSECT
 				// Intersect active t-span with the cube and evaluate
@@ -1232,7 +1238,7 @@ namespace SDFController
 					// Terminate if the corresponding bit in the non-leaf mask is not set.
 					// sme v dakom leafe
 					/*if (child_descriptor == 0)
-						break; // at t_min (overridden with tv_min).*//*
+						break; // at t_min (overridden with tv_min).*/
 
 					// PUSH
 					// Write current parent to the stack.
@@ -1317,8 +1323,8 @@ namespace SDFController
 		}
 
 		// Indicate miss if we are outside the octree.
-
-	#if (MAX_RAYCAST_ITERATIONS > 0)
+		// netreba handlovat
+	/*#if (MAX_RAYCAST_ITERATIONS > 0)
 		if (scale >= CAST_STACK_DEPTH || iter > MAX_RAYCAST_ITERATIONS)
 	#else
 		if (scale >= CAST_STACK_DEPTH)
@@ -1342,6 +1348,6 @@ namespace SDFController
 		res.pos.z = fminf(fmaxf(ray.orig.z + t_min * ray.dir.z, pos.z + epsilon), pos.z + scale_exp2 - epsilon);
 		res.node = parent;
 		res.childIdx = idx ^ octant_mask ^ 7;
-		res.stackPtr = scale;
-	}*/
+		res.stackPtr = scale;*/
+	}
 }

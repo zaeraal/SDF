@@ -561,6 +561,8 @@ namespace ModelController
 								}
 								glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
 							}
+							if(tmp->data->v[i]->HasNormal())
+								glNormal3f(tmp->data->v[i]->GetNormal().X, tmp->data->v[i]->GetNormal().Y, tmp->data->v[i]->GetNormal().Z);
 							glVertex3f(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
 						}
 					glEnd();
@@ -776,6 +778,7 @@ namespace ModelController
 
 		int numOfTriangles = 0;
 		int *triangleverts = NULL;
+		float *normals = NULL;
 		unsigned int numOfVertices = points->GetSize();
 		Vertex** tmp_points = new Vertex* [numOfVertices];
 
@@ -803,17 +806,27 @@ namespace ModelController
 			delete tmp_points[iii]->susedia;
 			tmp_points[iii]->susedia = new LinkedList<void>();
 		}
-
-		// triangulacia v Madovej libke
-		pTriangulator->computeGlobalTriangulationFromPoints(numOfVertices, verts, numOfTriangles, &triangleverts);
 		
+		// triangulacia v Madovej libke
+		pTriangulator->computeGlobalTriangulationFromPoints(numOfVertices, verts, numOfTriangles, &triangleverts, &normals, false);
+		
+		// kopcenie normal
+		for (unsigned int l=0; l<numOfVertices; l++)
+		{
+			Vector4 normala = Vector4(normals[l * 3 + 0], normals[l * 3 + 1], normals[l * 3 + 2]);
+			tmp_points[l]->SetNormal(normala);
+		}
+
 		// prelinkovanie struktur
 		for (int l=0; l<numOfTriangles; l++)
 		{
 			int v1 = triangleverts[l * 3 + 0];
 			int v2 = triangleverts[l * 3 + 1];
-			int v3 = triangleverts[l * 3 + 2];
+			int v3 = triangleverts[l * 3 + 2];		
 			Face* novy_face = new Face(tmp_points[v1], tmp_points[v2], tmp_points[v3]);
+			Vector4 t_nor = tmp_points[v1]->GetNormal() + tmp_points[v2]->GetNormal() + tmp_points[v3]->GetNormal();
+			t_nor.Normalize();
+			novy_face->normal = t_nor;
 			triangles->InsertToEnd(novy_face);
 			tmp_points[v1]->susedia->InsertToEnd(novy_face);
 			tmp_points[v2]->susedia->InsertToEnd(novy_face);
@@ -834,6 +847,7 @@ namespace ModelController
 		delete pTriangulator;
 		delete [] verts;
 		delete [] triangleverts;
+		delete [] normals;
 		delete [] tmp_points;
 	}
 	void CModel::DeleteIdenticalVertices()

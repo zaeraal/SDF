@@ -31,7 +31,7 @@ void DeleunayTriangulator::setCenterFactorParams(float _limit, float _offset, fl
 	centerFactor_function_scale = _scale;
 }
 
-void DeleunayTriangulator::computeLocalTriangulationFromPoints(int index, int numOfPoints, float * points, int &numOfIndices, int ** indices, std::vector<std::set<int>> globalNeighbourhoods){
+void DeleunayTriangulator::computeLocalTriangulationFromPoints(int index, int numOfPoints, float * points, int &numOfIndices, int ** indices, std::vector<std::set<int>> globalNeighbourhoods, float * nor, bool visualization){
 	PCTMeshGraph * pMesh = new PCTMeshGraph();
 	pMesh->numOfVertices = numOfPoints;
 	pMesh->pVerts = new PCTCVector3[numOfPoints];
@@ -41,7 +41,7 @@ void DeleunayTriangulator::computeLocalTriangulationFromPoints(int index, int nu
 		pMesh->pVerts[i].z = points[i * 3 + 2];
 	}
 
-	Array2D<bool> E_local = computeLocalTriangulation(index, pMesh, globalNeighbourhoods);
+	Array2D<bool> E_local = computeLocalTriangulation(index, pMesh, globalNeighbourhoods, nor, visualization);
 	
 	std::vector<int> v_indices;
 	for (int i=0; i<pMesh->numOfVertices; i++){
@@ -81,7 +81,7 @@ void DeleunayTriangulator::computeLocalTriangulationFromPoints(int index, int nu
 	numOfIndices = v_indices.size() / 3;
 }
 
-void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices){
+void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices, float ** normals, bool visualization){
 	PCTMeshGraph * pMesh = new PCTMeshGraph();
 	pMesh->numOfVertices = numOfPoints;
 	pMesh->pVerts = new PCTCVector3[numOfPoints];
@@ -91,18 +91,27 @@ void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints,
 		pMesh->pVerts[i].z = points[i * 3 + 2];
 	}
 
-	neighVis = new PCTNeighVisualization[pMesh->numOfVertices];
-	for (int i=0; i<pMesh->numOfVertices; i++){
-		neighVis[i].isE_local_visualize = false;
+	if (visualization){
+		neighVis = new PCTNeighVisualization[pMesh->numOfVertices];
+		for (int i=0; i<pMesh->numOfVertices; i++){
+			neighVis[i].isE_local_visualize = false;
+		}
+
+		neighVisSize = pMesh->numOfVertices;
 	}
 
-	neighVisSize = pMesh->numOfVertices;
+	*normals = new float[3 * pMesh->numOfVertices];
+	float * nor = new float[3];
 
 	std::vector<std::set<int>> globalNeighbourhoods = computeGlobalNeighbourhood(pMesh);
 	Array2D<bool> E_global = Array2D<bool>(numOfPoints, numOfPoints, false);
 
 	for (int i=0; i<pMesh->numOfVertices; i++){
-		Array2D<bool> E_local = computeLocalTriangulation(i, pMesh, globalNeighbourhoods);
+		Array2D<bool> E_local = computeLocalTriangulation(i, pMesh, globalNeighbourhoods, nor, visualization);
+
+		(*normals)[i * 3] = nor[0];
+		(*normals)[i * 3 + 1] = nor[1];
+		(*normals)[i * 3 + 2] = nor[2];
 
 		for (int j=0; j<pMesh->numOfVertices; j++){
 			if (E_local[i][j] == true){
@@ -226,7 +235,7 @@ void DeleunayTriangulator::getTangentPlanePCA(int numOfPoints, PCTCVector3 * poi
 	*n = Normalize(Cross(*ev_1, *ev_2));
 }
 
-Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGraph * pMesh, std::vector<std::set<int>> globalNeighbourhoods){
+Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGraph * pMesh, std::vector<std::set<int>> globalNeighbourhoods, float * nor, bool visualization){
 		/////////////// params /////////////
 		bool doProjectionToLocalPlane = false;
 		int k = 0;
@@ -379,18 +388,26 @@ Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGrap
 			
 		}
 
-		neighVis[i].E_local_visualize = E_local.copy();
-		neighVis[i].visNormals[0] = n;
-		neighVis[i].visNormals[1] = ev1;
-		neighVis[i].visNormals[2] = ev2;
-		neighVis[i].visNormals[3] = ev3;
+		if (visualization){
 
-		neighVis[i].localNeighs = neighs;
-		//neighVis[i].pointsInTangentPlane = pointsInPlane;
-		neighVis[i].isE_local_visualize = true;
+			neighVis[i].E_local_visualize = E_local.copy();
+			neighVis[i].visNormals[0] = n;
+			neighVis[i].visNormals[1] = ev1;
+			neighVis[i].visNormals[2] = ev2;
+			neighVis[i].visNormals[3] = ev3;
 
-		//delete[] pointsInPlane;
-		//delete[] neighPoints;
+			neighVis[i].localNeighs = neighs;
+			//neighVis[i].pointsInTangentPlane = pointsInPlane;
+			neighVis[i].isE_local_visualize = true;
+
+			delete[] pointsInPlane;
+			delete[] neighPoints;
+
+		}
+
+		nor[0] = n.x;
+		nor[1] = n.y;
+		nor[2] = n.z;
 
 		return E_local;
 }

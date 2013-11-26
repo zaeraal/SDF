@@ -7,17 +7,21 @@ namespace MeshStructures
 	// konstruktor
 	Vertex::Vertex(float x, float y, float z)
 	{
-		P.Init(x, y, z, 1.0);
+		P.Init(x, y, z, 1.0f);
 		susedia = new LinkedList<void>();
 		quality = new CSDF();
+		normal.Init(0.0f, 0.0f, 0.0f);
+		has_normal = false;
 	}
 
 	Vertex::Vertex(Vector4 position)
 	{
 		P = position;
-		P.W = 1.0;		// preistotu.. toto su body a teda W = 1
+		P.W = 1.0f;		// preistotu.. toto su body a teda W = 1
 		susedia = new LinkedList<void>();
 		quality = new CSDF();
+		normal.Init(0.0f, 0.0f, 0.0f);
+		has_normal = false;
 	}
 
 	// destruktor
@@ -25,5 +29,19 @@ namespace MeshStructures
 	{
 		delete susedia;
 		delete quality;
+	}
+
+	bool Vertex::HasNormal()
+	{
+		return has_normal;
+	}
+	void Vertex::SetNormal(Vector4 normala)
+	{
+		normal = normala;
+		has_normal = true;
+	}
+	Vector4 Vertex::GetNormal()
+	{
+		return normal;
 	}
 }

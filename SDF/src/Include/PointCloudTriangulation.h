@@ -17,8 +17,8 @@ namespace PointCloudTriangulation {
 		void setKNeighParams(float _ratio, int _min, int _max);
 		void setCenterFactorParams(float _limit, float _offset, float _scale);
 
-		void computeLocalTriangulationFromPoints(int i, int numOfPoints, float * points, int &numOfTriangles, int ** indices, std::vector<std::set<int>> globalNeighbourhoods);
-		void computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfTriangles, int ** indices);
+		void computeLocalTriangulationFromPoints(int index, int numOfPoints, float * points, int &numOfIndices, int ** indices, std::vector<std::set<int>> globalNeighbourhoods, float * nor, bool visualization = false);
+		void computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices, float ** normals, bool visualization = false);
 		std::vector<std::set<int>> computeGlobalNeighbourhood(PCTMeshGraph * pMesh);
 		int getKNeigh(PCTMeshGraph * pMesh);
 		PCTNeighVisualization * neighVis;
@@ -36,7 +36,7 @@ namespace PointCloudTriangulation {
 
 		int maxAddedPoints_MoreThanAngleTresh;
 
-		Array2D<bool> computeLocalTriangulation(int i, PCTMeshGraph * pMesh, std::vector<std::set<int>> globalNeighbourhoods);
+		Array2D<bool> computeLocalTriangulation(int i, PCTMeshGraph * pMesh, std::vector<std::set<int>> globalNeighbourhoods, float * nor, bool visualization = false);
 		void findClosestNeighWithCentering(int i, PCTMeshGraph * pMesh, std::set<int> &neighs, PCTCVector3 &cm, int * distances);
 		bool checkLocalNeighAngles(int i, PCTMeshGraph * pMesh, std::set<int> &neighs);
 		void getTangentPlanePCA(int numOfPoints, PCTCVector3 * points, PCTCVector3 * n, PCTCVector3 * ev_1, PCTCVector3 * ev_2, PCTCVector3 * ev_3);
