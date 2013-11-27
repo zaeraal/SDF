@@ -19,7 +19,9 @@ namespace OpenCLForm
 		int BuildKernel();
 		int GetGPUVariables();
 		int SetupMemory(unsigned int ss_triangles, unsigned int ss_vertices, unsigned int ss_origins, unsigned int ss_rays, unsigned int ss_targets, unsigned int ss_outputs);
+		int SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs);
 		int LaunchKernel(cl_uint3	*c_triangles, cl_float4	*c_vertices, cl_uint *c_origins, cl_float4 *c_rays, cl_uint *c_targets, cl_float *c_outputs, cl_uint4 c_params);
+		int LaunchKernel2(cl_float4 *c_triangles, cl_uint *c_nodes, cl_uint *c_node_tria, cl_float4 o_min, cl_float4 o_max, cl_float bias, cl_float4 *c_rays, cl_uint n_rays, cl_uint n_triangles, cl_float *c_outputs);
 		void WaitForFinish();
 
 		cl_uint		num_cores;				// pocet paralelnych jednotiek
@@ -32,7 +34,7 @@ namespace OpenCLForm
 		size_t local;   // local domain size for our calculation
 
 		size_t debug_len;
-		char debug_buffer[2048];
+		char debug_buffer[32768];
 	private:
 		cl_int err;     // error code returned from api calls
    
@@ -50,12 +52,16 @@ namespace OpenCLForm
 		unsigned int s_triangles;
 		unsigned int s_vertices;
 		unsigned int s_origins;
+		unsigned int s_nodes;
+		unsigned int s_node_tria;
 		unsigned int s_rays;
 		unsigned int s_targets;
 		unsigned int s_outputs;
 
 		// OpenCL Buffery
 		cl_mem b_triangles;
+		cl_mem b_nodes;
+		cl_mem b_node_tria;
 		cl_mem b_vertices;
 		cl_mem b_origins;
 		cl_mem b_rays;
@@ -63,5 +69,6 @@ namespace OpenCLForm
 		cl_mem b_outputs;
 
 		COpenCLDebug *debugger;
+		int moznost;
 	};
 }

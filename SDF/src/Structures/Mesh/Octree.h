@@ -14,7 +14,7 @@ namespace MeshStructures
 		~Octree();
 
 		void Build(Face** tria, unsigned int length);
-		void Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length);
+		void Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length, unsigned int &NodeCount, unsigned int &TriangleCount);
 		void InserToEnd(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2]);
 		void InserToStart(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2]);
 		void FwdMove(Face** tria, unsigned int* mtria, unsigned int idx, byte code, int (&tabulka)[8][2], bool added);
@@ -29,10 +29,16 @@ namespace MeshStructures
 		Octree** son;						// synovia
 		Face** triangles;					// nase trojuholnicky
 		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je Nastavenia->OCTREE_Threshold
+		unsigned char sons;					// tabulka platnosti synov
+		unsigned int nodeCount;
+		unsigned int triangleCount;
+		float size;							// hranica kocky
+		Vector4 o_min;
+		Vector4 o_max;
+		Vector4 origin;						// stred kocky
 	private:
 		unsigned int depth;					// ako hlboko sme v octree, max je Nastavenia->OCTREE_Depth
-		float size;							// hranica kocky
-		Vector4 origin;						// stred kocky
 		float Table[8][3];					// tabulka offsetov
+
 	};
 }

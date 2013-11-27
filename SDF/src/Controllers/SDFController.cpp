@@ -24,7 +24,7 @@ namespace SDFController
 		prealocated_space = 100;
 		/*fc_list = new LinkedList<Face>();
 		fc_list->Preallocate(prealocated_space);*/
-		fc_list = new HashTable<Face>(prealocated_space * 1);
+		fc_list = new HashTable<Face>(prealocated_space);
 		oc_list = new LinkedList<Octree>();
 		oc_list->Preallocate(100);
 		InitKernel();
@@ -48,7 +48,6 @@ namespace SDFController
 		float max = 0.0;
 		
 		const unsigned int n_rays = Nastavenia->SDF_Rays;
-		const float angle = Nastavenia->SDF_Cone;
 		unsigned int counter = 0;
 
 		//------------------prealocated variables------------------
@@ -121,7 +120,7 @@ namespace SDFController
 						intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face[idx]->v[0]->P, intersected_face[idx]->v[1]->P, intersected_face[idx]->v[2]->P, dist2);
 						if(intersected == true)
 						{
-							theta = acos( (ray * (current_face->data->normal * (-1))) / (ray.Length() * current_face->data->normal.Length()) );
+							theta = acos( (ray * intersected_face[idx]->normal) / (ray.Length() * intersected_face[idx]->normal.Length()) );
 							theta = theta * float(180.0 / M_PI);
 							//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
 							if((theta < 90.0f) && (dist2 < dist))
@@ -282,7 +281,6 @@ namespace SDFController
 		//-------------------------------------------
 
 		//------------------prealocated variables------------------	
-		const float angle = Nastavenia->SDF_Cone;
 		std::vector<float> weights;
 
 		Vector4 tangens, normal, binormal;
@@ -599,6 +597,7 @@ namespace SDFController
 		//center = center - (ray * diagonal);						// hack
 
 		ray_octree_traversal(root, ray, center, octrees);
+		//ray_octree_traversal2(root, ray, center, octrees);
 
 		// create triangle list
 		LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
@@ -661,6 +660,33 @@ namespace SDFController
 		return (int) answer;
 	}
 
+	int CSDFController::first_node2(Vector4 t0, Vector4 tm)
+	{
+		unsigned char answer = 0;   // initialize to 00000000
+		// select the entry plane and set bits
+		if(t0.X > t0.Y)
+		{
+			if(t0.X > t0.Z)					// PLANE YZ
+			{
+				if(tm.Y < t0.X) answer|=2;    // set bit at position 1
+				if(tm.Z < t0.X) answer|=1;    // set bit at position 0
+				return (int) answer;
+			}  
+		} else
+		{      
+			if(t0.Y > t0.Z)					// PLANE XZ
+			{
+				if(tm.X < t0.Y) answer|=4;    // set bit at position 2
+				if(tm.Z < t0.Y) answer|=1;    // set bit at position 0
+				return (int) answer;
+			}
+		}
+		// PLANE XY
+		if(tm.X < t0.Z) answer|=4;			// set bit at position 2
+		if(tm.Y < t0.Z) answer|=2;			// set bit at position 1
+		return (int) answer;
+	}
+
 	int CSDFController::new_node(float txm, int x, float tym, int y, float tzm, int z)
 	{
 		if(txm < tym)
@@ -674,7 +700,7 @@ namespace SDFController
 		return z;							// XY plane;
 	}
 
-	void CSDFController::proc_subtree (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
+	void CSDFController::proc_subtree (unsigned char idx, float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
 		if(node == NULL)
 			return;
@@ -700,35 +726,35 @@ namespace SDFController
 			switch (currNode)
 			{
 			case 0: {
-				proc_subtree(tx0,ty0,tz0,txm,tym,tzm,node->son[a], octrees);
+				proc_subtree(idx, tx0,ty0,tz0,txm,tym,tzm,node->son[idx], octrees);
 				currNode = new_node(txm,4,tym,2,tzm,1);
 				break;}
 			case 1: {
-				proc_subtree(tx0,ty0,tzm,txm,tym,tz1,node->son[1^a], octrees);
+				proc_subtree(idx, tx0,ty0,tzm,txm,tym,tz1,node->son[1^idx], octrees);
 				currNode = new_node(txm,5,tym,3,tz1,8);
 				break;}
 			case 2: {
-				proc_subtree(tx0,tym,tz0,txm,ty1,tzm,node->son[2^a], octrees);
+				proc_subtree(idx, tx0,tym,tz0,txm,ty1,tzm,node->son[2^idx], octrees);
 				currNode = new_node(txm,6,ty1,8,tzm,3);
 				break;}
 			case 3: {
-				proc_subtree(tx0,tym,tzm,txm,ty1,tz1,node->son[3^a], octrees);
+				proc_subtree(idx, tx0,tym,tzm,txm,ty1,tz1,node->son[3^idx], octrees);
 				currNode = new_node(txm,7,ty1,8,tz1,8);
 				break;}
 			case 4: {
-				proc_subtree(txm,ty0,tz0,tx1,tym,tzm,node->son[4^a], octrees);
+				proc_subtree(idx, txm,ty0,tz0,tx1,tym,tzm,node->son[4^idx], octrees);
 				currNode = new_node(tx1,8,tym,6,tzm,5);
 				break;}
 			case 5: {
-				proc_subtree(txm,ty0,tzm,tx1,tym,tz1,node->son[5^a], octrees);
+				proc_subtree(idx, txm,ty0,tzm,tx1,tym,tz1,node->son[5^idx], octrees);
 				currNode = new_node(tx1,8,tym,7,tz1,8);
 				break;}
 			case 6: {
-				proc_subtree(txm,tym,tz0,tx1,ty1,tzm,node->son[6^a], octrees);
+				proc_subtree(idx, txm,tym,tz0,tx1,ty1,tzm,node->son[6^idx], octrees);
 				currNode = new_node(tx1,8,ty1,8,tzm,7);
 				break;}
 			case 7: {
-				proc_subtree(txm,tym,tzm,tx1,ty1,tz1,node->son[7^a], octrees);
+				proc_subtree(idx, txm,tym,tzm,tx1,ty1,tz1,node->son[7^idx], octrees);
 				currNode = 8;
 				break;}
 			}
@@ -737,13 +763,7 @@ namespace SDFController
 
 	void CSDFController::ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees)
 	{
-		a = 0;
-		float o_size = 0.0;
-		float o_X = 0.0;
-		float o_Y = 0.0;
-		float o_Z = 0.0;
-		octree->GetBoundary(o_size, o_X, o_Y, o_Z);
-		float to_size = o_size * 2.0f;
+		unsigned char idx = 0;
 
 		// avoid division by zero
 		float Bias = 0.0001f;
@@ -756,8 +776,8 @@ namespace SDFController
 		float invdirz = 1.0f / fabs(ray.Z);
 
 		// TODO: pridat do octree a nie sem
-		Vector4 o_min = Vector4(o_X - o_size, o_Y - o_size, o_Z - o_size, 1.0);
-		Vector4 o_max = Vector4(o_X + o_size, o_Y + o_size, o_Z + o_size, 1.0);
+		Vector4 o_min = octree->o_min;
+		Vector4 o_max = octree->o_max;
 		float tx0 ,tx1, ty0, ty1, tz0, tz1;
 
 		// fixes for rays with negative direction
@@ -765,7 +785,7 @@ namespace SDFController
 		{
 			tx0 = (o_max.X - Center.X) * -invdirx;
 			tx1 = (o_min.X - Center.X) * -invdirx;
-			a |= 4 ; //bitwise OR (latest bits are XYZ)
+			idx |= 4 ; //bitwise OR (latest bits are XYZ)
 		}
 		else
 		{
@@ -776,7 +796,7 @@ namespace SDFController
 		{
 			ty0 = (o_max.Y - Center.Y) * -invdiry;
 			ty1 = (o_min.Y - Center.Y) * -invdiry;
-			a |= 2 ;
+			idx |= 2 ;
 		}
 		else
 		{
@@ -787,7 +807,7 @@ namespace SDFController
 		{
 			tz0 = (o_max.Z - Center.Z) * -invdirz;
 			tz1 = (o_min.Z - Center.Z) * -invdirz;
-			a |= 1 ;
+			idx |= 1 ;
 		}
 		else
 		{
@@ -795,17 +815,15 @@ namespace SDFController
 			tz1 = (o_max.Z - Center.Z) * invdirz;
 		}
 
-		/*float tx0 = (o_min.X - Center.X) * invdirx;
-		float tx1 = (o_max.X - Center.X) * invdirx;
-		float ty0 = (o_min.Y - Center.Y) * invdiry;
-		float ty1 = (o_max.Y - Center.Y) * invdiry;
-		float tz0 = (o_min.Z - Center.Z) * invdirz;
-		float tz1 = (o_max.Z - Center.Z) * invdirz;*/
-
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 
-			proc_subtree(tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
+//			proc_subtree(idx, tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
+			proc_subtree4(idx, Vector4(tx0,ty0,tz0),Vector4(tx1,ty1,tz1),octree, octrees);
 		}
+	}
+	void CSDFController::ray_octree_traversal2(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees)
+	{
+		proc_subtree3(Center,Center,ray,octree, octrees);
 	}
 
 	struct ActualState
@@ -817,7 +835,7 @@ namespace SDFController
 		float tz0;
 		float tz1;
 	};
-	void CSDFController::proc_subtree2 (float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
+	void CSDFController::proc_subtree2 (unsigned char idx, float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees)
 	{
 		if(node == NULL)
 			return;
@@ -857,60 +875,60 @@ namespace SDFController
 				case FLD_NODE:
 					newState.tx0 = state.tx0; newState.ty0 = state.ty0; newState.tz0 = state.tz0;
 					newState.tx1 = txm;		  newState.ty1 = tym;		newState.tz1 = tzm;						
-					stateLookUp = FLD_NODE ^ a;
+					stateLookUp = FLD_NODE ^ idx;
 					case1 = FRD_NODE; case2 = FLT_NODE; case3 = BLD_NODE;
 					break;
 				case BLD_NODE:
 					newState.tx0 = state.tx0; newState.ty0 = state.ty0; newState.tz0 = tzm;
 					newState.tx1 = txm;		  newState.ty1 = tym;		newState.tz1 = state.tz1;										
-					stateLookUp = BLD_NODE ^ a;
+					stateLookUp = BLD_NODE ^ idx;
 					case1 = BRD_NODE; case2 = BLT_NODE;
 					break;
 				case FLT_NODE:
 					newState.tx0 = state.tx0; newState.ty0 = tym;		newState.tz0 = state.tz0;
 					newState.tx1 = txm;		  newState.ty1 = state.ty1; newState.tz1 = tzm;							
-					stateLookUp = FLT_NODE ^ a;
+					stateLookUp = FLT_NODE ^ idx;
 					case1 = FRT_NODE; case3 = BLT_NODE;
 					break;
 				case BLT_NODE:
 					newState.tx0 = state.tx0; newState.ty0 = tym;		newState.tz0 = tzm;
 					newState.tx1 = txm;		  newState.ty1 = state.ty1; newState.tz1 = state.tz1;							
-					stateLookUp = BLT_NODE ^ a;
+					stateLookUp = BLT_NODE ^ idx;
 					case1 = BRT_NODE;
 					break;
 				case FRD_NODE:
 					newState.tx0 = txm;		  newState.ty0 = state.ty0; newState.tz0 = state.tz0;
 					newState.tx1 = state.tx1; newState.ty1 = tym;		newState.tz1 = tzm;						
-					stateLookUp = FRD_NODE ^ a;
+					stateLookUp = FRD_NODE ^ idx;
 					case2 = FRT_NODE; case3 = BRD_NODE;
 					break;
 				case BRD_NODE:
 					newState.tx0 = txm;		  newState.ty0 = state.ty0; newState.tz0 = tzm;
 					newState.tx1 = state.tx1; newState.ty1 = tym;		newState.tz1 = state.tz1;						
-					stateLookUp = BRD_NODE ^ a;
+					stateLookUp = BRD_NODE ^ idx;
 					case2 = BRT_NODE;
 					break;
 				case FRT_NODE:
 					newState.tx0 = txm;		  newState.ty0 = tym;		newState.tz0 = state.tz0;
 					newState.tx1 = state.tx1; newState.ty1 = state.ty1; newState.tz1 = tzm;						
-					stateLookUp = FRT_NODE ^ a;
+					stateLookUp = FRT_NODE ^ idx;
 					case3 = BRT_NODE;
 					break;
 				case BRT_NODE:
 					newState.tx0 = txm;		  newState.ty0 = tym;		newState.tz0 = tzm;
 					newState.tx1 = state.tx1; newState.ty1 = state.ty1; newState.tz1 = state.tz1;						
-					stateLookUp = BRT_NODE ^ a;
+					stateLookUp = BRT_NODE ^ idx;
 					break;
 			}
 
 			currNode = new_node(newState.tx1, case1, 
 								newState.ty1, case2,
 								newState.tz1, case3);
-			proc_subtree2(newState.tx0, newState.ty0, newState.tz0, newState.tx1, newState.ty1, newState.tz1,node->son[stateLookUp], octrees);
+			proc_subtree2(idx, newState.tx0, newState.ty0, newState.tz0, newState.tx1, newState.ty1, newState.tz1,node->son[stateLookUp], octrees);
 		} while (currNode < 8);
 	}
 
-	bool CSDFController::CheckError(int err, std::string extra_debug)
+	bool CSDFController::CheckError(int err, char extra_debug[32768])
 	{
 		switch(err)
 		{
@@ -1094,13 +1112,23 @@ namespace SDFController
 	class CastStack
 	{
 	public:
-		CastStack   (void)                          {}
+		CastStack   (void)
+		{
+			for(int i = 0; i < 24; i++)
+			{
+				tstack[i] = 0;
+				ostack[i] = NULL;
+			}
+		}
 
-		S32* read        (int idx, F32& tmax) const      { U64 e = stack[idx]; tmax = __int_as_float((U32)(e >> 32)); return (S32*)(U32)e; }
-		void write       (int idx, S32* node, F32 tmax)  { stack[idx] = (U32)node | ((U64)__float_as_int(tmax) << 32); }
+		//Octree* read        (int idx, F32& tmax) const      { U64 e = stack[idx]; tmax = __int_as_float((U32)(e >> 32)); return (Octree*)(U32)e; }
+		//void write       (int idx, Octree* node, F32 tmax)  { stack[idx] = (U32)node | ((U64)__float_as_int(tmax) << 32); }
+		Octree* read     (int idx, F32& tmax) const         { tmax = tstack[idx]; return ostack[idx]; }
+		void write       (int idx, Octree* node, F32 tmax)  { ostack[idx] = node; tstack[idx] = tmax; }
 
 	private:
-		U64             stack[24];
+		F32             tstack[24];
+		Octree*         ostack[24];
 	};
 	float copysignf(float a, float b)
 	{
@@ -1131,7 +1159,7 @@ namespace SDFController
 		ray.dir.x = d.X; ray.dir.y = d.Y; ray.dir.z = d.Z;
 
 		CastStack stack;
-		const float epsilon = 0.000001;
+		const float epsilon = 0.000001f;
 		//float ray_orig_sz = ray.orig_sz;
 		int iter = 0;
 
@@ -1170,7 +1198,7 @@ namespace SDFController
 
 		// Initialize the current voxel to the first child of the root.
 		// sme prvym synom roota, tj parent = m_root, zistime ktory sme az neskor
-		int*   parent           = 0;//(int*)getInput().rootNode;
+		Octree*   parent        = node;
 		int child_descriptor = 0; // invalid until fetched
 		int    idx              = 0;
 		cll_float3 pos          = make_float3(1.0f, 1.0f, 1.0f);
@@ -1194,12 +1222,14 @@ namespace SDFController
 			// nacitame si hodnoty nasho otca, tj link na prveho syna a ci su synovia validny/listnaty
 			if (child_descriptor == 0)
 			{
-				child_descriptor = (*parent)<<24;
+				//child_descriptor = (*parent)<<24;
+				child_descriptor = parent->sons;
 			}
 			if (child_descriptor == 0)
 			{
 				//sme v leafe
 				// ray intersect
+				octrees->InsertToEnd(parent);
 			}
 			// Determine maximum t-value of the cube by evaluating
 			// tx(), ty(), and tz() at its corner.
@@ -1251,9 +1281,11 @@ namespace SDFController
 
 					// Find child descriptor corresponding to the current voxel.
 
-					int ofs = (unsigned int)(*parent) >> 8; // child pointer
+					/*int ofs = (unsigned int)(*parent) >> 8; // child pointer
 					ofs += popc8((child_masks<<8) & 0x7F);
-					parent += ofs;
+					parent += ofs;*/
+					int ofs = popc8((child_masks) & 0x7F);
+					parent = parent->son[ofs];
 
 					// Select child voxel that the ray enters first.
 
@@ -1321,33 +1353,428 @@ namespace SDFController
 				child_descriptor = 0;
 			}
 		}
+	}
 
-		// Indicate miss if we are outside the octree.
-		// netreba handlovat
-	/*#if (MAX_RAYCAST_ITERATIONS > 0)
-		if (scale >= CAST_STACK_DEPTH || iter > MAX_RAYCAST_ITERATIONS)
-	#else
-		if (scale >= CAST_STACK_DEPTH)
-	#endif
+	bool CSDFController::CheckValid(int mask, int num)
+	{
+		return((mask >> num) & 1);
+	}
+	void CSDFController::proc_subtree4 (unsigned char idx, Vector4 t0, Vector4 t1, Octree* node, LinkedList<Octree>* octrees)
+	{
+		Vector4 tm = Vector4();
+		int currNode = -1;
+		CastStackx stack;
+		int scale = 0;
+		while (true)
 		{
-			t_min = 2.0f;
+			// konec toho spodneho switchu, berem otca
+			if(currNode == 8)
+			{
+				if(scale > 0)
+				{
+					scale--;
+					node = stack.read(scale, t0, t1, currNode);
+					continue;
+				}
+				else
+					break;
+			}
+			// mame novy nody
+			else if(currNode == -1)
+			{
+				if((t1.X < 0.0) || (t1.Y < 0.0) || (t1.Z < 0.0))
+				{
+					if(scale > 0)
+					{
+						scale--;
+						node = stack.read(scale, t0, t1, currNode);
+						continue;
+					}
+					else
+						break;
+				}
+				unsigned char synovia = node->sons;
+				if(synovia == 0)
+				{
+					//loggger->logInfo("Reached leaf node");
+					//if(node->count > 0)
+					octrees->InsertToEnd(node);
+
+					scale--;
+					node = stack.read(scale, t0, t1, currNode);
+					continue;
+				}
+				tm = 0.5*(t0 + t1);
+				
+				currNode = first_node2(t0,tm);
+			}
+			else
+				tm = 0.5*(t0 + t1);
+
+			switch (currNode)
+			{
+			case 0:
+				if(CheckValid(node->sons, idx))
+				{
+					currNode = new_node(tm.X,4,tm.Y,2,tm.Z,1);
+					stack.write(scale, t0, t1, currNode, node);
+					t1 = tm;
+					//proc_subtree4(tx0,ty0,tz0,txm,tym,tzm,node->son[aa], octrees);
+					//currNode = new_node(txm,4,tym,2,tzm,1);
+					currNode = -1;
+					node = node->son[idx];
+				}
+				else
+				{
+					currNode = new_node(tm.X,4,tm.Y,2,tm.Z,1);
+					scale--;
+				}
+				break;
+			case 1: 
+				if(CheckValid(node->sons, 1^idx))
+				{
+					currNode = new_node(tm.X,5,tm.Y,3,t1.Z,8);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.Z = tm.Z;
+					t1.X = tm.X;
+					t1.Y = tm.Y;
+					//proc_subtree4(tx0,ty0,tzm,txm,tym,tz1,node->son[1^aa], octrees);
+					//currNode = new_node(txm,5,tym,3,tz1,8);
+					currNode = -1;
+					node = node->son[1^idx];
+				}
+				else
+				{
+					currNode = new_node(tm.X,5,tm.Y,3,t1.Z,8);
+					scale--;
+				}
+				break;
+			case 2:
+				if(CheckValid(node->sons, 2^idx))
+				{
+					currNode = new_node(tm.X,6,t1.Y,8,tm.Z,3);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.Y = tm.Y;
+					t1.X = tm.X;
+					t1.Z = tm.Z;
+					//proc_subtree4(tx0,tym,tz0,txm,ty1,tzm,node->son[2^aa], octrees);
+					//currNode = new_node(txm,6,ty1,8,tzm,3);
+					currNode = -1;
+					node = node->son[2^idx];
+				}
+				else
+				{
+					currNode = new_node(tm.X,6,t1.Y,8,tm.Z,3);
+					scale--;
+				}
+				break;
+			case 3:
+				if(CheckValid(node->sons, 3^idx))
+				{
+					currNode = new_node(tm.X,7,t1.Y,8,t1.Z,8);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.Y = tm.Y;
+					t0.Z = tm.Z;
+					t1.X = tm.X;
+					//proc_subtree4(tx0,tym,tzm,txm,ty1,tz1,node->son[3^aa], octrees);
+					//currNode = new_node(txm,7,ty1,8,tz1,8);
+					currNode = -1;
+					node = node->son[3^idx];
+				}
+				else
+				{
+					currNode = new_node(tm.X,7,t1.Y,8,t1.Z,8);
+					scale--;
+				}
+				break;
+			case 4:
+				if(CheckValid(node->sons, 4^idx))
+				{
+					currNode = new_node(t1.X,8,tm.Y,6,tm.Z,5);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.X = tm.X;
+					t1.Y = tm.Y;
+					t1.Z = tm.Z;
+					//proc_subtree4(txm,ty0,tz0,tx1,tym,tzm,node->son[4^aa], octrees);
+					//currNode = new_node(tx1,8,tym,6,tzm,5);
+					currNode = -1;
+					node = node->son[4^idx];
+				}
+				else
+				{
+					currNode = new_node(t1.X,8,tm.Y,6,tm.Z,5);
+					scale--;
+				}
+				break;
+			case 5:
+				if(CheckValid(node->sons, 5^idx))
+				{
+					currNode = new_node(t1.X,8,tm.Y,7,t1.Z,8);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.X = tm.X;
+					t0.Z = tm.Z;
+					t1.Y = tm.Y;
+					//proc_subtree4(txm,ty0,tzm,tx1,tym,tz1,node->son[5^aa], octrees);
+					//currNode = new_node(tx1,8,tym,7,tz1,8);
+					currNode = -1;
+					node = node->son[5^idx];
+				}
+				else
+				{
+					currNode = new_node(t1.X,8,tm.Y,7,t1.Z,8);
+					scale--;
+				}
+				break;
+			case 6:
+				if(CheckValid(node->sons, 6^idx))
+				{
+					currNode = new_node(t1.X,8,t1.Y,8,tm.Z,7);
+					stack.write(scale, t0, t1, currNode, node);
+					t0.X = tm.X;
+					t0.Y = tm.Y;
+					t1.Z = tm.Z;
+					//proc_subtree4(txm,tym,tz0,tx1,ty1,tzm,node->son[6^aa], octrees);
+					//currNode = new_node(tx1,8,ty1,8,tzm,7);
+					currNode = -1;
+					node = node->son[6^idx];
+				}
+				else
+				{
+					currNode = new_node(t1.X,8,t1.Y,8,tm.Z,7);
+					scale--;
+				}
+				break;
+			case 7:
+				if(CheckValid(node->sons, 7^idx))
+				{
+					currNode = 8;
+					stack.write(scale, t0, t1, currNode, node);
+					t0.X = tm.X;
+					t0.Y = tm.Y;
+					t0.Z = tm.Z;
+					//proc_subtree4(txm,tym,tzm,tx1,ty1,tz1,node->son[7^aa], octrees);
+					//currNode = 8;
+					currNode = -1;
+					node = node->son[7^idx];
+				}
+				else
+				{
+					currNode = 8;
+					scale--;
+				}
+				break;
+			}
+			
+			scale++;
+		}
+	}
+
+	void CSDFController::ComputeOpenCL2(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, unsigned int* o_array, unsigned int* t_array)
+	{
+		using namespace OpenCLForm;
+		int ticks1 = GetTickCount();
+
+		//-------------------------------------------
+		//---------------INIT OpenCL-------Begin-----
+		//-------------------------------------------
+		COpenCL* OpenCLko = new COpenCL();
+
+		int err = EXIT_SUCCESS;
+		err = OpenCLko->InitOpenCL();
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->LoadKernel("sdf2.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->GetGPUVariables();
+		if(!CheckError(err)) return;
+
+		//-------------------------------------------
+		//---------------INIT OpenCL-------End-------
+		//-------------------------------------------
+
+
+		const unsigned int n_rays = Nastavenia->SDF_Rays;
+		const unsigned int n_triangles = triangles->GetSize();
+		const unsigned int n_nodes = root->nodeCount;
+		const unsigned int n_node_tria = root->triangleCount;
+		//unsigned int n_vertices = points->GetSize();
+
+		OpenCLko->global = n_triangles * n_rays;
+
+		//-------------------------------------------
+		//---------------Memory Alloc------Begin-----
+		//-------------------------------------------
+
+		cl_float4	*c_triangles;			// zoznam trojuholnikov obsahujucich 3 vertexy
+		cl_uint		*c_nodes;				// zoznam nodov v octree
+		cl_uint		*c_node_tria;			// zoznam trojuholnikov v nodoch v octree
+		cl_float4	*c_rays;				// zoznamy 30 lucov, ktore sa postupne vkladaju do OpenCL
+		cl_float	*c_outputs;				// vzdialenost a vaha pre kazdy luc, ktore je mojim vysledkom co si zapisem
+
+		unsigned int s_triangles = n_triangles * 3 * sizeof(cl_float4);					// pocet trojuholnikov * 4 * 3 vertexy * float
+		unsigned int s_nodes = n_nodes * sizeof(cl_uint);								// pocet nodov * int
+		unsigned int s_node_tria = (n_nodes +  n_node_tria) * sizeof(cl_uint);			// (pocet nodov (velkosti) + pocet trojuholnikov) * int
+		unsigned int s_rays = n_rays * sizeof(cl_float4);								// 30 * 4 * float
+		unsigned int s_outputs = n_triangles * n_rays * sizeof(cl_float);				// trojuholniky * 30  * float
+
+		int ticks2 = GetTickCount();
+		err = OpenCLko->SetupMemory2(s_triangles, s_nodes, s_node_tria, s_rays, s_outputs);
+		if(!CheckError(err)) return;
+		int ticks3 = GetTickCount();
+
+		c_triangles = (cl_float4*) malloc(s_triangles);
+		c_nodes = o_array;
+		c_node_tria = t_array;
+		c_rays = (cl_float4*) malloc(s_rays);
+		c_outputs = (cl_float*) calloc(s_outputs, sizeof(cl_float*));
+
+		//-------------------------------------------
+		//---------------Memory Alloc------End-------
+		//-------------------------------------------
+
+		//------------------prealocated variables------------------	
+		float *weights = new float[n_rays];
+
+		Vector4 tangens, normal, binormal;
+		Mat4 t_mat;
+
+		float* rndy = new float[n_rays];
+		float* rndx = new float[n_rays];
+		if(Nastavenia->SDF_Distribution == true)
+			UniformPointsOnSphere(rndx, rndy);
+		else
+			RandomPointsOnSphere(rndx, rndy);
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
+		{
+			Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]);
+			ray.Normalize();
+			c_rays[i].s[0] = ray.X;
+			c_rays[i].s[1] = ray.Y;
+			c_rays[i].s[2] = ray.Z;
+			c_rays[i].s[3] = 0.0f;
+			weights[i] = 180.0f - rndy[i];
+		}
+		delete [] rndy;
+		delete [] rndx;
+		//------------------prealocated variables------------------
+
+		// -----------------------------------------------
+		// vypocitaj dopredu zoznamy trojuholnikov a lucov
+		// -----------------------------------------------
+		int ticks4 = GetTickCount();
+		//---------------copy variables--------------
+		unsigned int pocet = 0;
+		LinkedList<Face>::Cell<Face>* tmp_face = triangles->start;
+		while(tmp_face != NULL)
+		{
+			for(int ii = 0; ii < 3; ii++)
+			{
+				c_triangles[pocet].s[0] = tmp_face->data->v[ii]->P.X;
+				c_triangles[pocet].s[1] = tmp_face->data->v[ii]->P.Y;
+				c_triangles[pocet].s[2] = tmp_face->data->v[ii]->P.Z;
+				c_triangles[pocet].s[3] = tmp_face->data->v[ii]->P.W;
+				pocet++;
+			}
+			tmp_face = tmp_face->next;
 		}
 
-		// Undo mirroring of the coordinate system.
+		//---------------copy variables--------------
+		
 
-		if ((octant_mask & 1) == 0) pos.x = 3.0f - scale_exp2 - pos.x;
-		if ((octant_mask & 2) == 0) pos.y = 3.0f - scale_exp2 - pos.y;
-		if ((octant_mask & 4) == 0) pos.z = 3.0f - scale_exp2 - pos.z;
+		// v tomto bode je uz pamet pripravena a nacitana
+		// je nutne poslat ju do OpenCL a zahajit vypocet
+		int ticks5 = GetTickCount();
+		cl_float4 o_min; o_min.s[0] = root->o_min.X; o_min.s[1] = root->o_min.Y; o_min.s[2] = root->o_min.Z; o_min.s[3] = root->o_min.W;
+		cl_float4 o_max; o_max.s[0] = root->o_max.X; o_max.s[1] = root->o_max.Y; o_max.s[2] = root->o_max.Z; o_max.s[3] = root->o_max.W;
+		cl_float bias = root->size * 2.0f * 0.00001f;
+		
+		err = OpenCLko->LaunchKernel2(c_triangles, c_nodes, c_node_tria, o_min, o_max, bias, c_rays, n_rays, n_triangles, c_outputs);
+		if(!CheckError(err)) return;
 
-		// Output results.
+		OpenCLko->WaitForFinish();
 
-		res.t = t_min;
-		res.iter = iter;
-		res.pos.x = fminf(fmaxf(ray.orig.x + t_min * ray.dir.x, pos.x + epsilon), pos.x + scale_exp2 - epsilon);
-		res.pos.y = fminf(fmaxf(ray.orig.y + t_min * ray.dir.y, pos.y + epsilon), pos.y + scale_exp2 - epsilon);
-		res.pos.z = fminf(fmaxf(ray.orig.z + t_min * ray.dir.z, pos.z + epsilon), pos.z + scale_exp2 - epsilon);
-		res.node = parent;
-		res.childIdx = idx ^ octant_mask ^ 7;
-		res.stackPtr = scale;*/
+		int ticks6 = GetTickCount();
+
+		// spracuj ziskane hodnoty
+		float min = FLOAT_MAX;
+		float max = 0.0f;
+		float dist = 0.0f;
+		std::vector<float> rays;
+		std::vector<float> weightsx;
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		for(unsigned int ii = 0; ii < n_triangles; ii++)
+		{
+			for(unsigned int kk = 0; kk < n_rays; kk++)
+			{
+				dist = c_outputs[(ii * n_rays) + kk];
+				//loggger->logInfo(MarshalString("triangle: "+i+ " val: " + dist));
+				if(dist < (FLOAT_MAX - 1.0f))
+				{
+					rays.push_back(dist);
+					weightsx.push_back(weights[kk]);
+				}
+			}
+			if(rays.size() > 0)
+			{
+				current_face->data->ComputeSDFValue(rays, weightsx);
+				if(current_face->data->quality->value < min)
+					min = current_face->data->quality->value;
+				if(current_face->data->quality->value > max)
+					max = current_face->data->quality->value;
+			}
+			current_face = current_face->next;
+			rays.clear();
+			weightsx.clear();
+		}
+
+		int ticks7 = GetTickCount();
+
+		// postprocessing - smoothing and normalization
+		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		EraseKernel();
+		InitKernel();
+		float* kernel = ComputeGaussianKernel(kernel_size);
+		current_face = triangles->start;
+		while(current_face != NULL)
+		{
+			Smooth(current_face->data, kernel, kernel_size);
+			current_face->data->quality->Normalize(min, max, 4.0);
+			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
+			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
+
+			current_face = current_face->next;
+		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
+		delete kernel;
+		int ticks8 = GetTickCount();
+
+
+		loggger->logInfo(MarshalString("Inicializacia OpenCL: " + (ticks2 - ticks1)+ "ms"));
+		loggger->logInfo(MarshalString("Alokovanie pamete v OpenCL: " + (ticks3 - ticks2)+ "ms"));
+		loggger->logInfo(MarshalString("Alokovanie pamete v PC: " + (ticks4 - ticks3)+ "ms"));
+		loggger->logInfo(MarshalString("Nacitanie zoznamu trojuholnikov: " + (ticks5 - ticks4)+ "ms"));
+		loggger->logInfo(MarshalString("!!VYPOCET OpenCL!!: " + (ticks6 - ticks5)+ "ms"));
+		loggger->logInfo(MarshalString("Spracovanie: " + (ticks7 - ticks6)+ "ms"));
+		loggger->logInfo(MarshalString("Smoothing: " + (ticks8 - ticks7)+ "ms"));
+		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (ticks8 - ticks1)+ "ms, pre " + n_triangles + " trojuholnikov"));
+		//loggger->logInfo(MarshalString("pocet: " + pocet));
+		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
+		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
+
+
+		// Delete OpenCL to free GPU
+		delete OpenCLko;
+		delete weights;
+
+		// Free host memory
+		free(c_triangles);
+		free(c_rays);
+		free(c_outputs);
 	}
 }

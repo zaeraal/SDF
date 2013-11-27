@@ -15,6 +15,8 @@ namespace ModelController
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
 		ResetSettings();
+		o_array = NULL;
+		t_array = NULL;
 	}
 
 	CModel::~CModel()
@@ -436,13 +438,15 @@ namespace ModelController
 				tmp2 = tmp2->next;
 				i++;
 			}
-
-			m_root->Build2(tria, mtria, 0, siz);
+			unsigned int nodeCount = 0, triangleCount = 0;
+			m_root->Build2(tria, mtria, 0, siz, nodeCount, triangleCount);
 			delete [] tria;
 			delete mtria;
 		}
 		else
 			m_root->Build(NULL, 0);
+
+		BuildArrays();
 	}
 
 	// nastavi farby pre picking
@@ -634,7 +638,7 @@ namespace ModelController
 					float N = (float)n_rays;
 
 					float inc = (float)M_PI * (3.0f - sqrt(5.0f));
-					float del = (360.0f / Nastavenia->SDF_Cone) * 2;
+					float del = (360.0f / Nastavenia->SDF_Cone);
 					float off = (2.0f / N) / del;
 					for(unsigned int k = 0; k < n_rays; k++)
 					{
@@ -751,7 +755,8 @@ namespace ModelController
 		if(Nastavenia->SDF_Mode == SDF_CPU)
 			SDF_control->Compute(triangles, m_root);
 		else
-			SDF_control->ComputeOpenCL(points, triangles, m_root);
+			//SDF_control->ComputeOpenCL(points, triangles, m_root);
+			SDF_control->ComputeOpenCL2(points, triangles, m_root, o_array, t_array);
 
 		CopySDF_Faces_to_Vertices();
 		Nastavenia->SDF_STATUS = 100;
@@ -886,5 +891,58 @@ namespace ModelController
 		m_root = NULL;
 
 		CreateOctree();
+	}
+	void CModel::BuildArrays()
+	{
+		if(m_root == NULL)
+			return;
+		if(o_array != NULL)
+			delete [] o_array;
+		if(t_array != NULL)
+			delete [] t_array;
+
+		Octree** oc_array = new Octree*[m_root->nodeCount];
+		o_array = new unsigned int[m_root->nodeCount];
+		t_array = new unsigned int[m_root->nodeCount + m_root->triangleCount];	// pocet + trojuholniky
+
+		Octree* node = m_root;
+		int end = 0;
+		oc_array[0] = node;
+		int tidx = 0;
+		bool jeden_krat = true;
+		for(unsigned int idx = 0; idx < m_root->nodeCount; idx++)
+		{
+			node = oc_array[idx];
+			if(node->isLeaf)
+			{
+				if(node->count == 0)
+					assert("daco sa povrzalo v octree");
+				o_array[idx] = tidx << 8;
+				t_array[tidx] = node->count;
+				tidx++;
+				for(unsigned int j = 0; j < node->count; j++)
+				{
+					t_array[tidx] = node->triangles[j]->number;
+					tidx++;
+				}
+				continue;
+			}
+			jeden_krat = true;
+			for(int i = 0; i < 8; i++)
+			{
+				if((node->sons >> i) & 1)
+				{
+					end++;
+					if(jeden_krat == true)
+					{
+						o_array[idx] = end<<8;
+						o_array[idx] += node->sons;
+						jeden_krat = false;
+					}
+					oc_array[end] = node->son[i];
+				}
+			}
+		}
+		delete [] oc_array;
 	}
 }

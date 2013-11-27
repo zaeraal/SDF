@@ -9,11 +9,11 @@ namespace SDFStructures
 		CSDF();
 		~CSDF();
 
-		void ComputeValue(const std::vector<float> values, const std::vector<float> inverse_Yangles);
-		float CalcMedian(const std::vector<float> values, unsigned int size);
-		float CalcMean(const std::vector<float> values, unsigned int size);
-		float CalcStandardDeviation(const std::vector<float> values, unsigned int size);
-		void Smooth(const std::vector<float> values, const std::vector<float> weights);
+		void ComputeValue(const std::vector<float> &values, const std::vector<float> &inverse_Yangles);
+		float CalcMedian(const std::vector<float> &values, unsigned int size);
+		float CalcMean(const std::vector<float> &values, unsigned int size);
+		float CalcStandardDeviation(const std::vector<float> &values, unsigned int size);
+		void Smooth(const std::vector<float> &values, const std::vector<float> &weights);
 
 		void Normalize(float min, float max, float alfa);
 

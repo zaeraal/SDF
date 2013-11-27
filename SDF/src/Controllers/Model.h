@@ -47,6 +47,7 @@ namespace ModelController
 		void TriangulatePoints();
 		void ReloadOctreeData();
 		void DeleteIdenticalVertices();
+		void BuildArrays();
 
 		bool loaded;
 		bool show_octree;
@@ -62,9 +63,11 @@ namespace ModelController
 		Octree* m_root;
 
 		// rozmery modelu
-		Vector4		b_stred;				// center of minN - maxN
-		float		b_size;					// size for octree
-		float		b_sf;					// scale factor
-		float		b_max;					// diagonala v octree
+		Vector4				b_stred;		// center of minN - maxN
+		float				b_size;			// size for octree
+		float				b_sf;			// scale factor
+		float				b_max;			// diagonala v octree
+		unsigned int*		o_array;		// array pre octree
+		unsigned int*		t_array;		// array pre trojuholniky v octree
 	};
 }

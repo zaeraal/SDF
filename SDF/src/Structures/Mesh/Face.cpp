@@ -42,7 +42,7 @@ namespace MeshStructures
 		farba = color;
 	}
 
-	void Face::ComputeSDFValue(const std::vector<float> values, const std::vector<float> inverse_Yangles)
+	void Face::ComputeSDFValue(const std::vector<float> &values, const std::vector<float> &inverse_Yangles)
 	{
 		quality->ComputeValue(values, inverse_Yangles);
 	}

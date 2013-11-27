@@ -51,6 +51,12 @@ namespace MeshStructures
 		count = 0;
 
 		son = new Octree* [8];
+		sons = 0;
+		nodeCount = 0;
+		triangleCount = 0;
+
+		o_min = Vector4(origin.X - size, origin.Y - size, origin.Z - size, 1.0);
+		o_max = Vector4(origin.X + size, origin.Y + size, origin.Z + size, 1.0);
 	}
 
 	Octree::~Octree()
@@ -172,6 +178,8 @@ namespace MeshStructures
 					}
 				}
 				son[i]->Build(tmp_zoznam, velkost);
+				if(velkost > 0)
+					sons |= (unsigned char)(1 << i);
 			}
 
 			// zmazanie pola, kedze vytvaram vlastne
@@ -187,7 +195,7 @@ namespace MeshStructures
 		}
 	}
 
-	void Octree::Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length)
+	void Octree::Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length, unsigned int &NodeCount, unsigned int &TriangleCount)
 	{
 		/*//debug kktina
 		unsigned int u [500];
@@ -195,6 +203,8 @@ namespace MeshStructures
 			u[ii] = tria[ii]->number;
 		if(u[0] == 1000)
 			return;*/
+		NodeCount = 0;
+		TriangleCount = 0;
 
 		if(length == 0)
 			return;
@@ -206,9 +216,12 @@ namespace MeshStructures
 			for(unsigned int i = start; i < start+length; i++)
 				triangles[i - start] = tria[i];
 			isLeaf = true;
+			TriangleCount = count;
+			NodeCount = 1;
 		}
 		else
 		{
+			nodeCount = 1;
 			isLeaf = false;
 			count = 0;
 			int new_depth = depth + 1;
@@ -267,8 +280,14 @@ namespace MeshStructures
 					Check(tria, mtria, i, tabulka, new_size, cislo);
 				}
 
-				son[i]->Build2(tria, mtria, tabulka[i][0], tabulka[i][1]);
+				son[i]->Build2(tria, mtria, tabulka[i][0], tabulka[i][1], NodeCount, TriangleCount);
+				if(tabulka[i][1] > 0)
+					sons |= (unsigned char)(1 << i);
+				nodeCount += NodeCount;
+				triangleCount += TriangleCount;
 			}
+			NodeCount = nodeCount;
+			TriangleCount = triangleCount;
 		}
 	}
 

@@ -26,8 +26,14 @@ namespace SDFStructures
 	/// fall within one standard deviation from the median of
 	/// all lengths. The weights used are the inverse of the angle
 	/// between the ray to the center of the cone.
-	void CSDF::ComputeValue(const std::vector<float> values, const std::vector<float> inverse_Yangles)
+	void CSDF::ComputeValue(const std::vector<float> &values, const std::vector<float> &inverse_Yangles)
 	{
+		value = 0.0;
+		smoothed = 0.0;
+		normalized1 = 0.0;
+		normalized2 = 0.0;
+		normalized3 = 0.0;
+		normalized4 = 0.0;
 		unsigned int size = values.size();
 		if(size == 0)
 			return;
@@ -54,7 +60,7 @@ namespace SDFStructures
 		value = sum_values / sum_weights;
 	}
 
-	float CSDF::CalcMedian(const std::vector<float> values, unsigned int size)
+	float CSDF::CalcMedian(const std::vector<float> &values, unsigned int size)
 	{
 		float median = 0.0;
 
@@ -75,7 +81,7 @@ namespace SDFStructures
 		return median;
 	}
 
-	float CSDF::CalcMean(const std::vector<float> values, unsigned int size)
+	float CSDF::CalcMean(const std::vector<float> &values, unsigned int size)
 	{
 		float mean = 0.0;
 
@@ -86,7 +92,7 @@ namespace SDFStructures
 		return (mean / float(size));
 	}
 
-	float CSDF::CalcStandardDeviation(const std::vector<float> values, unsigned int size)
+	float CSDF::CalcStandardDeviation(const std::vector<float> &values, unsigned int size)
 	{
 		float deviation = 0.0;
 
@@ -122,7 +128,7 @@ namespace SDFStructures
 		return log(((smoothed - min) / (max - min)) * alfa + 1.0f) / log(alfa + 1.0f);
 	}
 
-	void CSDF::Smooth(const std::vector<float> values, const std::vector<float> weights)
+	void CSDF::Smooth(const std::vector<float> &values, const std::vector<float> &weights)
 	{
 		unsigned int size = values.size();
 		if(size == 0)
