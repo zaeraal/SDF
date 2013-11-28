@@ -1623,8 +1623,8 @@ namespace SDF {
 		// bezi v threade aby som mohol updatovat popis
 		MController->logInfo("Compute SDF");
 		MController->ComputeSDF();
-		//myThread = gcnew Thread(gcnew ThreadStart(this,&Form1::MyThreadProcedure));  
-		//myThread->Start();
+		myThread = gcnew Thread(gcnew ThreadStart(this,&Form1::MyThreadProcedure));  
+		myThread->Start();
 
 		computing_SDF = true;
 		showToolStripMenuItem->Enabled = false;

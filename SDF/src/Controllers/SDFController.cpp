@@ -1630,7 +1630,7 @@ namespace SDFController
 		c_nodes = o_array;
 		c_node_tria = t_array;
 		c_rays = (cl_float4*) malloc(s_rays);
-		c_outputs = (cl_float*) calloc(s_outputs, sizeof(cl_float*));
+		c_outputs = (cl_float*) malloc(s_outputs);
 
 		//-------------------------------------------
 		//---------------Memory Alloc------End-------
@@ -1649,7 +1649,7 @@ namespace SDFController
 		else
 			RandomPointsOnSphere(rndx, rndy);
 
-		for(unsigned int i = 0; i < Nastavenia->SDF_Rays; i++)
+		for(unsigned int i = 0; i < n_rays; i++)
 		{
 			Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]);
 			ray.Normalize();

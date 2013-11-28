@@ -905,11 +905,21 @@ namespace ModelController
 		o_array = new unsigned int[m_root->nodeCount];
 		t_array = new unsigned int[m_root->nodeCount + m_root->triangleCount];	// pocet + trojuholniky
 
+		logDebug(MarshalString("node count: "+ m_root->nodeCount));
+		logDebug(MarshalString("triangle count: "+ m_root->triangleCount));
+		logDebug(MarshalString("spolu v t_array: "+ (m_root->nodeCount + m_root->triangleCount)));
+
 		Octree* node = m_root;
 		int end = 0;
 		oc_array[0] = node;
 		int tidx = 0;
 		bool jeden_krat = true;
+		unsigned int najvecsi_o = 0;
+		unsigned int najvecsi_t = 0;
+		for(unsigned int idx = 0; idx < (m_root->nodeCount + m_root->triangleCount); idx++)
+		{
+			t_array[idx] = 0;
+		}
 		for(unsigned int idx = 0; idx < m_root->nodeCount; idx++)
 		{
 			node = oc_array[idx];
@@ -923,6 +933,8 @@ namespace ModelController
 				for(unsigned int j = 0; j < node->count; j++)
 				{
 					t_array[tidx] = node->triangles[j]->number;
+					if(tidx > najvecsi_t)
+						najvecsi_t = tidx;
 					tidx++;
 				}
 				continue;
@@ -940,9 +952,13 @@ namespace ModelController
 						jeden_krat = false;
 					}
 					oc_array[end] = node->son[i];
+					if(end > najvecsi_o)
+						najvecsi_o = end;
 				}
 			}
 		}
 		delete [] oc_array;
+		logDebug(MarshalString("najvecsi_t: "+ najvecsi_t));
+		logDebug(MarshalString("najvecsi_o: "+ najvecsi_o));
 	}
 }

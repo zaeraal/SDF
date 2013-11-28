@@ -51,7 +51,7 @@ namespace SDFStructures
 		float sum_weights = 0.0;
 		for(unsigned int i = 0; i < size; i++)
 		{
-			if(abs(values[i] - median) < deviation)
+			if(abs(values[i] - median) <= deviation)
 			{
 				sum_values += values[i] * inverse_Yangles[i];
 				sum_weights += inverse_Yangles[i];

@@ -120,6 +120,7 @@ namespace OpenCLDebugger
 	}
 	//---------------------------------MOJE OPENCL FUNKCIE---------------------------------
 #define FLOAT_MAX  99999.0
+#define STACK_SIZE 10
 
 	float COpenCLDebug::rayIntersectsTriangle(const cl_float4 p, const cl_float4 d, const cl_float4 v0, const cl_float4 v1, const cl_float4 v2, const cl_float bias)
 	{
@@ -281,14 +282,18 @@ namespace OpenCLDebugger
 	}
 
 	typedef struct {
-		cl_float4       t0stack[10];
-		cl_float4       t1stack[10];
-		int				cstack[10];
-		unsigned int	ostack[10];
+		cl_float4       t0stack[STACK_SIZE];
+		cl_float4       t1stack[STACK_SIZE];
+		int				cstack[STACK_SIZE];
+		unsigned int	ostack[STACK_SIZE];
 	}CastStack;
 
 	unsigned int read (CastStack *stack, int idx, cl_float4 *t0, cl_float4 *t1, int *cnode)
 	{
+		if(idx < 0)
+			assert(false);
+		if(idx >= STACK_SIZE)
+			assert(false);
 		(*t0) = (*stack).t0stack[idx];
 		(*t1) = (*stack).t1stack[idx];
 		(*cnode) = (*stack).cstack[idx];
@@ -298,6 +303,10 @@ namespace OpenCLDebugger
 
 	void write (CastStack *stack, int idx, cl_float4 t0, cl_float4 t1, int cnode, unsigned int node)
 	{
+		if(idx < 0)
+			assert(false);
+		if(idx >= STACK_SIZE)
+			assert(false);
 		(*stack).t0stack[idx] = t0;
 		(*stack).t1stack[idx] = t1;
 		(*stack).cstack[idx] = cnode;
@@ -358,7 +367,7 @@ namespace OpenCLDebugger
 									const cl_uint *c_node_tria,
 									const cl_float4 ray,
 									const cl_float4 center,
-									const cl_uint triangle_ref,
+									const cl_uint ref_triangle,
 									const cl_float bias,
 									cl_float *dist,
 									unsigned char idx,
@@ -376,21 +385,21 @@ namespace OpenCLDebugger
 		unsigned int size = 0;
 		unsigned int i = 0;
 		cl_uint8 short_shack;
-		short_shack.s[0] = triangle_ref;
-		short_shack.s[1] = triangle_ref;
-		short_shack.s[2] = triangle_ref;
-		short_shack.s[3] = triangle_ref;
-		short_shack.s[4] = triangle_ref;
-		short_shack.s[5] = triangle_ref;
-		short_shack.s[6] = triangle_ref;
-		short_shack.s[7] = triangle_ref;
+		short_shack.s[0] = ref_triangle;
+		short_shack.s[1] = ref_triangle;
+		short_shack.s[2] = ref_triangle;
+		short_shack.s[3] = ref_triangle;
+		short_shack.s[4] = ref_triangle;
+		short_shack.s[5] = ref_triangle;
+		short_shack.s[6] = ref_triangle;
+		short_shack.s[7] = ref_triangle;
 		unsigned char ss_idx = 0;
 		float dist2 = FLOAT_MAX;
 		float theta = 0.0f;
 		cl_float4 v0, v1, v2;
 		cl_float4 tnormal;
 		unsigned char popik;
-		while (true)
+		while (scale < STACK_SIZE)
 		{
 			// konec toho spodneho switchu, berem otca
 			if(currNode == 8)
@@ -663,7 +672,7 @@ namespace OpenCLDebugger
 										const cl_float4 o_max,
 										cl_float4 ray,
 										const cl_float4 center,
-										const cl_uint triangle_ref,
+										const cl_uint ref_triangle,
 										const cl_float bias,
 										cl_float *dist)
 	{
@@ -718,7 +727,7 @@ namespace OpenCLDebugger
 
 		if( max(max(t0.s[0],t0.s[1]),t0.s[2]) < min(min(t1.s[0],t1.s[1]),t1.s[2]) )
 		{ 
-			proc_subtree(c_triangles, c_nodes, c_node_tria, ray, center, triangle_ref, bias, dist, idx, t0, t1);
+			proc_subtree(c_triangles, c_nodes, c_node_tria, ray, center, ref_triangle, bias, dist, idx, t0, t1);
 		}
 	}
 
@@ -758,7 +767,346 @@ namespace OpenCLDebugger
 		cl_float4 ray = Multiply(c_rays[ref_ray % n_rays], tangens, normal, binormal);
 
 		float dist = FLOAT_MAX;
-		OctreeTraversal(c_triangles, c_nodes, c_node_tria, o_min, o_max, ray, center, ref_triangle, bias, &dist);
+		unsigned char idx = 0;
+
+		// avoid division by zero
+		if (fabs(ray.s[0]) < bias) ray.s[0] = ray.s[0] < 0.0 ? -bias : bias;
+		if (fabs(ray.s[1]) < bias) ray.s[1] = ray.s[1] < 0.0 ? -bias : bias;
+		if (fabs(ray.s[2]) < bias) ray.s[2] = ray.s[2] < 0.0 ? -bias : bias;
+
+		float invdirx = 1.0f / fabs(ray.s[0]);
+		float invdiry = 1.0f / fabs(ray.s[1]);
+		float invdirz = 1.0f / fabs(ray.s[2]);
+
+		cl_float4 t0, t1;
+		t0.s[3] = 0; t1.s[3] = 0;
+
+		// fixes for rays with negative direction
+		if(ray.s[0] < 0.0)
+		{
+			t0.s[0] = (o_max.s[0] - center.s[0]) * -invdirx;
+			t1.s[0] = (o_min.s[0] - center.s[0]) * -invdirx;
+			idx |= 4 ; //bitwise OR (latest bits are XYZ)
+		}
+		else
+		{
+			t0.s[0] = (o_min.s[0] - center.s[0]) * invdirx;
+			t1.s[0] = (o_max.s[0] - center.s[0]) * invdirx;
+		}
+		if(ray.s[1] < 0.0)
+		{
+			t0.s[1] = (o_max.s[1] - center.s[1]) * -invdiry;
+			t1.s[1] = (o_min.s[1] - center.s[1]) * -invdiry;
+			idx |= 2 ;
+		}
+		else
+		{
+			t0.s[1] = (o_min.s[1] - center.s[1]) * invdiry;
+			t1.s[1] = (o_max.s[1] - center.s[1]) * invdiry;
+		}
+		if(ray.s[2] < 0.0)
+		{
+			t0.s[2] = (o_max.s[2] - center.s[2]) * -invdirz;
+			t1.s[2] = (o_min.s[2] - center.s[2]) * -invdirz;
+			idx |= 1 ;
+		}
+		else
+		{
+			t0.s[2] = (o_min.s[2] - center.s[2]) * invdirz;
+			t1.s[2] = (o_max.s[2] - center.s[2]) * invdirz;
+		}
+
+		if( max(max(t0.s[0],t0.s[1]),t0.s[2]) < min(min(t1.s[0],t1.s[1]),t1.s[2]) )
+		{ 
+			CastStack stack;
+			cl_float4 tm;
+			int currNode = -1;
+			int scale = 0;
+			unsigned int node = c_nodes[0];
+			unsigned char sons = (node & 0xFF);
+			unsigned int tindex;
+			unsigned int size = 0;
+			unsigned int i = 0;
+			cl_uint8 short_shack;
+			short_shack.s[0] = ref_triangle;
+			short_shack.s[1] = ref_triangle;
+			short_shack.s[2] = ref_triangle;
+			short_shack.s[3] = ref_triangle;
+			short_shack.s[4] = ref_triangle;
+			short_shack.s[5] = ref_triangle;
+			short_shack.s[6] = ref_triangle;
+			short_shack.s[7] = ref_triangle;
+			unsigned char ss_idx = 0;
+			float dist2 = FLOAT_MAX;
+			float theta = 0.0f;
+			cl_float4 v0, v1, v2;
+			cl_float4 tnormal;
+			unsigned char popik;
+			while (scale < STACK_SIZE)
+			{
+				// konec toho spodneho switchu, berem otca
+				if(currNode == 8)
+				{
+					if(scale > 0)
+					{
+						scale--;
+						node = read(&stack, scale, &t0, &t1, &currNode);
+						sons = (node & 0xFF);
+						continue;
+					}
+					else
+						break;
+				}
+				// mame novy nody
+				else if(currNode == -1)
+				{
+					if((t1.s[0] < 0.0) || (t1.s[1] < 0.0) || (t1.s[2] < 0.0))
+					{
+						if(scale > 0)
+						{
+							scale--;
+							node = read(&stack, scale, &t0, &t1, &currNode);
+							sons = (node & 0xFF);
+							continue;
+						}
+						else
+							break;
+					}
+					if(sons == 0)
+					{
+						tindex = node>>8;
+						size = c_node_tria[tindex];
+						for(i = 1; i <= size; i++)
+						{
+							if(CanAdd(&short_shack, &ss_idx, c_node_tria[tindex+i]))
+							{
+								v0 = c_triangles[c_node_tria[tindex+i] * 3 + 0];
+								v1 = c_triangles[c_node_tria[tindex+i] * 3 + 1];
+								v2 = c_triangles[c_node_tria[tindex+i] * 3 + 2];
+
+								dist2 = rayIntersectsTriangle(center, ray, v0, v1, v2, bias);
+								if(dist2 < FLOAT_MAX)
+								{
+									tnormal = cl_normalize(cl_cross(cl_minus(v1,v0), cl_minus(v2,v0)));
+									theta = acos( cl_dot(ray, tnormal) / cl_length(ray) );
+									theta = theta * (180.0f / (float)M_PI);
+									if((theta < 90.0f) && (dist2 < dist))
+										dist = dist2;
+								}
+							}
+						}
+						if(dist < (FLOAT_MAX - 1.0f))
+							break;
+
+						scale--;
+						node = read(&stack, scale, &t0, &t1, &currNode);
+						sons = (node & 0xFF);
+						size = 0;
+						continue;
+					}
+					tm = cl_multiply((cl_plus(t0,t1)), 0.5f);
+					currNode = first_node(t0,tm);
+				}
+				else
+					tm = cl_multiply((cl_plus(t0,t1)), 0.5f);
+
+				switch (currNode)
+				{
+				case 0:
+					if(CheckValid(sons, idx))
+					{
+						currNode = new_node(tm.s[0],4,tm.s[1],2,tm.s[2],1);
+						write(&stack, scale, t0, t1, currNode, node);
+						t1 = tm;
+						//proc_subtree4(tx0,ty0,tz0,txm,tym,tzm,node->son[aa], octrees);
+						//currNode = new_node(txm,4,tym,2,tzm,1);
+						currNode = -1;
+						sons = sons << (8 - (idx));
+						sons = sons >> (8 - (idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(tm.s[0],4,tm.s[1],2,tm.s[2],1);
+						scale--;
+					}
+					break;
+				case 1: 
+					if(CheckValid(sons, 1^idx))
+					{
+						currNode = new_node(tm.s[0],5,tm.s[1],3,t1.s[2],8);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[2] = tm.s[2];
+						t1.s[0] = tm.s[0];
+						t1.s[1] = tm.s[1];
+						//proc_subtree4(tx0,ty0,tzm,txm,tym,tz1,node->son[1^aa], octrees);
+						//currNode = new_node(txm,5,tym,3,tz1,8);
+						currNode = -1;
+						sons = sons << (8 - (1^idx));
+						sons = sons >> (8 - (1^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 1^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(tm.s[0],5,tm.s[1],3,t1.s[2],8);
+						scale--;
+					}
+					break;
+				case 2:
+					if(CheckValid(sons, 2^idx))
+					{
+						currNode = new_node(tm.s[0],6,t1.s[1],8,tm.s[2],3);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[1] = tm.s[1];
+						t1.s[0] = tm.s[0];
+						t1.s[2] = tm.s[2];
+						//proc_subtree4(tx0,tym,tz0,txm,ty1,tzm,node->son[2^aa], octrees);
+						//currNode = new_node(txm,6,ty1,8,tzm,3);
+						currNode = -1;
+						sons = sons << (8 - (2^idx));
+						sons = sons >> (8 - (2^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 2^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(tm.s[0],6,t1.s[1],8,tm.s[2],3);
+						scale--;
+					}
+					break;
+				case 3:
+					if(CheckValid(sons, 3^idx))
+					{
+						currNode = new_node(tm.s[0],7,t1.s[1],8,t1.s[2],8);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[1] = tm.s[1];
+						t0.s[2] = tm.s[2];
+						t1.s[0] = tm.s[0];
+						//proc_subtree4(tx0,tym,tzm,txm,ty1,tz1,node->son[3^aa], octrees);
+						//currNode = new_node(txm,7,ty1,8,tz1,8);
+						currNode = -1;
+						sons = sons << (8 - (3^idx));
+						sons = sons >> (8 - (3^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 3^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(tm.s[0],7,t1.s[1],8,t1.s[2],8);
+						scale--;
+					}
+					break;
+				case 4:
+					if(CheckValid(sons, 4^idx))
+					{
+						currNode = new_node(t1.s[0],8,tm.s[1],6,tm.s[2],5);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[0] = tm.s[0];
+						t1.s[1] = tm.s[1];
+						t1.s[2] = tm.s[2];
+						//proc_subtree4(txm,ty0,tz0,tx1,tym,tzm,node->son[4^aa], octrees);
+						//currNode = new_node(tx1,8,tym,6,tzm,5);
+						currNode = -1;
+						sons = sons << (8 - (4^idx));
+						sons = sons >> (8 - (4^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 4^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(t1.s[0],8,tm.s[1],6,tm.s[2],5);
+						scale--;
+					}
+					break;
+				case 5:
+					if(CheckValid(sons, 5^idx))
+					{
+						currNode = new_node(t1.s[0],8,tm.s[1],7,t1.s[2],8);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[0] = tm.s[0];
+						t0.s[2] = tm.s[2];
+						t1.s[1] = tm.s[1];
+						//proc_subtree4(txm,ty0,tzm,tx1,tym,tz1,node->son[5^aa], octrees);
+						//currNode = new_node(tx1,8,tym,7,tz1,8);
+						currNode = -1;
+						sons = sons << (8 - (5^idx));
+						sons = sons >> (8 - (5^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 5^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(t1.s[0],8,tm.s[1],7,t1.s[2],8);
+						scale--;
+					}
+					break;
+				case 6:
+					if(CheckValid(sons, 6^idx))
+					{
+						currNode = new_node(t1.s[0],8,t1.s[1],8,tm.s[2],7);
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[0] = tm.s[0];
+						t0.s[1] = tm.s[1];
+						t1.s[2] = tm.s[2];
+						//proc_subtree4(txm,tym,tz0,tx1,ty1,tzm,node->son[6^aa], octrees);
+						//currNode = new_node(tx1,8,ty1,8,tzm,7);
+						currNode = -1;
+						sons = sons << (8 - (6^idx));
+						sons = sons >> (8 - (6^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 6^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = new_node(t1.s[0],8,t1.s[1],8,tm.s[2],7);
+						scale--;
+					}
+					break;
+				case 7:
+					if(CheckValid(sons, 7^idx))
+					{
+						currNode = 8;
+						write(&stack, scale, t0, t1, currNode, node);
+						t0.s[0] = tm.s[0];
+						t0.s[1] = tm.s[1];
+						t0.s[2] = tm.s[2];
+						//proc_subtree4(txm,tym,tzm,tx1,ty1,tz1,node->son[7^aa], octrees);
+						//currNode = 8;
+						currNode = -1;
+						sons = sons << (8 - (7^idx));
+						sons = sons >> (8 - (7^idx));
+						popik = popc8(sons);
+						//popik = popc88(sons, 7^idx);
+						node = c_nodes[(node >> 8) + popik];
+						sons = (node & 0xFF);
+					}
+					else
+					{
+						currNode = 8;
+						scale--;
+					}
+					break;
+				}
+
+				scale++;
+			}
+		}
 
 		c_outputs[gid] = dist;
 	}

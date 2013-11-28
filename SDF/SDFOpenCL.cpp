@@ -385,13 +385,14 @@ namespace OpenCLForm
 			err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_nodes);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_node_tria);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
+			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_float4), &o_min);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_float4), &o_max);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_float), &bias);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint), &n_rays);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint), &n_triangles);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
+			
 			if (err != CL_SUCCESS)
 			{
 				//"Error: Failed to set kernel arguments! " << err << endl;
