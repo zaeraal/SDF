@@ -1622,7 +1622,7 @@ namespace SDF {
 		TB_Max_SDF->Text = "0";
 		// bezi v threade aby som mohol updatovat popis
 		MController->logInfo("Compute SDF");
-		MController->ComputeSDF();
+		//MController->ComputeSDF();
 		myThread = gcnew Thread(gcnew ThreadStart(this,&Form1::MyThreadProcedure));  
 		myThread->Start();
 

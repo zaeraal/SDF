@@ -1,6 +1,6 @@
 // moja kernel funkcia
 #define FLOAT_MAX  99999.0
-#define STACK_SIZE  10
+#define KERNEL_SIZE  4096
 
 inline float rayIntersectsTriangle(const float4 p, const float4 d, const float4 v0, const float4 v1, const float4 v2, const float bias)
 	{
@@ -184,14 +184,15 @@ __kernel void sdf(__global const float4 *c_triangles,
 					const float4 o_max,
 					const float bias,
 					const uint n_rays,
-					const uint n_triangles
+					const uint n_triangles,
+					const uint poradie
                   )
 
 {
-	const uint ref_ray = get_global_id(0);						// zisti kolkaty som luc v poradi				
-	const uint ref_triangle = (uint)(ref_ray / n_rays);			// na zaklade toho zisti ku ktoremu trojuholniku patrim
+	const uint ref_ray = get_global_id(0) + (poradie * KERNEL_SIZE);	// zisti kolkaty som luc v poradi
+	const uint ref_triangle = (uint)(ref_ray / n_rays);					// na zaklade toho zisti ku ktoremu trojuholniku patrim
 	
-	if(ref_triangle > n_triangles)								// thready navyse ignorujeme
+	if(ref_triangle > n_triangles)										// thready navyse ignorujeme
 		return;
 
 	/*c_outputs[ref_ray] = 10;

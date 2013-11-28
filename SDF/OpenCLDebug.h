@@ -13,6 +13,10 @@ namespace OpenCLDebugger
 		void SetArgValue(cl_uint /* arg_index */, void * /* arg_value */);
 		void ExecuteKernel( size_t   /* global_work_size */, size_t   /* local_work_size */);
 		void ExecuteKernel2( size_t   /* global_work_size */, size_t   /* local_work_size */);
+		unsigned int nodeCount;
+		unsigned int triangleCount;
+		unsigned int nn_triangles;
+		unsigned int max_outputs;
 	private:
 		void** args;
 		cl_uint arg_size;
@@ -62,6 +66,18 @@ namespace OpenCLDebugger
 					const cl_uint gid
 				);
 		void sdf2(const cl_float4 *c_triangles,
+			const cl_uint *c_nodes,
+			const cl_uint *c_node_tria,
+			const cl_float4 o_min,
+			const cl_float4 o_max,
+			const cl_float bias,
+			const cl_float4 *c_rays,
+			const cl_uint n_rays,
+			const cl_uint n_triangles,
+			float *c_outputs,
+			const cl_uint gid
+			);
+		void sdf3(const cl_float4 *c_triangles,
 			const cl_uint *c_nodes,
 			const cl_uint *c_node_tria,
 			const cl_float4 o_min,

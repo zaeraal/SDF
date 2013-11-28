@@ -11,12 +11,9 @@ namespace ModelController
 		VCGlib = new CVCG();
 		SDF_control = NULL;
 		m_root = NULL;
-//		transform_matica = 
 		triangles = new LinkedList<Face>();
 		points = new LinkedList<Vertex>();
 		ResetSettings();
-		o_array = NULL;
-		t_array = NULL;
 	}
 
 	CModel::~CModel()
@@ -330,6 +327,8 @@ namespace ModelController
 		b_size = 0.0;
 		b_sf = 1.0;
 		b_max = 0.0;
+		o_min = Vector4();
+		o_max = Vector4();
 	}
 
 	// priradi poradie
@@ -412,7 +411,7 @@ namespace ModelController
 	// vytvori Octree strukturu
 	void CModel::CreateOctree()
 	{
-		m_root = new Octree(1, b_size, b_stred, NULL);
+		m_root = new Octree(1, b_size, b_stred);
 
 		unsigned int siz = triangles->GetSize();
 		if(siz > 0)
@@ -438,15 +437,17 @@ namespace ModelController
 				tmp2 = tmp2->next;
 				i++;
 			}
-			unsigned int nodeCount = 0, triangleCount = 0;
-			m_root->Build2(tria, mtria, 0, siz, nodeCount, triangleCount);
+			nodeCount = 0, triangleCount = 0, leafCount = 0;
+			m_root->Build2(tria, mtria, 0, siz, nodeCount, triangleCount, leafCount);
+			o_min = Vector4(m_root->origin.X - m_root->size, m_root->origin.Y - m_root->size, m_root->origin.Z - m_root->size, 1.0);
+			o_max = Vector4(m_root->origin.X + m_root->size, m_root->origin.Y + m_root->size, m_root->origin.Z + m_root->size, 1.0);
 			delete [] tria;
 			delete mtria;
 		}
 		else
 			m_root->Build(NULL, 0);
 
-		BuildArrays();
+		//BuildArrays();
 	}
 
 	// nastavi farby pre picking
@@ -674,7 +675,7 @@ namespace ModelController
 
 			Vector4 norm = selected->normal * (-1.0);
 			LinkedList<Octree>* octrees = new LinkedList<Octree>();
-			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees);
+			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees, o_min, o_max);
 			LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
 			glColor3f(1.0f,0.0f,0.0f);
 			if(tmp != NULL)
@@ -753,10 +754,10 @@ namespace ModelController
 		Nastavenia->SDF_STATUS = 0;
 
 		if(Nastavenia->SDF_Mode == SDF_CPU)
-			SDF_control->Compute(triangles, m_root);
+			SDF_control->Compute(triangles, m_root, o_min, o_max);
 		else
-			//SDF_control->ComputeOpenCL(points, triangles, m_root);
-			SDF_control->ComputeOpenCL2(points, triangles, m_root, o_array, t_array);
+			//SDF_control->ComputeOpenCL(points, triangles, m_root, o_min, o_max);
+			SDF_control->ComputeOpenCL2(points, triangles, m_root, o_min, o_max, nodeCount, leafCount, triangleCount);
 
 		CopySDF_Faces_to_Vertices();
 		Nastavenia->SDF_STATUS = 100;
@@ -894,7 +895,7 @@ namespace ModelController
 	}
 	void CModel::BuildArrays()
 	{
-		if(m_root == NULL)
+		/*if(m_root == NULL)
 			return;
 		if(o_array != NULL)
 			delete [] o_array;
@@ -903,20 +904,20 @@ namespace ModelController
 
 		Octree** oc_array = new Octree*[m_root->nodeCount];
 		o_array = new unsigned int[m_root->nodeCount];
-		t_array = new unsigned int[m_root->nodeCount + m_root->triangleCount];	// pocet + trojuholniky
+		t_array = new unsigned int[m_root->leafCount + m_root->triangleCount];	// pocet + trojuholniky
 
 		logDebug(MarshalString("node count: "+ m_root->nodeCount));
 		logDebug(MarshalString("triangle count: "+ m_root->triangleCount));
-		logDebug(MarshalString("spolu v t_array: "+ (m_root->nodeCount + m_root->triangleCount)));
+		logDebug(MarshalString("spolu v t_array: "+ (m_root->leafCount + m_root->triangleCount)));
 
 		Octree* node = m_root;
-		int end = 0;
+		unsigned int end = 0;
 		oc_array[0] = node;
-		int tidx = 0;
+		unsigned int tidx = 0;
 		bool jeden_krat = true;
 		unsigned int najvecsi_o = 0;
 		unsigned int najvecsi_t = 0;
-		for(unsigned int idx = 0; idx < (m_root->nodeCount + m_root->triangleCount); idx++)
+		for(unsigned int idx = 0; idx < (m_root->leafCount + m_root->triangleCount); idx++)
 		{
 			t_array[idx] = 0;
 		}
@@ -927,7 +928,8 @@ namespace ModelController
 			{
 				if(node->count == 0)
 					assert("daco sa povrzalo v octree");
-				o_array[idx] = tidx << 8;
+				unsigned int safe_tidx = tidx << 8;
+				o_array[idx] = safe_tidx;
 				t_array[tidx] = node->count;
 				tidx++;
 				for(unsigned int j = 0; j < node->count; j++)
@@ -947,8 +949,9 @@ namespace ModelController
 					end++;
 					if(jeden_krat == true)
 					{
-						o_array[idx] = end<<8;
-						o_array[idx] += node->sons;
+						unsigned int safe_end = end<<8;
+						safe_end = safe_end +  node->sons;
+						o_array[idx] = safe_end;
 						jeden_krat = false;
 					}
 					oc_array[end] = node->son[i];
@@ -959,6 +962,6 @@ namespace ModelController
 		}
 		delete [] oc_array;
 		logDebug(MarshalString("najvecsi_t: "+ najvecsi_t));
-		logDebug(MarshalString("najvecsi_o: "+ najvecsi_o));
+		logDebug(MarshalString("najvecsi_o: "+ najvecsi_o));*/
 	}
 }

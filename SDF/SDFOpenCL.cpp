@@ -18,6 +18,8 @@
 #define EXIT_FAIL_LOAD			13
 #define EXIT_FAIL_READ			14
 
+#define KERNEL_SIZE  4096
+
 namespace OpenCLForm
 {
 	
@@ -118,7 +120,8 @@ namespace OpenCLForm
 		cSourceCL = NULL;
 
 		// Read the OpenCL kernel in from source file
-		cSourceCL = oclLoadProgSource(cSourceFile, "", &szKernelLength);
+		std::string depth = MarshalString("#define STACK_SIZE  " + Nastavenia->OCTREE_Depth);
+		cSourceCL = oclLoadProgSource(cSourceFile, depth.c_str(), &szKernelLength);
 
 		if(cSourceCL != NULL)
 			return EXIT_SUCCESS;
@@ -382,6 +385,7 @@ namespace OpenCLForm
 
 		if(Nastavenia->SDF_Mode == SDF_GPU)
 		{
+			cl_uint poradie = 0;
 			err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_nodes);
 			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_node_tria);
@@ -399,14 +403,49 @@ namespace OpenCLForm
 				return EXIT_FAIL_ARGUMENTS;
 			}
 
-			// Execute the kernel, localnu nech si nastavi sam
-			err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, NULL, 0, NULL, NULL);
-			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+			/*if(global > KERNEL_SIZE)
 			{
-				//"Error: Failed to execute kernel!"
-				return EXIT_FAIL_EXECUTE;
-			}
+				cl_uint pocet_vykonani = (global / KERNEL_SIZE)+1;
+				cl_uint pocet_itemov = KERNEL_SIZE;
+				for(poradie = 0; poradie < pocet_vykonani; poradie++)
+				{
+					err |= clSetKernelArg(kernel, n, sizeof(cl_uint), &poradie);
+					if (err != CL_SUCCESS)
+					{
+						//"Error: Failed to set kernel arguments! " << err << endl;
+						return EXIT_FAIL_ARGUMENTS;
+					}
 
+					// posledne vykonanie zmensime
+					if(poradie == (pocet_vykonani - 1))
+						pocet_itemov = global % KERNEL_SIZE;
+
+					// Execute the kernel, localnu nech si nastavi sam
+					err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &pocet_itemov, NULL, 0, NULL, NULL);
+					if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+					{
+						//"Error: Failed to execute kernel!"
+						return EXIT_FAIL_EXECUTE;
+					}
+					clFinish(commands);
+				}
+			}
+			else*/
+			{
+				err |= clSetKernelArg(kernel, n, sizeof(cl_uint), &poradie);
+				if (err != CL_SUCCESS)
+				{
+					//"Error: Failed to set kernel arguments! " << err << endl;
+					return EXIT_FAIL_ARGUMENTS;
+				}
+				// Execute the kernel, localnu nech si nastavi sam
+				err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, NULL, 0, NULL, NULL);
+				if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+				{
+					//"Error: Failed to execute kernel!"
+					return EXIT_FAIL_EXECUTE;
+				}
+			}
 			err = clEnqueueReadBuffer(commands, b_outputs, CL_FALSE, 0, s_outputs, c_outputs, 0, NULL, NULL );
 			if (err != CL_SUCCESS)
 			{

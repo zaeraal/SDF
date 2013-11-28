@@ -13,7 +13,7 @@ namespace MeshStructures
 		FLAG4 = 0x4,
 		FLAG8 = 0x8
 	};
-	Octree::Octree(const int dep, const float siz, Vector4 ori, Octree* par)
+	Octree::Octree(const int dep, const float siz, Vector4 ori)
 	{
 		// Front half			Back half (viewed from front)
 		// -----------------	-----------------
@@ -27,36 +27,18 @@ namespace MeshStructures
 		// -----------------	-----------------
 		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
 		// tabulka offsetov
-		float Table2[8][3] =
-        {
-            {-1.0, -1.0, -1.0},
-            {-1.0, -1.0, +1.0},
-            {-1.0, +1.0, -1.0},
-            {-1.0, +1.0, +1.0},
-            {+1.0, -1.0, -1.0},
-            {+1.0, -1.0, +1.0},
-            {+1.0, +1.0, -1.0},
-            {+1.0, +1.0, +1.0}
-        };
-		for(int i = 0; i < 8; i++)
-			for(int j = 0; j < 3; j++)
-				Table[i][j] = Table2[i][j];
-
 		isLeaf = true;
 		depth = dep;
 		size = siz;
 		origin = ori;
-		parent = par;
 		triangles = NULL;
 		count = 0;
 
 		son = new Octree* [8];
 		sons = 0;
-		nodeCount = 0;
-		triangleCount = 0;
 
-		o_min = Vector4(origin.X - size, origin.Y - size, origin.Z - size, 1.0);
-		o_max = Vector4(origin.X + size, origin.Y + size, origin.Z + size, 1.0);
+		//o_min = Vector4(origin.X - size, origin.Y - size, origin.Z - size, 1.0);
+		//o_max = Vector4(origin.X + size, origin.Y + size, origin.Z + size, 1.0);
 	}
 
 	Octree::~Octree()
@@ -87,6 +69,17 @@ namespace MeshStructures
 		}
 		else
 		{
+			float Table[8][3] =
+			{
+				{-1.0, -1.0, -1.0},
+				{-1.0, -1.0, +1.0},
+				{-1.0, +1.0, -1.0},
+				{-1.0, +1.0, +1.0},
+				{+1.0, -1.0, -1.0},
+				{+1.0, -1.0, +1.0},
+				{+1.0, +1.0, -1.0},
+				{+1.0, +1.0, +1.0}
+			};
 			isLeaf = false;
 			count = 0;
 			int new_depth = depth + 1;
@@ -162,7 +155,7 @@ namespace MeshStructures
 				Vector4 tmpv = Vector4(origin.X + new_size*Table[i][0],
 									   origin.Y + new_size*Table[i][1],
 									   origin.Z + new_size*Table[i][2]);
-				son[i] = new Octree(new_depth, new_size, tmpv, this);
+				son[i] = new Octree(new_depth, new_size, tmpv);
 
 				unsigned int velkost = (son_tria[i] == NULL ? 0 : son_tria[i]->GetSize());
 				Face** tmp_zoznam = NULL;
@@ -195,7 +188,7 @@ namespace MeshStructures
 		}
 	}
 
-	void Octree::Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length, unsigned int &NodeCount, unsigned int &TriangleCount)
+	void Octree::Build2(Face** tria, unsigned int* mtria, unsigned int start, unsigned int length, unsigned int &NodeCount, unsigned int &TriangleCount, unsigned int &LeafCount)
 	{
 		/*//debug kktina
 		unsigned int u [500];
@@ -205,6 +198,7 @@ namespace MeshStructures
 			return;*/
 		NodeCount = 0;
 		TriangleCount = 0;
+		LeafCount = 0;
 
 		if(length == 0)
 			return;
@@ -218,10 +212,24 @@ namespace MeshStructures
 			isLeaf = true;
 			TriangleCount = count;
 			NodeCount = 1;
+			LeafCount = 1;
 		}
 		else
 		{
-			nodeCount = 1;
+			float Table[8][3] =
+			{
+				{-1.0, -1.0, -1.0},
+				{-1.0, -1.0, +1.0},
+				{-1.0, +1.0, -1.0},
+				{-1.0, +1.0, +1.0},
+				{+1.0, -1.0, -1.0},
+				{+1.0, -1.0, +1.0},
+				{+1.0, +1.0, -1.0},
+				{+1.0, +1.0, +1.0}
+			};
+			unsigned int nodeCount = 1;
+			unsigned int triangleCount = 0;
+			unsigned int leafCount = 0;
 			isLeaf = false;
 			count = 0;
 			int new_depth = depth + 1;
@@ -274,20 +282,22 @@ namespace MeshStructures
 				Vector4 tmpv = Vector4(origin.X + new_size*Table[i][0],
 									   origin.Y + new_size*Table[i][1],
 									   origin.Z + new_size*Table[i][2]);
-				son[i] = new Octree(new_depth, new_size, tmpv, this);
+				son[i] = new Octree(new_depth, new_size, tmpv);
 				if(i > 0)
 				{
 					Check(tria, mtria, i, tabulka, new_size, cislo);
 				}
 
-				son[i]->Build2(tria, mtria, tabulka[i][0], tabulka[i][1], NodeCount, TriangleCount);
+				son[i]->Build2(tria, mtria, tabulka[i][0], tabulka[i][1], NodeCount, TriangleCount, LeafCount);
 				if(tabulka[i][1] > 0)
 					sons |= (unsigned char)(1 << i);
 				nodeCount += NodeCount;
 				triangleCount += TriangleCount;
+				leafCount += LeafCount;
 			}
 			NodeCount = nodeCount;
 			TriangleCount = triangleCount;
+			LeafCount = leafCount;
 		}
 	}
 
@@ -369,6 +379,17 @@ namespace MeshStructures
 
 	void Octree::Check(Face** tria, unsigned int* mtria, byte code, int (&tabulka)[8][2], float new_size, unsigned int cislo)
 	{
+		float Table[8][3] =
+		{
+			{-1.0, -1.0, -1.0},
+			{-1.0, -1.0, +1.0},
+			{-1.0, +1.0, -1.0},
+			{-1.0, +1.0, +1.0},
+			{+1.0, -1.0, -1.0},
+			{+1.0, -1.0, +1.0},
+			{+1.0, +1.0, -1.0},
+			{+1.0, +1.0, +1.0}
+		};
 		int length = 0;
 		for(unsigned int j = 0; j < code; j++)
 		{
@@ -418,6 +439,18 @@ namespace MeshStructures
 
 	void Octree::DrawOctree(bool recursive)
 	{
+		float Table[8][3] =
+		{
+			{-1.0, -1.0, -1.0},
+			{-1.0, -1.0, +1.0},
+			{-1.0, +1.0, -1.0},
+			{-1.0, +1.0, +1.0},
+			{+1.0, -1.0, -1.0},
+			{+1.0, -1.0, +1.0},
+			{+1.0, +1.0, -1.0},
+			{+1.0, +1.0, +1.0}
+		};
+
 		if((recursive == true) && (depth > 5))
 			return;
 		if((count == 0) && (isLeaf == true))

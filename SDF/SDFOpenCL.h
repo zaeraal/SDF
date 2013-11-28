@@ -35,6 +35,7 @@ namespace OpenCLForm
 
 		size_t debug_len;
 		char debug_buffer[32768];
+		COpenCLDebug *debugger;
 	private:
 		cl_int err;     // error code returned from api calls
    
@@ -68,7 +69,6 @@ namespace OpenCLForm
 		cl_mem b_targets;
 		cl_mem b_outputs;
 
-		COpenCLDebug *debugger;
 		int moznost;
 	};
 }

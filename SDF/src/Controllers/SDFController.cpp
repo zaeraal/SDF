@@ -41,7 +41,7 @@ namespace SDFController
 	}
 		
 	// pocitanie funkcie pre vsetky trojuholniky, O(n2)
-	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root)
+	void CSDFController::Compute(LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max)
 	{
 		int ticks1 = GetTickCount();
 		float min = FLOAT_MAX;
@@ -99,7 +99,7 @@ namespace SDFController
 				oc_list->Clear();
 				//fc_list->InsertToStart(current_face->data);
 				fc_list->Insert(current_face->data);
-				face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				face_list = GetFaceList(triangles, root, current_face->data->center, ray, o_min, o_max);
 				face_list->Delete(current_face->data);
 
 				int sizi = face_list->GetSize();
@@ -187,7 +187,7 @@ namespace SDFController
 	}
 
 	// pocitanie funkcie pre vsetky trojuholniky v OpenCL
-	void CSDFController::ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root)
+	void CSDFController::ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max)
 	{
 		using namespace OpenCLForm;
 		int ticks1 = GetTickCount();
@@ -358,7 +358,7 @@ namespace SDFController
 				oc_list->Clear();
 				//fc_list->InsertToStart(current_face->data);
 				fc_list->Insert(current_face->data);
-				HashTable<Face>* face_list = GetFaceList(triangles, root, current_face->data->center, ray);
+				HashTable<Face>* face_list = GetFaceList(triangles, root, current_face->data->center, ray, o_min, o_max);
 				face_list->Delete(current_face->data);
 
 				tmp_faces = face_list->start;
@@ -583,7 +583,7 @@ namespace SDFController
 		tmp->quality->Smooth(_values, _weights);
 	}
 
-	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray)
+	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max)
 	{
 		/*if (root == NULL)
 			return triangles;*/
@@ -596,7 +596,7 @@ namespace SDFController
 		//faces->Clear();
 		//center = center - (ray * diagonal);						// hack
 
-		ray_octree_traversal(root, ray, center, octrees);
+		ray_octree_traversal(root, ray, center, octrees, o_min, o_max);
 		//ray_octree_traversal2(root, ray, center, octrees);
 
 		// create triangle list
@@ -761,7 +761,7 @@ namespace SDFController
 		} while (currNode < 8);
 	}
 
-	void CSDFController::ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees)
+	void CSDFController::ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees, Vector4 o_min, Vector4 o_max)
 	{
 		unsigned char idx = 0;
 
@@ -775,9 +775,6 @@ namespace SDFController
 		float invdiry = 1.0f / fabs(ray.Y);
 		float invdirz = 1.0f / fabs(ray.Z);
 
-		// TODO: pridat do octree a nie sem
-		Vector4 o_min = octree->o_min;
-		Vector4 o_max = octree->o_max;
 		float tx0 ,tx1, ty0, ty1, tz0, tz1;
 
 		// fixes for rays with negative direction
@@ -1569,7 +1566,7 @@ namespace SDFController
 		}
 	}
 
-	void CSDFController::ComputeOpenCL2(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, unsigned int* o_array, unsigned int* t_array)
+	void CSDFController::ComputeOpenCL2(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max, unsigned int nodeCount, unsigned int leafCount, unsigned int triangleCount)
 	{
 		using namespace OpenCLForm;
 		int ticks1 = GetTickCount();
@@ -1599,11 +1596,12 @@ namespace SDFController
 
 		const unsigned int n_rays = Nastavenia->SDF_Rays;
 		const unsigned int n_triangles = triangles->GetSize();
-		const unsigned int n_nodes = root->nodeCount;
-		const unsigned int n_node_tria = root->triangleCount;
+		const unsigned int n_nodes = nodeCount;
+		const unsigned int n_leaves = leafCount;
+		const unsigned int n_node_tria = triangleCount;
 		//unsigned int n_vertices = points->GetSize();
 
-		OpenCLko->global = n_triangles * n_rays;
+		OpenCLko->global = (n_triangles * n_rays);
 
 		//-------------------------------------------
 		//---------------Memory Alloc------Begin-----
@@ -1613,11 +1611,11 @@ namespace SDFController
 		cl_uint		*c_nodes;				// zoznam nodov v octree
 		cl_uint		*c_node_tria;			// zoznam trojuholnikov v nodoch v octree
 		cl_float4	*c_rays;				// zoznamy 30 lucov, ktore sa postupne vkladaju do OpenCL
-		cl_float	*c_outputs;				// vzdialenost a vaha pre kazdy luc, ktore je mojim vysledkom co si zapisem
+		cl_float	*c_outputs;			// vzdialenost a vaha pre kazdy luc, ktore je mojim vysledkom co si zapisem
 
 		unsigned int s_triangles = n_triangles * 3 * sizeof(cl_float4);					// pocet trojuholnikov * 4 * 3 vertexy * float
 		unsigned int s_nodes = n_nodes * sizeof(cl_uint);								// pocet nodov * int
-		unsigned int s_node_tria = (n_nodes +  n_node_tria) * sizeof(cl_uint);			// (pocet nodov (velkosti) + pocet trojuholnikov) * int
+		unsigned int s_node_tria = (n_leaves +  n_node_tria) * sizeof(cl_uint);			// (pocet nodov (velkosti) + pocet trojuholnikov) * int
 		unsigned int s_rays = n_rays * sizeof(cl_float4);								// 30 * 4 * float
 		unsigned int s_outputs = n_triangles * n_rays * sizeof(cl_float);				// trojuholniky * 30  * float
 
@@ -1627,8 +1625,8 @@ namespace SDFController
 		int ticks3 = GetTickCount();
 
 		c_triangles = (cl_float4*) malloc(s_triangles);
-		c_nodes = o_array;
-		c_node_tria = t_array;
+		c_nodes = (cl_uint*) malloc(s_nodes);//o_array;
+		c_node_tria = (cl_uint*) malloc(s_node_tria);//t_array;
 		c_rays = (cl_float4*) malloc(s_rays);
 		c_outputs = (cl_float*) malloc(s_outputs);
 
@@ -1683,17 +1681,66 @@ namespace SDFController
 			tmp_face = tmp_face->next;
 		}
 
+
+		{
+			Octree** oc_array = new Octree*[nodeCount];
+
+			Octree* node = root;
+			unsigned int end = 0;
+			oc_array[0] = node;
+			unsigned int tidx = 0;
+			bool jeden_krat = true;
+			for(unsigned int idx = 0; idx < nodeCount; idx++)
+			{
+				node = oc_array[idx];
+				if(node->isLeaf)
+				{
+					unsigned int safe_tidx = tidx << 8;
+					c_nodes[idx] = safe_tidx;
+					c_node_tria[tidx] = node->count;
+					tidx++;
+					for(unsigned int j = 0; j < node->count; j++)
+					{
+						c_node_tria[tidx] = node->triangles[j]->number;
+						tidx++;
+					}
+					continue;
+				}
+				jeden_krat = true;
+				for(int i = 0; i < 8; i++)
+				{
+					if((node->sons >> i) & 1)
+					{
+						end++;
+						if(jeden_krat == true)
+						{
+							unsigned int safe_end = end<<8;
+							safe_end = safe_end +  node->sons;
+							c_nodes[idx] = safe_end;
+							jeden_krat = false;
+						}
+						oc_array[end] = node->son[i];
+					}
+				}
+			}
+			delete [] oc_array;
+		}
 		//---------------copy variables--------------
 		
 
 		// v tomto bode je uz pamet pripravena a nacitana
 		// je nutne poslat ju do OpenCL a zahajit vypocet
 		int ticks5 = GetTickCount();
-		cl_float4 o_min; o_min.s[0] = root->o_min.X; o_min.s[1] = root->o_min.Y; o_min.s[2] = root->o_min.Z; o_min.s[3] = root->o_min.W;
-		cl_float4 o_max; o_max.s[0] = root->o_max.X; o_max.s[1] = root->o_max.Y; o_max.s[2] = root->o_max.Z; o_max.s[3] = root->o_max.W;
+		cl_float4 oo_min; oo_min.s[0] = o_min.X; oo_min.s[1] = o_min.Y; oo_min.s[2] = o_min.Z; oo_min.s[3] = o_min.W;
+		cl_float4 oo_max; oo_max.s[0] = o_max.X; oo_max.s[1] = o_max.Y; oo_max.s[2] = o_max.Z; oo_max.s[3] = o_max.W;
 		cl_float bias = root->size * 2.0f * 0.00001f;
-		
-		err = OpenCLko->LaunchKernel2(c_triangles, c_nodes, c_node_tria, o_min, o_max, bias, c_rays, n_rays, n_triangles, c_outputs);
+
+		OpenCLko->debugger->max_outputs = n_triangles * n_rays;
+		OpenCLko->debugger->nodeCount = n_nodes;
+		OpenCLko->debugger->triangleCount = n_leaves +  n_node_tria;
+		OpenCLko->debugger->nn_triangles = n_triangles * 3;
+
+		err = OpenCLko->LaunchKernel2(c_triangles, c_nodes, c_node_tria, oo_min, oo_max, bias, c_rays, n_rays, n_triangles, c_outputs);
 		if(!CheckError(err)) return;
 
 		OpenCLko->WaitForFinish();
@@ -1776,5 +1823,7 @@ namespace SDFController
 		free(c_triangles);
 		free(c_rays);
 		free(c_outputs);
+		free(c_nodes);
+		free(c_node_tria);
 	}
 }

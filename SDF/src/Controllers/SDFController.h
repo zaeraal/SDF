@@ -15,12 +15,12 @@ namespace SDFController
 		CSDFController(float dia, CAssimp* logg);
 		~CSDFController();
 
-		void Compute(LinkedList<Face>* triangles, Octree* root);
-		void ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root);
-		void ComputeOpenCL2(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, unsigned int* o_array, unsigned int* t_array);
+		void Compute(LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max);
+		void ComputeOpenCL(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max);
+		void ComputeOpenCL2(LinkedList<Vertex>* points, LinkedList<Face>* triangles, Octree* root, Vector4 o_min, Vector4 o_max, unsigned int nodeCount, unsigned int leafCount, unsigned int triangleCount);
 		float* ComputeGaussianKernel(int radius);
 		void Smooth(Face* tmp, float* kernel, int kernel_size);
-		HashTable<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray);
+		HashTable<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max);
 		void ComputeTNB(Face* tmp, Vector4& tang, Vector4& binor, Vector4& norm);
 		int first_node(float tx0, float ty0, float tz0, float txm, float tym, float tzm);
 		int new_node(float txm, int x, float tym, int y, float tzm, int z);
@@ -29,7 +29,7 @@ namespace SDFController
 		void proc_subtree2 (unsigned char idx, float tx0, float ty0, float tz0, float tx1, float ty1, float tz1, Octree* node, LinkedList<Octree>* octrees);
 		void proc_subtree3 (Vector4 o, Vector4 or, Vector4 d, Octree* node, LinkedList<Octree>* octrees);
 		void proc_subtree4 (unsigned char idx, Vector4 t0, Vector4 t1, Octree* node, LinkedList<Octree>* octrees);
-		void ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees);
+		void ray_octree_traversal(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees, Vector4 o_min, Vector4 o_max);
 		void ray_octree_traversal2(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees);
 		bool CheckError(int err, char extra_debug[32768] = NULL);
 		void UniformPointsOnSphere(float* rndx, float * rndy);

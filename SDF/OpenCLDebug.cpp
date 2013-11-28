@@ -9,6 +9,11 @@ namespace OpenCLDebugger
 	{
 		args = NULL;
 		arg_size = 0;
+
+		nodeCount = 0;
+		triangleCount = 0;
+		nn_triangles = 0;
+		max_outputs = 0;
 	}
 	
 	COpenCLDebug::~COpenCLDebug()
@@ -20,7 +25,7 @@ namespace OpenCLDebugger
 			{
 				delete args[i];
 			}*/
-			delete args;
+			delete [] args;
 		}
 	}
 
@@ -121,6 +126,7 @@ namespace OpenCLDebugger
 	//---------------------------------MOJE OPENCL FUNKCIE---------------------------------
 #define FLOAT_MAX  99999.0
 #define STACK_SIZE 10
+#define MAX_ITERATIONS 1000
 
 	float COpenCLDebug::rayIntersectsTriangle(const cl_float4 p, const cl_float4 d, const cl_float4 v0, const cl_float4 v1, const cl_float4 v2, const cl_float bias)
 	{
@@ -731,9 +737,8 @@ namespace OpenCLDebugger
 		}
 	}
 
-	// c_params[0] = n_rays, c_params[1] = n_triangles, c_params[1] = bias
 	// moja kernel funkcia 2
-	void COpenCLDebug::sdf2(const cl_float4 *c_triangles,
+	void COpenCLDebug::sdf3(const cl_float4 *c_triangles,
 							const cl_uint *c_nodes,
 							const cl_uint *c_node_tria,
 							const cl_float4 o_min,
@@ -763,6 +768,53 @@ namespace OpenCLDebugger
 		const cl_float4 normal = cl_normalize(cl_multiply(cl_cross(cl_minus(v1,v0), cl_minus(v2,v0)), (-1.0f)));
 		const cl_float4 tangens = cl_normalize(cl_minus(v0,v2));
 		const cl_float4 binormal = cl_normalize(cl_cross(tangens, normal));
+
+		cl_float4 ray = Multiply(c_rays[ref_ray % n_rays], tangens, normal, binormal);
+
+		float dist = FLOAT_MAX;
+		OctreeTraversal(c_triangles, c_nodes, c_node_tria,o_min,o_max,ray,center,ref_triangle, bias, &dist);
+
+		c_outputs[gid] = dist;
+	}
+
+	// moja kernel funkcia 2
+	void COpenCLDebug::sdf2(const cl_float4 *c_triangles,
+							const cl_uint *c_nodes,
+							const cl_uint *c_node_tria,
+							const cl_float4 o_min,
+							const cl_float4 o_max,
+							const cl_float bias,
+							const cl_float4 *c_rays,
+							const cl_uint n_rays,
+							const cl_uint n_triangles,
+							float *c_outputs,
+							const cl_uint gid
+							)
+	{
+		//const cl_uint gid = get_global_id(0);
+		//cl_uint ITERATIONS = 0;
+		cl_uint ref_ray = gid;											// zisti kolkaty som luc v poradi
+		cl_uint ref_triangle = (cl_uint)(ref_ray / n_rays);		// na zaklade toho zisti ku ktoremu trojuholniku patrim
+	
+		if(ref_triangle > n_triangles)								// thready navyse ignorujeme
+			return;
+
+		/*c_outputs[ref_ray] = ref_ray;
+		return;*/
+		// premenne zadefinovat dopredu
+		if((ref_triangle * 3 + 2) >= nn_triangles)
+			assert(false);
+
+		const cl_float4 v0 = c_triangles[ref_triangle * 3];
+		const cl_float4 v1 = c_triangles[ref_triangle * 3 + 1];
+		const cl_float4 v2 = c_triangles[ref_triangle * 3 + 2];
+		const cl_float4 center = cl_div(cl_plus(cl_plus(v0, v1), v2), 3.0f);
+		const cl_float4 normal = cl_normalize(cl_multiply(cl_cross(cl_minus(v1,v0), cl_minus(v2,v0)), (-1.0f)));
+		const cl_float4 tangens = cl_normalize(cl_minus(v0,v2));
+		const cl_float4 binormal = cl_normalize(cl_cross(tangens, normal));
+
+		if((ref_ray % n_rays) >= n_rays)
+			assert(false);
 
 		cl_float4 ray = Multiply(c_rays[ref_ray % n_rays], tangens, normal, binormal);
 
@@ -844,6 +896,9 @@ namespace OpenCLDebugger
 			unsigned char popik;
 			while (scale < STACK_SIZE)
 			{
+				/*ITERATIONS++;
+				if(ITERATIONS > MAX_ITERATIONS)
+					break;*/
 				// konec toho spodneho switchu, berem otca
 				if(currNode == 8)
 				{
@@ -875,11 +930,19 @@ namespace OpenCLDebugger
 					if(sons == 0)
 					{
 						tindex = node>>8;
+						if(tindex >= triangleCount)
+							assert(false);
 						size = c_node_tria[tindex];
 						for(i = 1; i <= size; i++)
 						{
+							if((tindex+i) >= triangleCount)
+								assert(false);
 							if(CanAdd(&short_shack, &ss_idx, c_node_tria[tindex+i]))
 							{
+								//ITERATIONS++;
+								if((c_node_tria[tindex+i] * 3 + 2) >= nn_triangles)
+									assert(false);
+
 								v0 = c_triangles[c_node_tria[tindex+i] * 3 + 0];
 								v1 = c_triangles[c_node_tria[tindex+i] * 3 + 1];
 								v2 = c_triangles[c_node_tria[tindex+i] * 3 + 2];
@@ -925,6 +988,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -949,6 +1014,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (1^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 1^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -973,6 +1040,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (2^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 2^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -997,6 +1066,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (3^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 3^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -1021,6 +1092,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (4^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 4^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -1045,6 +1118,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (5^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 5^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -1069,6 +1144,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (6^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 6^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -1093,6 +1170,8 @@ namespace OpenCLDebugger
 						sons = sons >> (8 - (7^idx));
 						popik = popc8(sons);
 						//popik = popc88(sons, 7^idx);
+						if(((node >> 8) + popik) >= nodeCount)
+							assert(false);
 						node = c_nodes[(node >> 8) + popik];
 						sons = (node & 0xFF);
 					}
@@ -1107,7 +1186,8 @@ namespace OpenCLDebugger
 				scale++;
 			}
 		}
-
+		if(gid >= max_outputs)
+			assert(false);
 		c_outputs[gid] = dist;
 	}
 }

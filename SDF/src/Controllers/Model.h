@@ -67,7 +67,10 @@ namespace ModelController
 		float				b_size;			// size for octree
 		float				b_sf;			// scale factor
 		float				b_max;			// diagonala v octree
-		unsigned int*		o_array;		// array pre octree
-		unsigned int*		t_array;		// array pre trojuholniky v octree
+		Vector4				o_min;
+		Vector4				o_max;
+		unsigned int		nodeCount;
+		unsigned int		leafCount;
+		unsigned int		triangleCount;
 	};
 }
