@@ -17,7 +17,10 @@ namespace PointCloudTriangulation {
 		void setKNeighParams(float _ratio, int _min, int _max);
 		void setCenterFactorParams(float _limit, float _offset, float _scale);
 
+		// returns local deleunay triangulation, where normal is computed using PCA but normal orientation is unknown
 		void computeLocalTriangulationFromPoints(int index, int numOfPoints, float * points, int &numOfIndices, int ** indices, std::vector<std::set<int>> globalNeighbourhoods, float * nor, bool visualization = false);
+		// returns global triangulation composed of local deleunay triangulations. normals are computed using PCA and orientation choice is made like this:
+		// most side vertex's normal has to direct out of aabb and orientations of neighbouring vertices are choosen using per triangle connectivity... 
 		void computeGlobalTriangulationFromPoints(int numOfPoints, float * points, int &numOfIndices, int ** indices, float ** normals, bool visualization = false);
 		std::vector<std::set<int>> computeGlobalNeighbourhood(PCTMeshGraph * pMesh);
 		int getKNeigh(PCTMeshGraph * pMesh);

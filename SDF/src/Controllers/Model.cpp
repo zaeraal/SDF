@@ -605,10 +605,11 @@ namespace ModelController
 		}
 		if((selected != NULL) && (Nastavenia->VISUAL_State != VISUAL_PICKING))
 		{
-			Vector4 U = Vector4(selected->v[1]->P - selected->v[0]->P);
+			Vector4 normal = selected->normal * (-1.0);
+			/*Vector4 U = Vector4(selected->v[1]->P - selected->v[0]->P);
 			Vector4 V = Vector4(selected->v[2]->P - selected->v[0]->P);
 			Vector4 normal = (U % V) * (-1.0);
-			normal.Normalize();
+			normal.Normalize();*/
 
 			Vector4 tangens = Vector4(selected->v[0]->P - selected->v[2]->P);
 			tangens.Normalize();
@@ -832,6 +833,13 @@ namespace ModelController
 			Face* novy_face = new Face(tmp_points[v1], tmp_points[v2], tmp_points[v3]);
 			Vector4 t_nor = tmp_points[v1]->GetNormal() + tmp_points[v2]->GetNormal() + tmp_points[v3]->GetNormal();
 			t_nor.Normalize();
+			float theta = acos(novy_face->normal * t_nor);
+			theta = theta * float(180.0 / M_PI);
+			if(theta > 90.0f)
+			{
+				novy_face->v[0] = tmp_points[v3];
+				novy_face->v[2] = tmp_points[v1];
+			}
 			novy_face->normal = t_nor;
 			triangles->InsertToEnd(novy_face);
 			tmp_points[v1]->susedia->InsertToEnd(novy_face);

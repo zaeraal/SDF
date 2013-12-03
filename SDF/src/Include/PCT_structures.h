@@ -98,10 +98,10 @@ public:
 
 struct PCTNeighVisualization
 {
-	Array2D<bool> E_local_visualize;
 	bool isE_local_visualize;
 	PCTCVector3 * visNormals;
 	std::set<int> localNeighs;
+	std::vector<int> edges;
 	//PCTCVector2 * pointsInTangentPlane;
 	PCTNeighVisualization(){
 		visNormals = new PCTCVector3[4];

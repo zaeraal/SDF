@@ -81,52 +81,75 @@ namespace SDFController
 		int min_tri = 99999;
 		int max_tri = 0;
 		float avg = 0;
+		float vypis_pocet = 0.0f;
+		float total_pocet = (float)triangles->GetSize();
 		while(current_face != NULL)
 		{
+			vypis_pocet = vypis_pocet + 1;
 			// vypocet TNB vektorov a matice
 			ComputeTNB(current_face->data, tangens, binormal, normal);
 			t_mat = Mat4(tangens, normal, binormal);
 
 			rays.clear();
+			Nastavenia->SDF_STATUS = (unsigned int)((vypis_pocet / total_pocet) * 100.0f);
 			for(unsigned int i = 0; i < n_rays; i++)
 			{
+				unsigned int repeat = 1;
+				if(Nastavenia->SDF_Revert_Rays == true)
+					repeat = 2;
+				
 				Vector4 ray = CalcRayFromAngle(rndx[i], rndy[i]) * t_mat;
 				ray.Normalize();
+				ray = ray * (-1.0f);
 
 				dist = FLOAT_MAX;
-
-				fc_list->Clear();
-				oc_list->Clear();
-				//fc_list->InsertToStart(current_face->data);
-				fc_list->Insert(current_face->data);
-				face_list = GetFaceList(triangles, root, current_face->data->center, ray, o_min, o_max);
-				face_list->Delete(current_face->data);
-
-				int sizi = face_list->GetSize();
-				if(sizi < min_tri)
-					min_tri = sizi;
-				if(sizi > max_tri)
-					max_tri = sizi;
-				avg += sizi;
-
-				intersected_face = face_list->start;
-				if(face_list->GetSize() > 0)
+				while(repeat > 0)
 				{
-					for(unsigned int idx = 0; idx < face_list->prealocated; idx++)
-					{				
-						if(intersected_face[idx] == NULL)
-							continue;
-						dist2 = FLOAT_MAX;
-						intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face[idx]->v[0]->P, intersected_face[idx]->v[1]->P, intersected_face[idx]->v[2]->P, dist2);
-						if(intersected == true)
-						{
-							theta = acos( (ray * intersected_face[idx]->normal) / (ray.Length() * intersected_face[idx]->normal.Length()) );
-							theta = theta * float(180.0 / M_PI);
-							//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
-							if((theta < 90.0f) && (dist2 < dist))
-								dist = dist2;
+					repeat--;
+					ray = ray * (-1.0f);
+					fc_list->Clear();
+					oc_list->Clear();
+					//fc_list->InsertToStart(current_face->data);
+					fc_list->Insert(current_face->data);
+					face_list = GetFaceList(triangles, root, current_face->data->center, ray, o_min, o_max);
+					face_list->Delete(current_face->data);
+
+					int sizi = face_list->GetSize();
+					if(sizi < min_tri)
+						min_tri = sizi;
+					if(sizi > max_tri)
+						max_tri = sizi;
+					avg += sizi;
+
+					intersected_face = face_list->start;
+					if(face_list->GetSize() > 0)
+					{
+						for(unsigned int idx = 0; idx < face_list->prealocated; idx++)
+						{				
+							if(intersected_face[idx] == NULL)
+								continue;
+							dist2 = FLOAT_MAX;
+							intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face[idx]->v[0]->P, intersected_face[idx]->v[1]->P, intersected_face[idx]->v[2]->P, dist2);
+							if(intersected == true)
+							{
+								if(repeat == 1)
+								{
+									if((dist2 > 0) && (dist2 < dist))
+										dist = dist2;
+								}
+								else
+								{
+									/*theta = acos( (ray * intersected_face[idx]->normal) / (ray.Length() * intersected_face[idx]->normal.Length()) );
+									theta = theta * float(180.0 / M_PI);
+									//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
+									if((theta < 90.0f) && (dist2 < dist))
+										dist = dist2;*/
+									if((dist2 > 0) && (dist2 < dist))
+										dist = dist2;
+								}
+							}
+							//intersected_face = intersected_face->next;
 						}
-						//intersected_face = intersected_face->next;
 					}
 				}
 				if(dist < (FLOAT_MAX - 1.0f))

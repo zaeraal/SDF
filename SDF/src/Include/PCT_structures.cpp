@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "PCT_structures.h"
 
 /////////////////////////////////////// CROSS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
@@ -182,3 +181,5 @@ float DeterminantInPlane(PCTCVector3 vVector1, PCTCVector3 vVector2, PCTCVector3
 		vVector1.y * vVector2.x * vVector3.z;
 
 }
+
+////////////

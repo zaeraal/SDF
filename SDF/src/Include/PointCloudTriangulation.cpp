@@ -1,4 +1,4 @@
-// This is the main DLL file.
+﻿// This is the main DLL file.
 
 #include "PointCloudTriangulation.h"
 
@@ -151,7 +151,97 @@ void DeleunayTriangulator::computeGlobalTriangulationFromPoints(int numOfPoints,
 		}
 	}
 
-	*indices = new int[v_indices.size()];
+	// chose which orientation of normals is correct
+    /////////////////////////////////////////////////////////////
+
+    // find most top vertex and orient unit normals that it is pointing out of aabb
+
+    float maxtop = FLT_MIN;
+    float mintop = FLT_MAX;
+
+    int maxidx = -1;
+    int minidx = -1;
+
+    for (int i=0; i<pMesh->numOfVertices; i++){
+
+        if (pMesh->pVerts[i].y > maxtop){
+            maxtop = pMesh->pVerts[i].y;
+            maxidx = i;
+        }
+
+        if (pMesh->pVerts[i].y < mintop){
+            mintop = pMesh->pVerts[i].y;
+            minidx = i;
+        }
+    }
+
+    PCTCVector3 aabb_axis = pMesh->pVerts[maxidx] - pMesh->pVerts[minidx];
+    PCTCVector3 maxnorm = PCTCVector3((*normals)[maxidx * 3], (*normals)[maxidx * 3 + 1], (*normals)[maxidx * 3 + 2]);
+
+    if (Dot(aabb_axis, pMesh->pVerts[maxidx] + maxnorm) > 0){
+        // keep normal, it is oriented fine
+    } else {
+        // swap normal orientation
+        maxnorm = maxnorm * -1;
+    }
+
+    (*normals)[maxidx * 3] = maxnorm.x;
+    (*normals)[maxidx * 3 + 1] = maxnorm.y;
+    (*normals)[maxidx * 3 + 2] = maxnorm.z;
+
+    // distribute normal orientation over surafece
+
+    int verticesChanged = 1;
+
+    bool * orientedVertices = new bool[pMesh->numOfVertices];
+    for (int i=0; i<pMesh->numOfVertices; i++){
+        orientedVertices[i] = false;
+    }
+    orientedVertices[maxidx] = true;
+
+    while (verticesChanged < pMesh->numOfVertices){
+        // iterate all vertices and change if neighbour is oriented
+        for (int i=0; i<pMesh->numOfVertices; i++){
+            // itareta neighbours
+            for (int j=0; j<pMesh->numOfVertices; j++){
+                if (E_global[i][j] && !orientedVertices[i] && orientedVertices[j]){
+
+                    PCTCVector3 normal_i((*normals)[i * 3], (*normals)[i * 3 + 1], (*normals)[i * 3 + 2]);
+                    PCTCVector3 normal_j((*normals)[j * 3], (*normals)[j * 3 + 1], (*normals)[j * 3 + 2]);
+
+                    if (Dot(normal_i, normal_j) > 0){
+                        // keep normal, it is oriented fine
+                    } else {
+                        // swap normal orientation
+                        (*normals)[i * 3] = -(*normals)[i * 3];
+                        (*normals)[i * 3 + 1] = -(*normals)[i * 3 + 1];
+                        (*normals)[i * 3 + 2] = -(*normals)[i * 3 + 2];
+                    }
+
+                    orientedVertices[i] = true;
+                    verticesChanged++;
+
+                    break;
+                }
+            }
+        }
+    }
+
+
+    delete[] orientedVertices;
+
+
+    for (int i=0; i<pMesh->numOfVertices; i++){
+        (*normals)[i * 3] = -(*normals)[i * 3];
+        (*normals)[i * 3 + 1] = -(*normals)[i * 3 + 1];
+        (*normals)[i * 3 + 2] = -(*normals)[i * 3 + 2];
+
+		if (visualization){
+			neighVis[i].visNormals[0] = PCTCVector3((*normals)[i * 3], (*normals)[i * 3 + 1], (*normals)[i * 3 + 2]);
+		}
+    }
+
+ 	*indices = new int[v_indices.size()];
 	for (int i=0; i<v_indices.size(); i++){
 		(*indices)[i] = v_indices[i];
 	}
@@ -390,7 +480,14 @@ Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGrap
 
 		if (visualization){
 
-			neighVis[i].E_local_visualize = E_local.copy();
+			for (int x=0; x<pMesh->numOfVertices; x++)
+				for (int y=x; y<pMesh->numOfVertices; y++)
+					if (E_local[x][y]){
+						neighVis[i].edges.push_back(x);
+						neighVis[i].edges.push_back(y);
+					}
+
+
 			neighVis[i].visNormals[0] = n;
 			neighVis[i].visNormals[1] = ev1;
 			neighVis[i].visNormals[2] = ev2;
@@ -400,10 +497,10 @@ Array2D<bool> DeleunayTriangulator::computeLocalTriangulation(int i, PCTMeshGrap
 			//neighVis[i].pointsInTangentPlane = pointsInPlane;
 			neighVis[i].isE_local_visualize = true;
 
-			delete[] pointsInPlane;
-			delete[] neighPoints;
-
 		}
+
+		//delete[] pointsInPlane;
+		//delete[] neighPoints;
 
 		nor[0] = n.x;
 		nor[1] = n.y;
