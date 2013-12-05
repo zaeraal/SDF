@@ -285,14 +285,14 @@ namespace SDF {
 			this->TSMI_Open->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Open->Name = L"TSMI_Open";
 			this->TSMI_Open->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::O));
-			this->TSMI_Open->Size = System::Drawing::Size(152, 22);
+			this->TSMI_Open->Size = System::Drawing::Size(147, 22);
 			this->TSMI_Open->Text = L"&Open";
 			this->TSMI_Open->Click += gcnew System::EventHandler(this, &Form1::TSMI_Open_Click);
 			// 
 			// toolStripSeparator
 			// 
 			this->toolStripSeparator->Name = L"toolStripSeparator";
-			this->toolStripSeparator->Size = System::Drawing::Size(149, 6);
+			this->toolStripSeparator->Size = System::Drawing::Size(144, 6);
 			// 
 			// TSMI_Save
 			// 
@@ -300,7 +300,7 @@ namespace SDF {
 			this->TSMI_Save->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Save->Name = L"TSMI_Save";
 			this->TSMI_Save->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::S));
-			this->TSMI_Save->Size = System::Drawing::Size(152, 22);
+			this->TSMI_Save->Size = System::Drawing::Size(147, 22);
 			this->TSMI_Save->Text = L"&Save";
 			this->TSMI_Save->Click += gcnew System::EventHandler(this, &Form1::TSMI_Save_Click);
 			// 
@@ -308,20 +308,20 @@ namespace SDF {
 			// 
 			this->TSMI_Export->Name = L"TSMI_Export";
 			this->TSMI_Export->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::E));
-			this->TSMI_Export->Size = System::Drawing::Size(152, 22);
+			this->TSMI_Export->Size = System::Drawing::Size(147, 22);
 			this->TSMI_Export->Text = L"&Export";
 			this->TSMI_Export->Click += gcnew System::EventHandler(this, &Form1::TSMI_Export_Click);
 			// 
 			// toolStripSeparator2
 			// 
 			this->toolStripSeparator2->Name = L"toolStripSeparator2";
-			this->toolStripSeparator2->Size = System::Drawing::Size(149, 6);
+			this->toolStripSeparator2->Size = System::Drawing::Size(144, 6);
 			// 
 			// TSMI_Exit
 			// 
 			this->TSMI_Exit->Name = L"TSMI_Exit";
 			this->TSMI_Exit->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::X));
-			this->TSMI_Exit->Size = System::Drawing::Size(152, 22);
+			this->TSMI_Exit->Size = System::Drawing::Size(147, 22);
 			this->TSMI_Exit->Text = L"E&xit";
 			this->TSMI_Exit->Click += gcnew System::EventHandler(this, &Form1::TSMI_Exit_Click);
 			// 
@@ -933,7 +933,7 @@ namespace SDF {
 			this->TB_Depth->RightToLeft = System::Windows::Forms::RightToLeft::No;
 			this->TB_Depth->Size = System::Drawing::Size(136, 20);
 			this->TB_Depth->TabIndex = 13;
-			this->TB_Depth->Text = L"8";
+			this->TB_Depth->Text = L"10";
 			this->TB_Depth->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			this->TB_Depth->TextChanged += gcnew System::EventHandler(this, &Form1::TB_Depth_TextChanged);
 			// 
@@ -1447,7 +1447,7 @@ namespace SDF {
 		}
 		else
 		{
-			Nastavenia->OCTREE_Depth = 8;
+			Nastavenia->OCTREE_Depth = 10;
 		}
 	}
 	private: System::Void TB_Threshold_TextChanged(System::Object^  sender, System::EventArgs^  e)

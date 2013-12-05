@@ -48,6 +48,7 @@ namespace ModelController
 		void ReloadOctreeData();
 		void DeleteIdenticalVertices();
 		void BuildArrays();
+		void ComputeSoftNormals();
 
 		bool loaded;
 		bool show_octree;

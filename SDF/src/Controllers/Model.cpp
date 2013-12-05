@@ -93,6 +93,7 @@ namespace ModelController
 
 		SetColors();
 		ComputeSusedov();
+		ComputeSoftNormals();
 
 		int ticks6 = GetTickCount();
 
@@ -149,6 +150,7 @@ namespace ModelController
 
 		SetColors();
 		ComputeSusedov();
+		ComputeSoftNormals();
 
 		int ticks6 = GetTickCount();
 
@@ -200,6 +202,7 @@ namespace ModelController
 		CreateOctree();
 		SetColors();
 		ComputeSusedov();
+		ComputeSoftNormals();
 
 		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
 		Nastavenia->INFO_Total_Vertices = points->GetSize();
@@ -566,7 +569,7 @@ namespace ModelController
 								}
 								glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
 							}
-							if(tmp->data->v[i]->HasNormal())
+							if(tmp->data->v[i]->HasNormal() && (Nastavenia->VISUAL_Smoothed == true))
 								glNormal3f(tmp->data->v[i]->GetNormal().X, tmp->data->v[i]->GetNormal().Y, tmp->data->v[i]->GetNormal().Z);
 							glVertex3f(tmp->data->v[i]->P.X, tmp->data->v[i]->P.Y, tmp->data->v[i]->P.Z);
 						}
@@ -894,13 +897,22 @@ namespace ModelController
 	}
 	void CModel::ReloadOctreeData()
 	{
+		int ticks1 = GetTickCount();
+
 		if(m_root != NULL)
 			delete m_root;
 
 		m_root = NULL;
 
+		int ticks2 = GetTickCount();
 		CreateOctree();
+
+		int ticks3 = GetTickCount();
+
+		logInfo(MarshalString("Zmazanie stareho Octree: " + (ticks2 - ticks1)+ "ms"));
+		logInfo(MarshalString("Znovu vytvorenie Octree: " + (ticks3 - ticks2)+ "ms"));
 	}
+
 	void CModel::BuildArrays()
 	{
 		/*if(m_root == NULL)
@@ -971,5 +983,25 @@ namespace ModelController
 		delete [] oc_array;
 		logDebug(MarshalString("najvecsi_t: "+ najvecsi_t));
 		logDebug(MarshalString("najvecsi_o: "+ najvecsi_o));*/
+	}
+	void CModel::ComputeSoftNormals()
+	{
+		LinkedList<Vertex>* new_vertices = new LinkedList<Vertex>();
+		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
+		while(tmp1 != NULL)
+		{
+			LinkedList<void>::Cell<void>* tmp2 = tmp1->data->susedia->start;
+			Vector4 normala;
+			while(tmp2 != NULL)
+			{
+				normala = normala + ((Face*)tmp2->data)->normal;
+				tmp2 = tmp2->next;
+			}
+			normala.W = 0;
+			normala.Normalize();
+			tmp1->data->SetNormal(normala);
+
+			tmp1 = tmp1->next;
+		}
 	}
 }

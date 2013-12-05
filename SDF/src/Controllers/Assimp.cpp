@@ -125,9 +125,9 @@ namespace AssimpFileHandler
 						if(tmp_points[vertexIndex] == NULL)
 						{
 							// aplikuj maticu transformacie
-							Vector4 original = Vector4(mesh->mVertices[vertexIndex].x * 10000.0f,
-													   mesh->mVertices[vertexIndex].y * 10000.0f,
-													   mesh->mVertices[vertexIndex].z * 10000.0f,
+							Vector4 original = Vector4(mesh->mVertices[vertexIndex].x,// * 10000.0f,
+													   mesh->mVertices[vertexIndex].y,// * 10000.0f,
+													   mesh->mVertices[vertexIndex].z,// * 10000.0f,
 													   1.0);							// ide o bod a teda ma W = 1, vtedy pouzije aj posunutie ak existuje v matici
 							Vector4 transformed = original * mat;
 

@@ -132,19 +132,17 @@ namespace SDFController
 							intersected = rayIntersectsTriangle(current_face->data->center, ray, intersected_face[idx]->v[0]->P, intersected_face[idx]->v[1]->P, intersected_face[idx]->v[2]->P, dist2);
 							if(intersected == true)
 							{
-								if(repeat == 1)
+								if(Nastavenia->SDF_Revert_Rays == true)
 								{
-									if((dist2 > 0) && (dist2 < dist))
+									if((dist2 > 0.0001f) && (dist2 < dist))
 										dist = dist2;
 								}
 								else
 								{
-									/*theta = acos( (ray * intersected_face[idx]->normal) / (ray.Length() * intersected_face[idx]->normal.Length()) );
+									theta = acos( (ray * intersected_face[idx]->normal) / (ray.Length() * intersected_face[idx]->normal.Length()) );
 									theta = theta * float(180.0 / M_PI);
 									//loggger->logInfo(MarshalString("pridany ray s thetou: " + theta));
-									if((theta < 90.0f) && (dist2 < dist))
-										dist = dist2;*/
-									if((dist2 > 0) && (dist2 < dist))
+									if((theta < 90.0f) && (dist2 > 0.0001f) && (dist2 < dist))
 										dist = dist2;
 								}
 							}
@@ -152,9 +150,11 @@ namespace SDFController
 						}
 					}
 				}
-				if(dist < (FLOAT_MAX - 1.0f))
+				//if(dist < (FLOAT_MAX - 1.0f))
 				{
 					//loggger->logInfo(MarshalString("pridany ray s dlzkou: " + dist));
+					if(dist >= (FLOAT_MAX - 1.0f))
+						dist = 0;
 					rays.push_back(dist);
 				}
 				//if(root != NULL)
@@ -1783,11 +1783,11 @@ namespace SDFController
 			{
 				dist = c_outputs[(ii * n_rays) + kk];
 				//loggger->logInfo(MarshalString("triangle: "+i+ " val: " + dist));
-				if(dist < (FLOAT_MAX - 1.0f))
-				{
-					rays.push_back(dist);
-					weightsx.push_back(weights[kk]);
-				}
+				if(dist >= (FLOAT_MAX - 1.0f))
+					dist = 0;
+
+				rays.push_back(dist);
+				weightsx.push_back(weights[kk]);
 			}
 			if(rays.size() > 0)
 			{

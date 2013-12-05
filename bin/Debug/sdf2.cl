@@ -147,7 +147,7 @@ inline unsigned char popc8(unsigned char mask)
 	return c_popc8LUT[mask];
 }
 
-inline bool CanAdd(uint8 *short_shack, unsigned char *ss_idx, unsigned int triangle)
+/*inline bool CanAdd(uint8 *short_shack, unsigned char *ss_idx, unsigned int triangle)
 {
 	if((*short_shack).x == triangle) return false;
 	if((*short_shack).y == triangle) return false;
@@ -173,7 +173,7 @@ inline bool CanAdd(uint8 *short_shack, unsigned char *ss_idx, unsigned int trian
 		
 	}
 	return true;
-}
+}*/
 
 __kernel void sdf(__global const float4 *c_triangles,
                   __global const uint *c_nodes,
@@ -270,7 +270,7 @@ __kernel void sdf(__global const float4 *c_triangles,
 		unsigned int tindex;
 		unsigned int size = 0;
 		unsigned int i = 0;
-		uint8 short_shack;
+		/*uint8 short_shack;
 		short_shack.x = ref_triangle;
 		short_shack.y = ref_triangle;
 		short_shack.z = ref_triangle;
@@ -278,7 +278,7 @@ __kernel void sdf(__global const float4 *c_triangles,
 		short_shack.s4 = ref_triangle;
 		short_shack.s5 = ref_triangle;
 		short_shack.s6 = ref_triangle;
-		short_shack.s7 = ref_triangle;
+		short_shack.s7 = ref_triangle;*/
 		unsigned char ss_idx = 0;
 		float dist2 = FLOAT_MAX;
 		float theta = 0.0f;
@@ -322,14 +322,14 @@ __kernel void sdf(__global const float4 *c_triangles,
 					size = c_node_tria[tindex];
 					for(i = 1; i <= size; i++)
 					{
-						if(CanAdd(&short_shack, &ss_idx, c_node_tria[tindex+i]))
+						//if(CanAdd(&short_shack, &ss_idx, c_node_tria[tindex+i]))
 						{
 							v0 = c_triangles[c_node_tria[tindex+i] * 3 + 0];
 							v1 = c_triangles[c_node_tria[tindex+i] * 3 + 1];
 							v2 = c_triangles[c_node_tria[tindex+i] * 3 + 2];
 
 							dist2 = rayIntersectsTriangle(center, ray, v0, v1, v2, bias);
-							if(dist2 < FLOAT_MAX)
+							if((dist2 < FLOAT_MAX) && (dist2 > bias))
 							{
 								tnormal = normalize(cross(v1-v0, v2-v0));
 								theta = acos( dot(ray, tnormal) / length(ray) );

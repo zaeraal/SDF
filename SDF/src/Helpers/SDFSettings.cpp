@@ -12,7 +12,7 @@ CSettings::CSettings()
 	SDF_Smoothing_Radius = 2;
 	SDF_Revert_Rays = false;
 	SDF_Distribution = true;
-	OCTREE_Depth = 8;
+	OCTREE_Depth = 10;
 	OCTREE_Threshold = 4;
 	GPU_Work_Groups = 2.0f;
 	GPU_Work_Items = 0.25f;
