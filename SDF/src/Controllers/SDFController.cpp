@@ -177,24 +177,10 @@ namespace SDFController
 		delete [] rndx;
 
 		int ticks2 = GetTickCount();
-		// postprocessing - smoothing and normalization
-		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
-		EraseKernel();
-		InitKernel();
-		float* kernel = ComputeGaussianKernel(kernel_size);
-		current_face = triangles->start;
-		while(current_face != NULL)
-		{
-			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->quality->Normalize(min, max, 4.0);
-			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
-			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
 
-			current_face = current_face->next;
-		}
-		Nastavenia->DEBUG_Min_SDF = min;
-		Nastavenia->DEBUG_Max_SDF = max;
-		delete kernel;
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+			DoSmoothing(triangles, min, max);
+
 		int ticks3 = GetTickCount();
 
 		loggger->logInfo(MarshalString("SDF vypocitane v case: " + (ticks2 - ticks1)+ "ms"));
@@ -469,24 +455,9 @@ namespace SDFController
 		}
 		int ticks8 = GetTickCount();
 
-		// postprocessing - smoothing and normalization
-		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
-		EraseKernel();
-		InitKernel();
-		float* kernel = ComputeGaussianKernel(kernel_size);
-		current_face = triangles->start;
-		while(current_face != NULL)
-		{
-			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->quality->Normalize(min, max, 4.0);
-			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
-			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+			DoSmoothing(triangles, min, max);
 
-			current_face = current_face->next;
-		}
-		Nastavenia->DEBUG_Min_SDF = min;
-		Nastavenia->DEBUG_Max_SDF = max;
-		delete kernel;
 		int ticks9 = GetTickCount();
 
 
@@ -1804,24 +1775,9 @@ namespace SDFController
 
 		int ticks7 = GetTickCount();
 
-		// postprocessing - smoothing and normalization
-		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
-		EraseKernel();
-		InitKernel();
-		float* kernel = ComputeGaussianKernel(kernel_size);
-		current_face = triangles->start;
-		while(current_face != NULL)
-		{
-			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->quality->Normalize(min, max, 4.0);
-			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
-			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+			DoSmoothing(triangles, min, max);
 
-			current_face = current_face->next;
-		}
-		Nastavenia->DEBUG_Min_SDF = min;
-		Nastavenia->DEBUG_Max_SDF = max;
-		delete kernel;
 		int ticks8 = GetTickCount();
 
 
@@ -1848,5 +1804,26 @@ namespace SDFController
 		free(c_outputs);
 		free(c_nodes);
 		free(c_node_tria);
+	}
+	void CSDFController::DoSmoothing(LinkedList<Face> *triangles, float min, float max)
+	{
+		// postprocessing - smoothing and normalization
+		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+		EraseKernel();
+		InitKernel();
+		float* kernel = ComputeGaussianKernel(kernel_size);
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		while(current_face != NULL)
+		{
+			Smooth(current_face->data, kernel, kernel_size);
+			current_face->data->quality->Normalize(min, max, 4.0);
+			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
+			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
+
+			current_face = current_face->next;
+		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
+		delete kernel;
 	}
 }

@@ -121,12 +121,18 @@ namespace ModelController
 		if(SDF_control != NULL)
 			delete SDF_control;
 
+		LinkedList<Face>* triangles_backup;
+		LinkedList<Vertex>* points_backup;
+
 		// delete actual faces and vertices
-		triangles->CompleteDelete();
+		/*triangles->CompleteDelete();
 		delete triangles;
 
 		points->CompleteDelete();
-		delete points;
+		delete points;*/
+
+		triangles_backup = triangles;
+		points_backup = points;
 
 		m_root = NULL;
 		SDF_control = NULL;
@@ -163,6 +169,16 @@ namespace ModelController
 
 		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
 		Nastavenia->INFO_Total_Vertices = points->GetSize();
+
+		if((triangles->GetSize() == triangles_backup->GetSize()) && (points->GetSize() == points_backup->GetSize()))
+		{
+			MergeResults(triangles_backup, points_backup);
+		}
+		triangles_backup->CompleteDelete();
+		delete triangles_backup;
+
+		points_backup->CompleteDelete();
+		delete points_backup;
 	}
 
 	void CModel::SaveModel(std::string Filename)
@@ -401,7 +417,6 @@ namespace ModelController
 		else
 			sizez = abs(minz-maxz);
 
-		//NormalizeMatrix(
 		b_size = max(max(sizex, sizey), sizez);
 
 		b_sf = b_size / 10.0f;											// 1 / 10 velkosti modelu budu tie vektory
@@ -986,7 +1001,6 @@ namespace ModelController
 	}
 	void CModel::ComputeSoftNormals()
 	{
-		LinkedList<Vertex>* new_vertices = new LinkedList<Vertex>();
 		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
 		while(tmp1 != NULL)
 		{
@@ -1003,5 +1017,68 @@ namespace ModelController
 
 			tmp1 = tmp1->next;
 		}
+	}
+	void CModel::MergeResults(LinkedList<Face>* triangles_backup, LinkedList<Vertex>* points_backup)
+	{
+		logInfo(MarshalString("robim rozdiel hodnot SDF"));
+		float min = 99999.0f;
+		float max = -99999.0f;
+		float avg = 0.0f;
+
+		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
+		LinkedList<Vertex>::Cell<Vertex>* tmp2 = points_backup->start;
+		while(tmp1 != NULL)
+		{
+			tmp1->data->quality->value = tmp1->data->quality->value - tmp2->data->quality->value;
+			tmp1->data->quality->smoothed = tmp1->data->quality->smoothed - tmp2->data->quality->smoothed;
+
+			if(tmp1->data->quality->value < min)
+				min = tmp1->data->quality->value;
+
+			if(tmp1->data->quality->value > max)
+				max = tmp1->data->quality->value;
+
+			avg += tmp1->data->quality->value;
+
+			tmp1 = tmp1->next;
+			tmp2 = tmp2->next;
+		}
+		avg = avg / (float)(points->GetSize());
+
+		logInfo(MarshalString("min: " + min));
+		logInfo(MarshalString("max: " + max));
+		logInfo(MarshalString("avg: " + avg));
+
+		LinkedList<Face>::Cell<Face>* tmp1f = triangles->start;
+		LinkedList<Face>::Cell<Face>* tmp2f = triangles_backup->start;
+		while(tmp1f != NULL)
+		{
+			tmp1f->data->quality->value = tmp1f->data->quality->value - tmp2f->data->quality->value;
+			tmp1f->data->quality->smoothed = tmp1f->data->quality->smoothed - tmp2f->data->quality->smoothed;
+
+			tmp1f = tmp1f->next;
+			tmp2f = tmp2f->next;
+		}
+	}
+	void CModel::RecomputeSmoothing()
+	{
+		float min = 99999.0f;
+		float max = -99999.0f;
+		LinkedList<Face>::Cell<Face>* tmp1 = triangles->start;
+		while(tmp1 != NULL)
+		{
+			if(tmp1->data->quality->value < min)
+				min = tmp1->data->quality->value;
+
+			if(tmp1->data->quality->value > max)
+				max = tmp1->data->quality->value;
+
+			tmp1 = tmp1->next;
+		}
+
+		//if(Nastavenia->SDF_Smoothing_Radius > 0)
+			SDF_control->DoSmoothing(triangles, min, max);
+
+		CopySDF_Faces_to_Vertices();
 	}
 }

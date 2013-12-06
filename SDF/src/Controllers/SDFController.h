@@ -37,6 +37,7 @@ namespace SDFController
 		void InitKernel();
 		void EraseKernel();
 		bool CheckValid(int mask, int num);
+		void DoSmoothing(LinkedList<Face> *triangles, float min, float max);
 	private:
 		float diagonal;
 		CAssimp* loggger;

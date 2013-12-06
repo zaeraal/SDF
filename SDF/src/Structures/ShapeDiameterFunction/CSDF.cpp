@@ -41,6 +41,7 @@ namespace SDFStructures
 		if(size == 1)
 		{
 			value = values[0];
+			smoothed = values[0];
 			return;
 		}
 
@@ -58,6 +59,7 @@ namespace SDFStructures
 			}
 		}
 		value = sum_values / sum_weights;
+		smoothed = sum_values / sum_weights;
 	}
 
 	float CSDF::CalcMedian(const std::vector<float> &values, unsigned int size)

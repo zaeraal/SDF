@@ -49,6 +49,8 @@ namespace ModelController
 		void DeleteIdenticalVertices();
 		void BuildArrays();
 		void ComputeSoftNormals();
+		void MergeResults(LinkedList<Face>* triangles_backup, LinkedList<Vertex>* points_backup);
+		void RecomputeSmoothing();
 
 		bool loaded;
 		bool show_octree;

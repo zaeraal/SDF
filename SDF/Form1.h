@@ -140,6 +140,9 @@ namespace SDF {
 	private: System::Windows::Forms::TrackBar^  trackBar_Alpha;
 	private: System::Windows::Forms::GroupBox^  groupBox_Octree;
 	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Compute_Octree;
+private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
+private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
+
 
 
 	private: System::ComponentModel::IContainer^  components;
@@ -175,9 +178,11 @@ namespace SDF {
 			this->TSMI_Normals = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Axes = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->TSMI_Compute_Octree = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Compute_SDF = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Compute_Triangulation = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->toolStripSeparator3 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->TSMI_Compute_Octree = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->TSMI_ComputeSmoothing = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->helpToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_about = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
@@ -407,26 +412,18 @@ namespace SDF {
 			// 
 			// toolsToolStripMenuItem
 			// 
-			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->TSMI_Compute_Octree, 
-				this->TSMI_Compute_SDF, this->TSMI_Compute_Triangulation});
+			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->TSMI_Compute_SDF, 
+				this->TSMI_Compute_Triangulation, this->toolStripSeparator3, this->TSMI_Compute_Octree, this->TSMI_ComputeSmoothing});
 			this->toolsToolStripMenuItem->Enabled = false;
 			this->toolsToolStripMenuItem->Name = L"toolsToolStripMenuItem";
 			this->toolsToolStripMenuItem->Size = System::Drawing::Size(48, 20);
 			this->toolsToolStripMenuItem->Text = L"&Tools";
 			// 
-			// TSMI_Compute_Octree
-			// 
-			this->TSMI_Compute_Octree->Name = L"TSMI_Compute_Octree";
-			this->TSMI_Compute_Octree->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::M));
-			this->TSMI_Compute_Octree->Size = System::Drawing::Size(239, 22);
-			this->TSMI_Compute_Octree->Text = L"Co&mpute Octree";
-			this->TSMI_Compute_Octree->Click += gcnew System::EventHandler(this, &Form1::TSMI_Compute_Octree_Click);
-			// 
 			// TSMI_Compute_SDF
 			// 
 			this->TSMI_Compute_SDF->Name = L"TSMI_Compute_SDF";
 			this->TSMI_Compute_SDF->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::C));
-			this->TSMI_Compute_SDF->Size = System::Drawing::Size(239, 22);
+			this->TSMI_Compute_SDF->Size = System::Drawing::Size(242, 22);
 			this->TSMI_Compute_SDF->Text = L"&Compute SDF";
 			this->TSMI_Compute_SDF->Click += gcnew System::EventHandler(this, &Form1::TSMI_Compute_SDF_Click);
 			// 
@@ -434,9 +431,30 @@ namespace SDF {
 			// 
 			this->TSMI_Compute_Triangulation->Name = L"TSMI_Compute_Triangulation";
 			this->TSMI_Compute_Triangulation->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::T));
-			this->TSMI_Compute_Triangulation->Size = System::Drawing::Size(239, 22);
+			this->TSMI_Compute_Triangulation->Size = System::Drawing::Size(242, 22);
 			this->TSMI_Compute_Triangulation->Text = L"Compute &Triangulation";
 			this->TSMI_Compute_Triangulation->Click += gcnew System::EventHandler(this, &Form1::TSMI_Compute_Triangulation_Click);
+			// 
+			// toolStripSeparator3
+			// 
+			this->toolStripSeparator3->Name = L"toolStripSeparator3";
+			this->toolStripSeparator3->Size = System::Drawing::Size(239, 6);
+			// 
+			// TSMI_Compute_Octree
+			// 
+			this->TSMI_Compute_Octree->Name = L"TSMI_Compute_Octree";
+			this->TSMI_Compute_Octree->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::M));
+			this->TSMI_Compute_Octree->Size = System::Drawing::Size(242, 22);
+			this->TSMI_Compute_Octree->Text = L"ReCo&mpute Octree";
+			this->TSMI_Compute_Octree->Click += gcnew System::EventHandler(this, &Form1::TSMI_Compute_Octree_Click);
+			// 
+			// TSMI_ComputeSmoothing
+			// 
+			this->TSMI_ComputeSmoothing->Name = L"TSMI_ComputeSmoothing";
+			this->TSMI_ComputeSmoothing->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::H));
+			this->TSMI_ComputeSmoothing->Size = System::Drawing::Size(242, 22);
+			this->TSMI_ComputeSmoothing->Text = L"ReCompute Smoot&hing";
+			this->TSMI_ComputeSmoothing->Click += gcnew System::EventHandler(this, &Form1::TSMI_ComputeSmoothing_Click);
 			// 
 			// helpToolStripMenuItem
 			// 
@@ -1611,10 +1629,6 @@ namespace SDF {
 #pragma endregion
 
 #pragma region Tools
-	private: System::Void TSMI_Compute_Octree_Click(System::Object^  sender, System::EventArgs^  e)
-	{
-		MController->ReloadOctreeData();
-	}
 	private: System::Void TSMI_Compute_SDF_Click(System::Object^  sender, System::EventArgs^  e)
 	{
 		progressBar->Value = 0;
@@ -1637,6 +1651,14 @@ namespace SDF {
 		this->TB_Total_Triangles->Text = ""+Nastavenia->INFO_Total_Triangles;
 		this->TB_Total_Vertices->Text = ""+Nastavenia->INFO_Total_Vertices;
 	}
+	private: System::Void TSMI_ComputeSmoothing_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		MController->RecomputeSmoothing();
+	}
+	private: System::Void TSMI_Compute_Octree_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		MController->ReloadOctreeData();
+	}
 #pragma endregion
 
 #pragma region About
@@ -1646,6 +1668,7 @@ namespace SDF {
 		form2->ShowDialog();
 	}
 #pragma endregion
+
 };
 }
 
