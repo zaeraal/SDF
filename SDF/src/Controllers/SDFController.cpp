@@ -178,8 +178,7 @@ namespace SDFController
 
 		int ticks2 = GetTickCount();
 
-		if(Nastavenia->SDF_Smoothing_Radius > 0)
-			DoSmoothing(triangles, min, max);
+		DoSmoothing(triangles, min, max);
 
 		int ticks3 = GetTickCount();
 
@@ -455,8 +454,7 @@ namespace SDFController
 		}
 		int ticks8 = GetTickCount();
 
-		if(Nastavenia->SDF_Smoothing_Radius > 0)
-			DoSmoothing(triangles, min, max);
+		DoSmoothing(triangles, min, max);
 
 		int ticks9 = GetTickCount();
 
@@ -808,8 +806,8 @@ namespace SDFController
 
 		if( max(max(tx0,ty0),tz0) < min(min(tx1,ty1),tz1) )
 		{ 
-//			proc_subtree(idx, tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
-			proc_subtree4(idx, Vector4(tx0,ty0,tz0),Vector4(tx1,ty1,tz1),octree, octrees);
+			proc_subtree(idx, tx0,ty0,tz0,tx1,ty1,tz1,octree, octrees);
+//			proc_subtree4(idx, Vector4(tx0,ty0,tz0),Vector4(tx1,ty1,tz1),octree, octrees);
 		}
 	}
 	void CSDFController::ray_octree_traversal2(Octree* octree, Vector4 ray, Vector4 Center, LinkedList<Octree>* octrees)
@@ -946,13 +944,15 @@ namespace SDFController
 	{
 		unsigned int n_rays = Nastavenia->SDF_Rays;
 		float N = (float)n_rays;
+		
+		float mull = 4.0f / (2.0f * (1.0f - cos( (Nastavenia->SDF_Cone / 2.0f) * (float)M_PI / 180.0f )));
+		N = N * mull;
 
 		float inc = (float)M_PI * (3.0f - sqrt(5.0f));
-		float del = (360.0f / Nastavenia->SDF_Cone);
-		float off = (2.0f / N) / del;
+		float off = (2.0f / N);
 		for(unsigned int k = 0; k < n_rays; k++)
 		{
-			float y = k * off - 1 + (off / 2.0f) * del;
+			float y = k * off - 1 + (off / 2.0f);
 			float r = sqrt(1 - y*y);
 			float phi = k * inc;
 			Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r);
@@ -1775,8 +1775,7 @@ namespace SDFController
 
 		int ticks7 = GetTickCount();
 
-		if(Nastavenia->SDF_Smoothing_Radius > 0)
-			DoSmoothing(triangles, min, max);
+		DoSmoothing(triangles, min, max);
 
 		int ticks8 = GetTickCount();
 
@@ -1805,25 +1804,39 @@ namespace SDFController
 		free(c_nodes);
 		free(c_node_tria);
 	}
+
 	void CSDFController::DoSmoothing(LinkedList<Face> *triangles, float min, float max)
 	{
-		// postprocessing - smoothing and normalization
-		//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
-		EraseKernel();
-		InitKernel();
-		float* kernel = ComputeGaussianKernel(kernel_size);
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
-		while(current_face != NULL)
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
-			Smooth(current_face->data, kernel, kernel_size);
-			current_face->data->quality->Normalize(min, max, 4.0);
-			// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
-			//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
+			// postprocessing - smoothing and normalization
+			//float kernel[] = {1.0,4.0,6.0,4.0,1.0};
+			EraseKernel();
+			InitKernel();
+			float* kernel = ComputeGaussianKernel(kernel_size);
+			while(current_face != NULL)
+			{
+				Smooth(current_face->data, kernel, kernel_size);
+				current_face->data->quality->Normalize(min, max, 4.0);
+				// pokus pouzit diagonalu, pripadne avg a pod, ale dako nefungovalo
+				//tmp->data->diameter->Normalizex(0, diagonal, 4.0);
 
-			current_face = current_face->next;
+				current_face = current_face->next;
+			}
+
+			delete kernel;
+		}
+		else
+		{
+			while(current_face != NULL)
+			{
+				current_face->data->quality->smoothed = current_face->data->quality->value;
+				current_face->data->quality->Normalize(min, max, 4.0);
+				current_face = current_face->next;
+			}
 		}
 		Nastavenia->DEBUG_Min_SDF = min;
 		Nastavenia->DEBUG_Max_SDF = max;
-		delete kernel;
 	}
 }

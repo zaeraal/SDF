@@ -657,12 +657,14 @@ namespace ModelController
 				{
 					float N = (float)n_rays;
 
+					float mull = 4.0f / (2.0f * (1.0f - cos( (Nastavenia->SDF_Cone / 2.0f) * (float)M_PI / 180.0f )));
+					N = N * mull;
+
 					float inc = (float)M_PI * (3.0f - sqrt(5.0f));
-					float del = (360.0f / Nastavenia->SDF_Cone);
-					float off = (2.0f / N) / del;
+					float off = (2.0f / N);
 					for(unsigned int k = 0; k < n_rays; k++)
 					{
-						float y = k * off - 1 + (off / 2.0f) * del;
+						float y = k * off - 1 + (off / 2.0f);
 						float r = sqrt(1 - y*y);
 						float phi = k * inc;
 						Vector4 ray = Vector4(cos(phi)*r, -y, sin(phi)*r) * t_mat;
@@ -1022,21 +1024,29 @@ namespace ModelController
 	{
 		logInfo(MarshalString("robim rozdiel hodnot SDF"));
 		float min = 99999.0f;
-		float max = -99999.0f;
+		float maxx = -99999.0f;
 		float avg = 0.0f;
 
 		LinkedList<Vertex>::Cell<Vertex>* tmp1 = points->start;
 		LinkedList<Vertex>::Cell<Vertex>* tmp2 = points_backup->start;
 		while(tmp1 != NULL)
 		{
-			tmp1->data->quality->value = tmp1->data->quality->value - tmp2->data->quality->value;
-			tmp1->data->quality->smoothed = tmp1->data->quality->smoothed - tmp2->data->quality->smoothed;
+			float maxik = 1.6f;
+			float val1 = tmp1->data->quality->value > maxik ? maxik : tmp1->data->quality->value;
+			float val2 = tmp2->data->quality->value > maxik ? maxik : tmp2->data->quality->value;
+			float alfa = 4.0f;
+
+			val1 = (log(((val1 - 0.0f) / (maxik - 0.0f)) * alfa + 1.0f) / log(alfa + 1.0f));
+			val2 = (log(((val2 - 0.0f) / (maxik - 0.0f)) * alfa + 1.0f) / log(alfa + 1.0f));
+
+			tmp1->data->quality->value = abs(val1 - val2) * 100.0f;
+			tmp1->data->quality->smoothed = abs(val1 - val2) * 100.0f;
 
 			if(tmp1->data->quality->value < min)
 				min = tmp1->data->quality->value;
 
-			if(tmp1->data->quality->value > max)
-				max = tmp1->data->quality->value;
+			if(tmp1->data->quality->value > maxx)
+				maxx = tmp1->data->quality->value;
 
 			avg += tmp1->data->quality->value;
 
@@ -1046,7 +1056,7 @@ namespace ModelController
 		avg = avg / (float)(points->GetSize());
 
 		logInfo(MarshalString("min: " + min));
-		logInfo(MarshalString("max: " + max));
+		logInfo(MarshalString("max: " + maxx));
 		logInfo(MarshalString("avg: " + avg));
 
 		LinkedList<Face>::Cell<Face>* tmp1f = triangles->start;
@@ -1076,8 +1086,7 @@ namespace ModelController
 			tmp1 = tmp1->next;
 		}
 
-		//if(Nastavenia->SDF_Smoothing_Radius > 0)
-			SDF_control->DoSmoothing(triangles, min, max);
+		SDF_control->DoSmoothing(triangles, min, max);
 
 		CopySDF_Faces_to_Vertices();
 	}
