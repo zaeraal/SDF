@@ -28,7 +28,7 @@ namespace MeshStructures
 		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
 		// tabulka offsetov
 		isLeaf = true;
-		depth = dep;
+		depth = dep;	// root ma 1, najnizsi list ma Nastavenia->OCTREE_Depth
 		size = siz;
 		origin = ori;
 		triangles = NULL;

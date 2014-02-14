@@ -32,6 +32,7 @@ public:
 	unsigned int		SDF_Rays;				// pocet lucov
 	float				SDF_Cone;				// velkost conu
 	unsigned int		SDF_Smoothing_Radius;	// velkost conu
+	bool				SDF_Smooth_Projected;	// ci vyhladit mesh, alebo projektnute body
 	bool				SDF_Revert_Rays;		// ci aj obratene luce								x
 	bool				SDF_Distribution;		// random (false) / uniform (true) distribucia
 	unsigned int		OCTREE_Depth;			// hlbka octree

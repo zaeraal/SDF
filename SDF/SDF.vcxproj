@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -113,6 +113,8 @@
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
     <ClCompile Include="src\Structures\Mesh\Grid.cpp" />
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
+    <ClCompile Include="src\Structures\Mesh\PPoint.cpp" />
+    <ClCompile Include="src\Structures\Mesh\ROctree.cpp" />
     <ClCompile Include="src\Structures\Mesh\Vertex.cpp" />
     <ClCompile Include="src\Structures\ShapeDiameterFunction\CSDF.cpp" />
     <ClCompile Include="src\VCGlib\wrap\ply\plylib.cpp" />
@@ -146,6 +148,8 @@
     <ClInclude Include="src\Structures\Mesh\Face.h" />
     <ClInclude Include="src\Structures\Mesh\Grid.h" />
     <ClInclude Include="src\Structures\Mesh\Octree.h" />
+    <ClInclude Include="src\Structures\Mesh\PPoint.h" />
+    <ClInclude Include="src\Structures\Mesh\ROctree.h" />
     <ClInclude Include="src\Structures\Mesh\Vertex.h" />
     <ClInclude Include="src\Structures\ShapeDiameterFunction\CSDF.h" />
     <ClInclude Include="stdafx.h" />

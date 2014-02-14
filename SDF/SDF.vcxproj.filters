@@ -120,6 +120,12 @@
     <ClCompile Include="src\Structures\Mesh\Grid.cpp">
       <Filter>Source Files\Structures\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\ROctree.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Structures\Mesh\PPoint.cpp">
+      <Filter>Source Files\Structures\Mesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -189,6 +195,12 @@
       <Filter>Header Files\Controllers</Filter>
     </ClInclude>
     <ClInclude Include="src\Structures\Mesh\Grid.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Mesh\ROctree.h">
+      <Filter>Header Files\Structures\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures\Mesh\PPoint.h">
       <Filter>Header Files\Structures\Mesh</Filter>
     </ClInclude>
   </ItemGroup>

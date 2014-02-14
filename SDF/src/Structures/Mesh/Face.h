@@ -27,6 +27,7 @@ namespace MeshStructures
 		int						farba;						// pre picking
 		CSDF*					quality;
 		unsigned int			number;						// cislo v zozname
+		bool					checked;					// èi smne skontrolovali pri robeni susedov
 	private:
 		LinkedList<Face>* susedia;
 		//const struct aiFace*	assimp_ref;

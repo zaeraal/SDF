@@ -613,7 +613,7 @@ namespace ModelController
 		{
 			if(Nastavenia->VISUAL_Octree == true)
 			{
-				glColor3f(0.5f,0.5f,0.5f);							// seda farba
+				glColor4f(0.5f,0.5f,0.5f,1.0f);							// seda farba
 				m_root->DrawOctree(true);
 			}
 			if(Nastavenia->VISUAL_Axes == true)
@@ -634,7 +634,7 @@ namespace ModelController
 			Vector4 binormal = tangens % normal;
 			binormal.Normalize();
 			Mat4 t_mat= Mat4(tangens, normal, binormal);
-			glColor3f(0.0f,1.0f,0.0f);
+			glColor4f(0.0f,1.0f,0.0f,1.0f);
 			glBegin(GL_LINES);
 				glVertex3f(selected->center.X, selected->center.Y, selected->center.Z);
 				glVertex3f( normal.X * 5.0f + selected->center.X,
@@ -650,7 +650,7 @@ namespace ModelController
 							tangens.Z * b_sf + selected->center.Z);
 			glEnd();
 
-			glColor3f(0.5f,0.5f,1.0f);
+			glColor4f(0.5f,0.5f,1.0f,1.0f);
 			glBegin(GL_LINES);
 				unsigned int n_rays = Nastavenia->SDF_Rays;
 				if(Nastavenia->SDF_Distribution == true)
@@ -698,13 +698,13 @@ namespace ModelController
 			LinkedList<Octree>* octrees = new LinkedList<Octree>();
 			SDF_control->ray_octree_traversal(m_root, norm, selected->center, octrees, o_min, o_max);
 			LinkedList<Octree>::Cell<Octree>* tmp = octrees->start;
-			glColor3f(1.0f,0.0f,0.0f);
+			glColor4f(1.0f,0.0f,0.0f,1.0f);
 			if(tmp != NULL)
 			{
 				tmp->data->DrawOctree(false);
 				tmp = tmp->next;
 			}
-			glColor3f(1.0f,0.5f,0.5f);
+			glColor4f(1.0f,0.5f,0.5f,1.0f);
 			while(tmp != NULL)
 			{
 				tmp->data->DrawOctree(false);
@@ -1086,7 +1086,10 @@ namespace ModelController
 			tmp1 = tmp1->next;
 		}
 
-		SDF_control->DoSmoothing(triangles, min, max);
+		if(Nastavenia->SDF_Smooth_Projected == true)
+			SDF_control->DoSmoothing2(triangles, min, max);
+		else
+			SDF_control->DoSmoothing(triangles, min, max);
 
 		CopySDF_Faces_to_Vertices();
 	}

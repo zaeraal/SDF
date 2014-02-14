@@ -13,6 +13,7 @@ namespace MeshStructures
 		farba = 0;
 		ComputeNormal();
 		quality = new CSDF();
+		checked = false;
 		//assimp_ref = NULL;
 	}
 

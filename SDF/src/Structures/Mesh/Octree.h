@@ -25,21 +25,20 @@ namespace MeshStructures
 		void DrawOctree(bool recursive);
 		void DrawAxes();
 
-		//Octree* parent;						// otec, NULL ak sme hlavny vrchol
 		Octree** son;						// synovia
 		Face** triangles;					// nase trojuholnicky
 		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je Nastavenia->OCTREE_Threshold
-		unsigned char sons;					// tabulka platnosti synov
+		unsigned int depth;					// ako hlboko sme v octree, max je Nastavenia->OCTREE_Depth
 		float size;							// hranica kocky
-		/*unsigned int nodeCount;
+		Vector4 origin;						// stred kocky
+		unsigned char sons;					// tabulka platnosti synov
+
+		// obsolete, koli size
+		/*Octree* parent;						// otec, NULL ak sme hlavny vrchol
+		unsigned int nodeCount;
 		unsigned int triangleCount;
 		unsigned int leafCount;
 		Vector4 o_min;
 		Vector4 o_max;*/
-		Vector4 origin;						// stred kocky
-	private:
-		unsigned int depth;					// ako hlboko sme v octree, max je Nastavenia->OCTREE_Depth
-		//float Table[8][3];					// tabulka offsetov
-
 	};
 }

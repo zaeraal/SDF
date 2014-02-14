@@ -142,6 +142,8 @@ namespace SDF {
 	private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Compute_Octree;
 private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
+private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
+
 
 
 
@@ -246,6 +248,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->groupBox_Status = (gcnew System::Windows::Forms::GroupBox());
 			this->TB_Status = (gcnew System::Windows::Forms::TextBox());
 			this->progressBar = (gcnew System::Windows::Forms::ProgressBar());
+			this->CHB_Smooth_Projected = (gcnew System::Windows::Forms::CheckBox());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->tabControl1->SuspendLayout();
@@ -505,7 +508,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->tabControl1->Location = System::Drawing::Point(3, 3);
 			this->tabControl1->Name = L"tabControl1";
 			this->tabControl1->SelectedIndex = 0;
-			this->tabControl1->Size = System::Drawing::Size(168, 408);
+			this->tabControl1->Size = System::Drawing::Size(168, 429);
 			this->tabControl1->TabIndex = 0;
 			// 
 			// tabPage_Info
@@ -519,7 +522,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->tabPage_Info->Location = System::Drawing::Point(4, 22);
 			this->tabPage_Info->Name = L"tabPage_Info";
 			this->tabPage_Info->Padding = System::Windows::Forms::Padding(3);
-			this->tabPage_Info->Size = System::Drawing::Size(160, 382);
+			this->tabPage_Info->Size = System::Drawing::Size(160, 403);
 			this->tabPage_Info->TabIndex = 0;
 			this->tabPage_Info->Text = L"Info";
 			// 
@@ -704,7 +707,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->tabPage_SDF->Location = System::Drawing::Point(4, 22);
 			this->tabPage_SDF->Name = L"tabPage_SDF";
 			this->tabPage_SDF->Padding = System::Windows::Forms::Padding(3);
-			this->tabPage_SDF->Size = System::Drawing::Size(160, 382);
+			this->tabPage_SDF->Size = System::Drawing::Size(160, 403);
 			this->tabPage_SDF->TabIndex = 1;
 			this->tabPage_SDF->Text = L"SDF";
 			// 
@@ -714,7 +717,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->groupBox_GPU_Settings->Controls->Add(this->TB_Work_Groups);
 			this->groupBox_GPU_Settings->Controls->Add(this->LBL_Work_Groups);
 			this->groupBox_GPU_Settings->Controls->Add(this->LBL_Work_Items);
-			this->groupBox_GPU_Settings->Location = System::Drawing::Point(8, 264);
+			this->groupBox_GPU_Settings->Location = System::Drawing::Point(8, 294);
 			this->groupBox_GPU_Settings->Name = L"groupBox_GPU_Settings";
 			this->groupBox_GPU_Settings->Size = System::Drawing::Size(148, 103);
 			this->groupBox_GPU_Settings->TabIndex = 15;
@@ -763,6 +766,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			// 
 			// groupBox_Params
 			// 
+			this->groupBox_Params->Controls->Add(this->CHB_Smooth_Projected);
 			this->groupBox_Params->Controls->Add(this->CHB_Uniform_Distribution);
 			this->groupBox_Params->Controls->Add(this->CHB_Reverted_Rays);
 			this->groupBox_Params->Controls->Add(this->TB_Radius);
@@ -773,7 +777,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->groupBox_Params->Controls->Add(this->LBL_Cone);
 			this->groupBox_Params->Location = System::Drawing::Point(8, 74);
 			this->groupBox_Params->Name = L"groupBox_Params";
-			this->groupBox_Params->Size = System::Drawing::Size(149, 184);
+			this->groupBox_Params->Size = System::Drawing::Size(149, 214);
 			this->groupBox_Params->TabIndex = 17;
 			this->groupBox_Params->TabStop = false;
 			this->groupBox_Params->Text = L"Algorithm Params";
@@ -918,7 +922,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->tabPage_Visual->Controls->Add(this->groupBox_Display_SDF);
 			this->tabPage_Visual->Location = System::Drawing::Point(4, 22);
 			this->tabPage_Visual->Name = L"tabPage_Visual";
-			this->tabPage_Visual->Size = System::Drawing::Size(160, 382);
+			this->tabPage_Visual->Size = System::Drawing::Size(160, 408);
 			this->tabPage_Visual->TabIndex = 2;
 			this->tabPage_Visual->Text = L"Visual";
 			// 
@@ -1131,6 +1135,19 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 			this->progressBar->Step = 1;
 			this->progressBar->TabIndex = 11;
 			// 
+			// CHB_Smooth_Projected
+			// 
+			this->CHB_Smooth_Projected->AutoSize = true;
+			this->CHB_Smooth_Projected->Checked = true;
+			this->CHB_Smooth_Projected->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->CHB_Smooth_Projected->Location = System::Drawing::Point(5, 183);
+			this->CHB_Smooth_Projected->Name = L"CHB_Smooth_Projected";
+			this->CHB_Smooth_Projected->Size = System::Drawing::Size(110, 17);
+			this->CHB_Smooth_Projected->TabIndex = 18;
+			this->CHB_Smooth_Projected->Text = L"Smooth Projected";
+			this->CHB_Smooth_Projected->UseVisualStyleBackColor = true;
+			this->CHB_Smooth_Projected->CheckedChanged += gcnew System::EventHandler(this, &Form1::CHB_Smooth_Projected_CheckedChanged);
+			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -1232,7 +1249,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 		if(MController->selected != NULL)
 		{
 			this->TB_Face_ID->Text = "" + MController->selected->number;
-			this->TB_SDF_Value->Text = "" + MController->selected->quality->value;
+			this->TB_SDF_Value->Text = "" + MController->selected->quality->smoothed;
 		}
 		else
 		{
@@ -1356,6 +1373,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 	private: System::Void CHB_Uniform_Distribution_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 	{
 		Nastavenia->SDF_Distribution = CHB_Uniform_Distribution->Checked;
+	}
+	private: System::Void CHB_Smooth_Projected_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
+	{
+		 Nastavenia->SDF_Smooth_Projected = CHB_Smooth_Projected->Checked;
 	}
 	private: System::Void TB_Work_Groups_TextChanged(System::Object^  sender, System::EventArgs^  e)
 	{
@@ -1668,6 +1689,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 		form2->ShowDialog();
 	}
 #pragma endregion
+
 
 };
 }

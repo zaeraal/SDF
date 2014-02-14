@@ -4,7 +4,8 @@
 #include "MathHelper.h"
 #include "SDFOpenCL.h"
 
-#define FLOAT_MAX  99999.0
+#define FLOAT_MAX  99999.0f
+#define SQRT_THREE 1.7320508075f
 #define FLD_NODE 0
 #define BLD_NODE 1
 #define FLT_NODE 2
@@ -178,7 +179,10 @@ namespace SDFController
 
 		int ticks2 = GetTickCount();
 
-		DoSmoothing(triangles, min, max);
+		if(Nastavenia->SDF_Smooth_Projected == true)
+			DoSmoothing2(triangles, min, max);
+		else
+			DoSmoothing(triangles, min, max);
 
 		int ticks3 = GetTickCount();
 
@@ -454,7 +458,10 @@ namespace SDFController
 		}
 		int ticks8 = GetTickCount();
 
-		DoSmoothing(triangles, min, max);
+		if(Nastavenia->SDF_Smooth_Projected == true)
+			DoSmoothing2(triangles, min, max);
+		else
+			DoSmoothing(triangles, min, max);
 
 		int ticks9 = GetTickCount();
 
@@ -517,12 +524,30 @@ namespace SDFController
 		return matrix;
 	}
 
+	// vypocitaj gaussian hodnotu pre dane x
+	float CSDFController::ComputeGaussian(int radius, float val, float maxval)
+	{
+		if(radius == 0)
+		{
+			return 1.0f;
+		}
+		float sigma = (float)radius/2.0f;
+		float norm = 1.0f / float(sqrt(2*M_PI) * sigma);
+		float coeff = 2*sigma*sigma;
+
+		float num = min((val / maxval), 1.0f);
+		float g = norm * exp( (-num*num)/coeff)  *100.0f;
+
+		return g;
+	}
+
 	void CSDFController::Smooth(Face* tmp, float* kernel, int kernel_size)
 	{
 		gauss_sus[0]->InsertToEnd(tmp);
+		tmp->checked = true;
 		for(int i=1; i <= kernel_size; i++)				// bacha na posunutie
 		{
-			//gauss_sus[i] = new LinkedList<Face>();
+			//gauss_sus[i] = new LinkedList<Face>();	// prealokovane
 			LinkedList<Face>::Cell<Face>* tm = gauss_sus[i-1]->start;
 			while(tm != NULL)
 			{
@@ -530,24 +555,15 @@ namespace SDFController
 				LinkedList<Face>::Cell<Face>* tc = t->start;
 				while(tc != NULL)
 				{
-					bool pokracuj = false;
-					for(int j = 0; j <= i; j++)
-					{
-						if(gauss_sus[j]->Contains(tc->data))
-						{
-							pokracuj = true;
-							break;
-						}
-					}
-					if(pokracuj)
+					if(tc->data->checked == true)
 					{
 						tc = tc->next;
 						continue;
 					}
 					gauss_sus[i]->InsertToEnd(tc->data);
+					tc->data->checked = true;
 					tc = tc->next;
 				}
-				//delete t;
 				tm = tm->next;
 			}
 		}
@@ -565,6 +581,7 @@ namespace SDFController
 				{
 					_values.push_back(tc->data->quality->value);
 					_weights.push_back(_weight);
+					tc->data->checked = false;
 					tc = tc->next;
 				}
 			}
@@ -573,6 +590,34 @@ namespace SDFController
 		//delete [] gauss_sus;
 
 		tmp->quality->Smooth(_values, _weights);
+	}
+
+	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list)
+	{
+		float maxval = pointik->ref->quality->value / 2.0f;
+		RadiusSearch2(pointik->P, maxval, m_root, ro_list);
+
+		float sum_values = 0.0f;
+		float sum_weights = 0.0f;
+
+		LinkedList<ROctree>::Cell<ROctree>* tmp = ro_list->start;
+		while(tmp != NULL)
+		{
+			for(unsigned int i = 0; i < tmp->data->count; i++)
+			{
+				float distanc = pointik->P.Dist(tmp->data->pointy[i]->P);
+				if(distanc <= maxval)
+				{
+					float weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
+					sum_values += tmp->data->pointy[i]->ref->quality->value * weight;
+					sum_weights += weight;
+				}
+			}
+			tmp->data->pointy;
+			tmp = tmp->next;
+		}
+
+		pointik->diameter = sum_values / sum_weights;
 	}
 
 	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max)
@@ -1775,7 +1820,10 @@ namespace SDFController
 
 		int ticks7 = GetTickCount();
 
-		DoSmoothing(triangles, min, max);
+		if(Nastavenia->SDF_Smooth_Projected == true)
+			DoSmoothing2(triangles, min, max);
+		else
+			DoSmoothing(triangles, min, max);
 
 		int ticks8 = GetTickCount();
 
@@ -1838,5 +1886,229 @@ namespace SDFController
 		}
 		Nastavenia->DEBUG_Min_SDF = min;
 		Nastavenia->DEBUG_Max_SDF = max;
+	}
+
+	void CSDFController::DoSmoothing2(LinkedList<Face> *triangles, float min, float max)
+	{
+		int ticks1 = GetTickCount();
+		int ticks2 = 0;
+
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+		{
+			LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
+			while(current_face != NULL)
+			{
+				// projektnute body
+				PPoint* tmp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
+				point_list->InsertToEnd(tmp);
+				current_face = current_face->next;
+			}
+			float b_size;
+			Vector4 b_stred = ComputePointBoundary(point_list, b_size);
+			ROctree* m_root = CreateROctree(point_list, b_size, b_stred);
+
+			LinkedList<PPoint>::Cell<PPoint>* current_point = point_list->start;
+			LinkedList<ROctree>* ro_list = new LinkedList<ROctree>();
+			ro_list->Preallocate(10000);
+
+			ticks2 = GetTickCount();
+
+			while(current_point != NULL)
+			{
+				Smooth2(current_point->data, m_root, ro_list);
+				current_point->data->ref->quality->smoothed = current_point->data->diameter;
+				current_point->data->ref->quality->Normalize(min, max, 4.0);
+				current_point = current_point->next;
+				ro_list->Clear();
+			}
+			delete ro_list;
+			point_list->CompleteDelete();
+		}
+		else
+		{
+			current_face = triangles->start;
+			while(current_face != NULL)
+			{
+				current_face->data->quality->smoothed = current_face->data->quality->value;
+				current_face->data->quality->Normalize(min, max, 4.0);
+				current_face = current_face->next;
+			}
+		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
+
+		int ticks3 = GetTickCount();
+
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+		{
+			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks2 - ticks1)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks3 - ticks2)+ "ms"));
+		}
+	}
+
+	// recursive
+	void CSDFController::RadiusSearch1(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees)
+	{
+		if(node->isLeaf == true)
+		{
+			octrees->InsertToEnd(node);
+		}
+		else
+		{
+			for(int i = 0; i < 8; i++)
+			{
+				if(CheckValid(node->sons, i) == true)
+				{
+					float vzdialenost = center.Dist(node->son[i]->origin) - (node->son[i]->size * SQRT_THREE);
+					if(vzdialenost <= dist)
+						RadiusSearch1(center, dist, node->son[i], octrees);
+				}
+			}
+		}	
+	}
+
+	class CastStackz
+	{
+	public:
+		CastStackz   (void)
+		{
+			for(int i = 0; i < 10; i++)
+			{
+				ostack[i] = NULL;
+				tstack[i] = 0;
+			}
+		}
+
+		ROctree* read     (int idx, U8& id) const         { id = tstack[idx]; return ostack[idx]; }
+		void write       (int idx, ROctree* node, U8 id)  { ostack[idx] = node; tstack[idx] = id; }
+
+	private:
+		ROctree*         ostack[10];
+		U8              tstack[10];
+	};
+
+	// stack based
+	void CSDFController::RadiusSearch2(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees)
+	{
+		CastStackz stack;
+		ROctree* tmp = NULL;
+		int idx = 0;
+		U8 id = 0;
+
+		stack.write(idx, node, 0); 
+		while (idx >= 0)
+		{
+			tmp = stack.read(idx, id);	// nacitame si momentalne robeny node (node v rekurzivnom)
+			if(tmp->sons == 0)		// leaf
+			{
+				octrees->InsertToEnd(tmp);
+				idx--;
+			}
+			else
+			{
+				if(id >= 8)
+				{
+					idx--;
+					continue;
+				}
+				if(CheckValid(tmp->sons, id) == true)
+				{
+					float vzdialenost = center.Dist(tmp->son[id]->origin) - (tmp->son[id]->size * SQRT_THREE);
+					if(vzdialenost <= dist)
+					{
+						stack.write(idx, tmp, id + 1);
+						stack.write(idx + 1, tmp->son[id], 0);
+						idx = idx + 1;
+					}
+					else
+					{
+						stack.write(idx, tmp, id + 1); 
+					}
+				}
+				else
+				{
+					stack.write(idx, tmp, id + 1); 
+				}
+			}
+		}
+	}
+
+	Vector4 CSDFController::ComputePointBoundary(LinkedList<PPoint>* point_list, float &b_size)
+	{
+		float minx = 99999.0, miny = 99999.0, minz = 99999.0;
+		float maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
+
+		LinkedList<PPoint>::Cell<PPoint>* tmp = point_list->start;
+		while(tmp != NULL)
+		{
+			if(tmp->data->P.X < minx)
+				minx = tmp->data->P.X;
+			if(tmp->data->P.Y < miny)
+				miny = tmp->data->P.Y;
+			if(tmp->data->P.Z < minz)
+				minz = tmp->data->P.Z;
+
+			if(tmp->data->P.X > maxx)
+				maxx = tmp->data->P.X;
+			if(tmp->data->P.Y > maxy)
+				maxy = tmp->data->P.Y;
+			if(tmp->data->P.Z > maxz)
+				maxz = tmp->data->P.Z;
+
+			tmp = tmp->next;
+		}
+
+		Vector4 b_stred = Vector4((minx+maxx) / 2.0f, (miny+maxy) / 2.0f, (minz+maxz) / 2.0f);
+		float sizex = 0;
+		float sizey = 0;
+		float sizez = 0;
+
+		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
+			sizex = abs(maxx-minx);
+		else
+			sizex = abs(minx-maxx);
+
+		if(((miny<=0.0)&&(maxy<=0.0)) || ((miny>=0.0)&&(maxy>=0.0)))
+			sizey = abs(maxy-miny);
+		else
+			sizey = abs(miny-maxy);
+
+		if(((minz<=0.0)&&(maxz<=0.0)) || ((minz>=0.0)&&(maxz>=0.0)))
+			sizez = abs(maxz-minz);
+		else
+			sizez = abs(minz-maxz);
+
+		b_size = max(max(sizex, sizey), sizez) / 2.0f + 0.005f;
+		return b_stred;
+	}
+
+	// vytvori Octree strukturu
+	ROctree* CSDFController::CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred)
+	{
+		ROctree* m_root = new ROctree(1, b_size, b_stred);
+
+		unsigned int siz = point_list->GetSize();
+		if(siz > 0)
+		{
+			PPoint** pointiky = new PPoint* [siz];
+			LinkedList<PPoint>::Cell<PPoint>* tmp = point_list->start;
+			int i = 0;
+			while(tmp != NULL)
+			{
+				pointiky[i] = tmp->data;
+				tmp = tmp->next;
+				i++;
+			}
+			unsigned int nodeCount = 0, triangleCount = 0, leafCount = 0;
+			m_root->Build2(pointiky, 0, siz, nodeCount, triangleCount, leafCount);
+
+			delete [] pointiky;
+		}
+		else
+			m_root->Build(NULL, 0);
+
+		return m_root;
 	}
 }

@@ -51,6 +51,8 @@ namespace VCGFileHandler
 		i = 0;
 		for(MyMesh::FaceIterator it = m.face.begin(); it != m.face.end(); it++)
 		{
+			//if((i % 4) != 0)
+			{
 			MyMesh::VertexPointer v0 = it->V(0);
 			MyMesh::VertexPointer v1 = it->V(1);
 			MyMesh::VertexPointer v2 = it->V(2);
@@ -71,7 +73,10 @@ namespace VCGFileHandler
 			/*if(it->HasNormal())
 				face->normal = Vector4(it->N().X(), it->N().Y(), it->N().Z(), 0.0f);*/
 
+			
 			fc->InsertToEnd(face);
+			}
+			//i++;
 		}
 		delete [] tmp_points;
 	}
