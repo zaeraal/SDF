@@ -31,6 +31,10 @@ namespace OpenCLDebugger
 
 	void COpenCLDebug::SetArgSize(cl_uint size /* args_size */)
 	{
+		if(arg_size > 0)
+		{
+			delete [] args;
+		}
 		args = new void*[size];
 		arg_size = size;
 	}
@@ -57,6 +61,14 @@ namespace OpenCLDebugger
 		}
 	}
 
+	void COpenCLDebug::ExecuteKernel3( size_t global   /* global_work_size */, size_t local   /* local_work_size */)
+	{
+		//cl_uint kernel_size = (cl_uint)global / (cl_uint)local;
+		for(cl_uint i = 0; i < (cl_uint)global; i++)
+		{
+			proces((float*)args[0], (float*)args[1], (float*)args[2], (*(cl_uint*)(args[3])), i);
+		}
+	}
 	// pomocne OpenCL funkcie
 	cl_float4 COpenCLDebug::cl_minus(cl_float4 a, cl_float4 b)
 	{
@@ -1189,5 +1201,78 @@ namespace OpenCLDebugger
 		if(gid >= max_outputs)
 			assert(false);
 		c_outputs[gid] = dist;
+	}
+
+	#define N_RAYS 30
+	void COpenCLDebug::proces(float *c_outputs,
+		float *c_results,
+		float *weights,
+		const cl_uint n_triangles,
+		const cl_uint gid
+		)
+	{
+		cl_uint ref_triangle = gid;									// kolkaty som luc v poradi
+	
+		if(ref_triangle > n_triangles)								// thready navyse ignorujeme
+			return;
+
+		float cache[N_RAYS];
+		int i = 0;
+		int j = 0;
+		float mean = 0.0;
+		for(i = 0; i < N_RAYS; i++)
+		{
+			cache[i] = c_outputs[(ref_triangle * N_RAYS) +  i];
+			if(cache[i] >= (FLOAT_MAX - 1.0f))
+				cache[i] = 0;
+			mean += cache[i];
+		}
+
+		// bubble Sort
+		float tmp = 0.0f;
+		for(int i = 0; i < N_RAYS - 1; i++)
+		{
+			for(int j = 0; j < N_RAYS - i - 1; j++)
+			{
+				if(cache[j+1] < cache[j])
+				{
+					tmp = cache[j + 1];
+					cache[j + 1] = cache[j];
+					cache[j] = tmp;
+				}   
+			}   
+		}
+
+		float median = 0.0f;
+		if (N_RAYS  % 2 == 0)
+		{
+			median = (cache[N_RAYS / 2 - 1] + cache[N_RAYS / 2]) / 2;
+		}
+		else 
+		{
+			median = cache[N_RAYS / 2];
+		}
+
+		mean = mean / (float)N_RAYS;
+
+		float deviation = 0.0f;
+
+		for(unsigned int i = 0; i < N_RAYS; i++)
+		{
+			deviation += (cache[i] - mean) * (cache[i] - mean);
+		}
+		deviation = sqrt(deviation / (float)N_RAYS);
+
+		float sum_values = 0.0;
+		float sum_weights = 0.0;
+		for(unsigned int i = 0; i < N_RAYS; i++)
+		{
+			if(fabs(cache[i] - median) <= deviation)
+			{
+				sum_values += cache[i] * weights[i];
+				sum_weights += weights[i];
+			}
+		}
+		c_results[ref_triangle] = sum_values / sum_weights;           
 	}
 }

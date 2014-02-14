@@ -143,6 +143,7 @@ namespace SDF {
 private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
+private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 
 
 
@@ -216,6 +217,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->LBL_Work_Groups = (gcnew System::Windows::Forms::Label());
 			this->LBL_Work_Items = (gcnew System::Windows::Forms::Label());
 			this->groupBox_Params = (gcnew System::Windows::Forms::GroupBox());
+			this->CHB_Smooth_Projected = (gcnew System::Windows::Forms::CheckBox());
 			this->CHB_Uniform_Distribution = (gcnew System::Windows::Forms::CheckBox());
 			this->CHB_Reverted_Rays = (gcnew System::Windows::Forms::CheckBox());
 			this->TB_Radius = (gcnew System::Windows::Forms::TextBox());
@@ -248,7 +250,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->groupBox_Status = (gcnew System::Windows::Forms::GroupBox());
 			this->TB_Status = (gcnew System::Windows::Forms::TextBox());
 			this->progressBar = (gcnew System::Windows::Forms::ProgressBar());
-			this->CHB_Smooth_Projected = (gcnew System::Windows::Forms::CheckBox());
+			this->TSMI_Points = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->tabControl1->SuspendLayout();
@@ -293,14 +295,14 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->TSMI_Open->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Open->Name = L"TSMI_Open";
 			this->TSMI_Open->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::O));
-			this->TSMI_Open->Size = System::Drawing::Size(147, 22);
+			this->TSMI_Open->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Open->Text = L"&Open";
 			this->TSMI_Open->Click += gcnew System::EventHandler(this, &Form1::TSMI_Open_Click);
 			// 
 			// toolStripSeparator
 			// 
 			this->toolStripSeparator->Name = L"toolStripSeparator";
-			this->toolStripSeparator->Size = System::Drawing::Size(144, 6);
+			this->toolStripSeparator->Size = System::Drawing::Size(149, 6);
 			// 
 			// TSMI_Save
 			// 
@@ -308,7 +310,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->TSMI_Save->ImageTransparentColor = System::Drawing::Color::Magenta;
 			this->TSMI_Save->Name = L"TSMI_Save";
 			this->TSMI_Save->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::S));
-			this->TSMI_Save->Size = System::Drawing::Size(147, 22);
+			this->TSMI_Save->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Save->Text = L"&Save";
 			this->TSMI_Save->Click += gcnew System::EventHandler(this, &Form1::TSMI_Save_Click);
 			// 
@@ -316,28 +318,28 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Export->Name = L"TSMI_Export";
 			this->TSMI_Export->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::E));
-			this->TSMI_Export->Size = System::Drawing::Size(147, 22);
+			this->TSMI_Export->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Export->Text = L"&Export";
 			this->TSMI_Export->Click += gcnew System::EventHandler(this, &Form1::TSMI_Export_Click);
 			// 
 			// toolStripSeparator2
 			// 
 			this->toolStripSeparator2->Name = L"toolStripSeparator2";
-			this->toolStripSeparator2->Size = System::Drawing::Size(144, 6);
+			this->toolStripSeparator2->Size = System::Drawing::Size(149, 6);
 			// 
 			// TSMI_Exit
 			// 
 			this->TSMI_Exit->Name = L"TSMI_Exit";
 			this->TSMI_Exit->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::X));
-			this->TSMI_Exit->Size = System::Drawing::Size(147, 22);
+			this->TSMI_Exit->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Exit->Text = L"E&xit";
 			this->TSMI_Exit->Click += gcnew System::EventHandler(this, &Form1::TSMI_Exit_Click);
 			// 
 			// showToolStripMenuItem
 			// 
-			this->showToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(9) {this->TSMI_None, 
+			this->showToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(10) {this->TSMI_None, 
 				this->TSMI_Default, this->TSMI_Wireframe, this->TSMI_SDF_Hodnoty, this->TSMI_Picking_Hodnoty, this->toolStripSeparator1, this->TSMI_Octree, 
-				this->TSMI_Normals, this->TSMI_Axes});
+				this->TSMI_Normals, this->TSMI_Axes, this->TSMI_Points});
 			this->showToolStripMenuItem->Enabled = false;
 			this->showToolStripMenuItem->Name = L"showToolStripMenuItem";
 			this->showToolStripMenuItem->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::N));
@@ -348,7 +350,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_None->Name = L"TSMI_None";
 			this->TSMI_None->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::N));
-			this->TSMI_None->Size = System::Drawing::Size(190, 22);
+			this->TSMI_None->Size = System::Drawing::Size(197, 22);
 			this->TSMI_None->Text = L"&None";
 			this->TSMI_None->Click += gcnew System::EventHandler(this, &Form1::TSMI_None_Click);
 			// 
@@ -356,7 +358,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Default->Name = L"TSMI_Default";
 			this->TSMI_Default->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::D));
-			this->TSMI_Default->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Default->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Default->Text = L"&Default";
 			this->TSMI_Default->Click += gcnew System::EventHandler(this, &Form1::TSMI_Default_Click);
 			// 
@@ -364,7 +366,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Wireframe->Name = L"TSMI_Wireframe";
 			this->TSMI_Wireframe->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::W));
-			this->TSMI_Wireframe->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Wireframe->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Wireframe->Text = L"&Wireframe";
 			this->TSMI_Wireframe->Click += gcnew System::EventHandler(this, &Form1::TSMI_Wireframe_Click);
 			// 
@@ -372,7 +374,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_SDF_Hodnoty->Name = L"TSMI_SDF_Hodnoty";
 			this->TSMI_SDF_Hodnoty->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::F));
-			this->TSMI_SDF_Hodnoty->Size = System::Drawing::Size(190, 22);
+			this->TSMI_SDF_Hodnoty->Size = System::Drawing::Size(197, 22);
 			this->TSMI_SDF_Hodnoty->Text = L"SD&F values";
 			this->TSMI_SDF_Hodnoty->Click += gcnew System::EventHandler(this, &Form1::TSMI_SDF_Hodnoty_Click);
 			// 
@@ -380,20 +382,20 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Picking_Hodnoty->Name = L"TSMI_Picking_Hodnoty";
 			this->TSMI_Picking_Hodnoty->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::P));
-			this->TSMI_Picking_Hodnoty->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Picking_Hodnoty->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Picking_Hodnoty->Text = L"&Picking values";
 			this->TSMI_Picking_Hodnoty->Click += gcnew System::EventHandler(this, &Form1::TSMI_Picking_Hodnoty_Click);
 			// 
 			// toolStripSeparator1
 			// 
 			this->toolStripSeparator1->Name = L"toolStripSeparator1";
-			this->toolStripSeparator1->Size = System::Drawing::Size(187, 6);
+			this->toolStripSeparator1->Size = System::Drawing::Size(194, 6);
 			// 
 			// TSMI_Octree
 			// 
 			this->TSMI_Octree->Name = L"TSMI_Octree";
 			this->TSMI_Octree->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::O));
-			this->TSMI_Octree->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Octree->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Octree->Text = L"&Octree";
 			this->TSMI_Octree->Click += gcnew System::EventHandler(this, &Form1::TSMI_Octree_Click);
 			// 
@@ -401,7 +403,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Normals->Name = L"TSMI_Normals";
 			this->TSMI_Normals->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::N));
-			this->TSMI_Normals->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Normals->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Normals->Text = L"&Normals";
 			this->TSMI_Normals->Click += gcnew System::EventHandler(this, &Form1::TSMI_Normals_Click);
 			// 
@@ -409,7 +411,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			// 
 			this->TSMI_Axes->Name = L"TSMI_Axes";
 			this->TSMI_Axes->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::A));
-			this->TSMI_Axes->Size = System::Drawing::Size(190, 22);
+			this->TSMI_Axes->Size = System::Drawing::Size(197, 22);
 			this->TSMI_Axes->Text = L"&Axes";
 			this->TSMI_Axes->Click += gcnew System::EventHandler(this, &Form1::TSMI_Axes_Click);
 			// 
@@ -782,6 +784,19 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->groupBox_Params->TabStop = false;
 			this->groupBox_Params->Text = L"Algorithm Params";
 			// 
+			// CHB_Smooth_Projected
+			// 
+			this->CHB_Smooth_Projected->AutoSize = true;
+			this->CHB_Smooth_Projected->Checked = true;
+			this->CHB_Smooth_Projected->CheckState = System::Windows::Forms::CheckState::Checked;
+			this->CHB_Smooth_Projected->Location = System::Drawing::Point(5, 183);
+			this->CHB_Smooth_Projected->Name = L"CHB_Smooth_Projected";
+			this->CHB_Smooth_Projected->Size = System::Drawing::Size(110, 17);
+			this->CHB_Smooth_Projected->TabIndex = 18;
+			this->CHB_Smooth_Projected->Text = L"Smooth Projected";
+			this->CHB_Smooth_Projected->UseVisualStyleBackColor = true;
+			this->CHB_Smooth_Projected->CheckedChanged += gcnew System::EventHandler(this, &Form1::CHB_Smooth_Projected_CheckedChanged);
+			// 
 			// CHB_Uniform_Distribution
 			// 
 			this->CHB_Uniform_Distribution->AutoSize = true;
@@ -922,7 +937,7 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->tabPage_Visual->Controls->Add(this->groupBox_Display_SDF);
 			this->tabPage_Visual->Location = System::Drawing::Point(4, 22);
 			this->tabPage_Visual->Name = L"tabPage_Visual";
-			this->tabPage_Visual->Size = System::Drawing::Size(160, 408);
+			this->tabPage_Visual->Size = System::Drawing::Size(160, 403);
 			this->tabPage_Visual->TabIndex = 2;
 			this->tabPage_Visual->Text = L"Visual";
 			// 
@@ -1135,18 +1150,13 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 			this->progressBar->Step = 1;
 			this->progressBar->TabIndex = 11;
 			// 
-			// CHB_Smooth_Projected
+			// TSMI_Points
 			// 
-			this->CHB_Smooth_Projected->AutoSize = true;
-			this->CHB_Smooth_Projected->Checked = true;
-			this->CHB_Smooth_Projected->CheckState = System::Windows::Forms::CheckState::Checked;
-			this->CHB_Smooth_Projected->Location = System::Drawing::Point(5, 183);
-			this->CHB_Smooth_Projected->Name = L"CHB_Smooth_Projected";
-			this->CHB_Smooth_Projected->Size = System::Drawing::Size(110, 17);
-			this->CHB_Smooth_Projected->TabIndex = 18;
-			this->CHB_Smooth_Projected->Text = L"Smooth Projected";
-			this->CHB_Smooth_Projected->UseVisualStyleBackColor = true;
-			this->CHB_Smooth_Projected->CheckedChanged += gcnew System::EventHandler(this, &Form1::CHB_Smooth_Projected_CheckedChanged);
+			this->TSMI_Points->Name = L"TSMI_Points";
+			this->TSMI_Points->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::P));
+			this->TSMI_Points->Size = System::Drawing::Size(197, 22);
+			this->TSMI_Points->Text = L"&Projected Points";
+			this->TSMI_Points->Click += gcnew System::EventHandler(this, &Form1::TSMI_Points_Click);
 			// 
 			// Form1
 			// 
@@ -1647,6 +1657,13 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 		TSMI_Axes->Checked = Nastavenia->VISUAL_Axes;
 		MController->logInfo("Zobrazi Osy");
 	}
+
+	private: System::Void TSMI_Points_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		Nastavenia->VISUAL_Points = (Nastavenia->VISUAL_Points == true ? false : true);
+		TSMI_Points->Checked = Nastavenia->VISUAL_Points;
+		MController->logInfo("Zobrazi Projektnute body");
+	}
 #pragma endregion
 
 #pragma region Tools
@@ -1689,8 +1706,6 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 		form2->ShowDialog();
 	}
 #pragma endregion
-
-
 };
 }
 

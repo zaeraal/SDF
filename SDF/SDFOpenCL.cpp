@@ -29,8 +29,12 @@ namespace OpenCLForm
 		device_id = NULL;
 		context = NULL;
 		commands = NULL;
-		program = NULL;
-		kernel = NULL;
+		program1 = NULL;
+		program2 = NULL;
+		program3 = NULL;
+		kernel1 = NULL;
+		kernel2 = NULL;
+		kernel3 = NULL;
 
 		b_triangles = NULL;
 		b_nodes = NULL;
@@ -40,6 +44,8 @@ namespace OpenCLForm
 		b_rays = NULL;
 		b_targets = NULL;
 		b_outputs = NULL;
+		b_results = NULL;
+		b_weights = NULL;
 		moznost = 0;
 
 		debugger = new COpenCLDebug();
@@ -62,9 +68,15 @@ namespace OpenCLForm
 			clReleaseMemObject(b_node_tria);
 			clReleaseMemObject(b_rays);
 			clReleaseMemObject(b_outputs);
+			clReleaseMemObject(b_results);
+			clReleaseMemObject(b_weights);
 		}
-		clReleaseProgram(program);
-		clReleaseKernel(kernel);
+		clReleaseProgram(program1);
+		clReleaseKernel(kernel1);
+		clReleaseProgram(program2);
+		clReleaseKernel(kernel2);
+		clReleaseProgram(program3);
+		clReleaseKernel(kernel3);
 		clReleaseCommandQueue(commands);
 		clReleaseContext(context);
 
@@ -115,7 +127,7 @@ namespace OpenCLForm
 	
 	}
 
-	int COpenCL::LoadKernel(const char* cSourceFile)
+	int COpenCL::LoadKernel1(const char* cSourceFile)
 	{
 		cSourceCL = NULL;
 
@@ -129,28 +141,116 @@ namespace OpenCLForm
 		return EXIT_FAIL_LOAD;
 	}
 
-	int COpenCL::BuildKernel()
+	int COpenCL::LoadKernel2(const char* cSourceFile)
+	{
+		cSourceCL = NULL;
+
+		// Read the OpenCL kernel in from source file
+		std::string depth = MarshalString("#define N_RAYS " + Nastavenia->SDF_Rays);
+		cSourceCL = oclLoadProgSource(cSourceFile, depth.c_str(), &szKernelLength);
+
+		if(cSourceCL != NULL)
+			return EXIT_SUCCESS;
+
+		return EXIT_FAIL_LOAD;
+	}
+
+	int COpenCL::LoadKernel3(const char* cSourceFile)
+	{
+		cSourceCL = NULL;
+
+		// Read the OpenCL kernel in from source file
+		std::string depth = MarshalString("#define STACK_SIZE  " + (Nastavenia->OCTREE_Depth - 4));
+		cSourceCL = oclLoadProgSource(cSourceFile, depth.c_str(), &szKernelLength);
+
+		if(cSourceCL != NULL)
+			return EXIT_SUCCESS;
+
+		return EXIT_FAIL_LOAD;
+	}
+
+	int COpenCL::BuildKernel1()
 	{
 		// Create the compute program from the source buffer
-		program = clCreateProgramWithSource(context, 1, (const char **)&cSourceCL, &szKernelLength, &err);
-		if (!program)
+		program1 = clCreateProgramWithSource(context, 1, (const char **)&cSourceCL, &szKernelLength, &err);
+		if (!program1)
 		{
 			//"Error: Failed to create compute program!"
 			return EXIT_FAIL_CREATE;
 		}
   
 		// Build the program executable (default setting)
-		err = clBuildProgram(program, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
+		err = clBuildProgram(program1, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
 		if (err != CL_SUCCESS)
 		{
 			//"Error: Failed to build program executable!"
-			clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(debug_buffer), debug_buffer, &debug_len);
+			clGetProgramBuildInfo(program1, device_id, CL_PROGRAM_BUILD_LOG, sizeof(debug_buffer), debug_buffer, &debug_len);
 			return EXIT_FAIL_PROGRAM;
 		}
 
 		// Create the compute kernel in the program
-		kernel = clCreateKernel(program, "sdf", &err);
-		if (!kernel || err != CL_SUCCESS)
+		kernel1 = clCreateKernel(program1, "sdf", &err);
+		if (!kernel1 || err != CL_SUCCESS)
+		{
+			//"Error: Failed to create compute kernel!"
+			return EXIT_FAIL_KERNEL;
+		}
+
+		return EXIT_SUCCESS;
+	}
+
+	int COpenCL::BuildKernel2()
+	{
+		// Create the compute program from the source buffer
+		program2 = clCreateProgramWithSource(context, 1, (const char **)&cSourceCL, &szKernelLength, &err);
+		if (!program2)
+		{
+			//"Error: Failed to create compute program!"
+			return EXIT_FAIL_CREATE;
+		}
+
+		// Build the program executable (default setting)
+		err = clBuildProgram(program2, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to build program executable!"
+			clGetProgramBuildInfo(program2, device_id, CL_PROGRAM_BUILD_LOG, sizeof(debug_buffer), debug_buffer, &debug_len);
+			return EXIT_FAIL_PROGRAM;
+		}
+
+		// Create the compute kernel in the program
+		kernel2 = clCreateKernel(program2, "proces", &err);
+		if (!kernel2 || err != CL_SUCCESS)
+		{
+			//"Error: Failed to create compute kernel!"
+			return EXIT_FAIL_KERNEL;
+		}
+
+		return EXIT_SUCCESS;
+	}
+
+	int COpenCL::BuildKernel3()
+	{
+		// Create the compute program from the source buffer
+		program3 = clCreateProgramWithSource(context, 1, (const char **)&cSourceCL, &szKernelLength, &err);
+		if (!program3)
+		{
+			//"Error: Failed to create compute program!"
+			return EXIT_FAIL_CREATE;
+		}
+
+		// Build the program executable (default setting)
+		err = clBuildProgram(program3, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to build program executable!"
+			clGetProgramBuildInfo(program3, device_id, CL_PROGRAM_BUILD_LOG, sizeof(debug_buffer), debug_buffer, &debug_len);
+			return EXIT_FAIL_PROGRAM;
+		}
+
+		// Create the compute kernel in the program
+		kernel3 = clCreateKernel(program3, "smooth", &err);
+		if (!kernel3 || err != CL_SUCCESS)
 		{
 			//"Error: Failed to create compute kernel!"
 			return EXIT_FAIL_KERNEL;
@@ -242,7 +342,7 @@ namespace OpenCLForm
 			//"Error: Failed to allocate memory!"
 			return EXIT_FAIL_MEMORY;
 		}
-		b_outputs = clCreateBuffer(context, CL_MEM_WRITE_ONLY, s_outputs, NULL, &err);
+		b_outputs = clCreateBuffer(context, CL_MEM_READ_WRITE, s_outputs, NULL, &err);
 		if (err != CL_SUCCESS)
 		{
 			//"Error: Failed to allocate memory!"
@@ -252,7 +352,7 @@ namespace OpenCLForm
 		return EXIT_SUCCESS;
 	}
 
-	int COpenCL::SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs)
+	int COpenCL::SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs, unsigned int ss_results, unsigned int ss_weights)
 	{
 		moznost = 2;
 		s_triangles = ss_triangles;
@@ -260,6 +360,8 @@ namespace OpenCLForm
 		s_node_tria = ss_node_tria;
 		s_rays = ss_rays;
 		s_outputs = ss_outputs;
+		s_weights = ss_weights;
+		s_results = ss_results;
 
 		err = CL_SUCCESS;
 
@@ -294,6 +396,18 @@ namespace OpenCLForm
 			//"Error: Failed to allocate memory!"
 			return EXIT_FAIL_MEMORY;
 		}
+		b_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY, s_results, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
+		b_weights = clCreateBuffer(context, CL_MEM_READ_ONLY, s_weights, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
 
 		return EXIT_SUCCESS;
 	}
@@ -319,13 +433,13 @@ namespace OpenCLForm
 
 		if(Nastavenia->SDF_Mode == SDF_GPU)
 		{
-			err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_vertices);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_origins);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_targets);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint4), &c_params);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
+			err  = clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_triangles);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_vertices);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_origins);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_rays);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_targets);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_uint4), &c_params);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_outputs);
 			if (err != CL_SUCCESS)
 			{
 				//"Error: Failed to set kernel arguments! " << err << endl;
@@ -333,7 +447,7 @@ namespace OpenCLForm
 			}
 
 			// Execute the kernel
-			err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
+			err = clEnqueueNDRangeKernel(commands, kernel1, 1, NULL, &global, &local, 0, NULL, NULL);
 			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
 			{
 				//"Error: Failed to execute kernel!"
@@ -386,16 +500,16 @@ namespace OpenCLForm
 		if(Nastavenia->SDF_Mode == SDF_GPU)
 		{
 			cl_uint poradie = 0;
-			err  = clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_triangles);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_nodes);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_node_tria);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_rays);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_mem), &b_outputs);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_float4), &o_min);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_float4), &o_max);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_float), &bias);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint), &n_rays);
-			err |= clSetKernelArg(kernel, n++, sizeof(cl_uint), &n_triangles);
+			err  = clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_triangles);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_nodes);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_node_tria);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_rays);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_mem), &b_outputs);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_float4), &o_min);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_float4), &o_max);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_float), &bias);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_uint), &n_rays);
+			err |= clSetKernelArg(kernel1, n++, sizeof(cl_uint), &n_triangles);
 			
 			if (err != CL_SUCCESS)
 			{
@@ -409,7 +523,7 @@ namespace OpenCLForm
 				cl_uint pocet_itemov = KERNEL_SIZE;
 				for(poradie = 0; poradie < pocet_vykonani; poradie++)
 				{
-					err |= clSetKernelArg(kernel, n, sizeof(cl_uint), &poradie);
+					err |= clSetKernelArg(kernel1, n, sizeof(cl_uint), &poradie);
 					if (err != CL_SUCCESS)
 					{
 						//"Error: Failed to set kernel arguments! " << err << endl;
@@ -420,8 +534,8 @@ namespace OpenCLForm
 					if(poradie == (pocet_vykonani - 1))
 						pocet_itemov = global % KERNEL_SIZE;
 
-					// Execute the kernel, localnu nech si nastavi sam
-					err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &pocet_itemov, NULL, 0, NULL, NULL);
+					// Execute the kernel1, localnu nech si nastavi sam
+					err = clEnqueueNDRangeKernel(commands, kernel1, 1, NULL, &pocet_itemov, NULL, 0, NULL, NULL);
 					if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
 					{
 						//"Error: Failed to execute kernel!"
@@ -432,14 +546,14 @@ namespace OpenCLForm
 			}
 			else*/
 			{
-				err |= clSetKernelArg(kernel, n, sizeof(cl_uint), &poradie);
+				err |= clSetKernelArg(kernel1, n, sizeof(cl_uint), &poradie);
 				if (err != CL_SUCCESS)
 				{
 					//"Error: Failed to set kernel arguments! " << err << endl;
 					return EXIT_FAIL_ARGUMENTS;
 				}
-				// Execute the kernel, localnu nech si nastavi sam
-				err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, NULL, 0, NULL, NULL);
+				// Execute the kernel1, localnu nech si nastavi sam
+				err = clEnqueueNDRangeKernel(commands, kernel1, 1, NULL, &global, NULL, 0, NULL, NULL);
 				if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
 				{
 					//"Error: Failed to execute kernel!"
@@ -468,6 +582,68 @@ namespace OpenCLForm
 			debugger->SetArgValue(n++, c_outputs);
 
 			debugger->ExecuteKernel2(global, 0);
+		}
+
+		return EXIT_SUCCESS;
+	}
+
+	int COpenCL::LaunchKernel3(cl_float *c_outputs, cl_float *c_results, cl_float *c_weights, cl_uint n_triangles)
+	{
+		// Transfer the input vectors into device memory
+		err = CL_SUCCESS;
+		err |= clEnqueueWriteBuffer(commands, b_weights, CL_FALSE, 0, s_weights, c_weights, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to write to source array!"
+			return(EXIT_FAIL_WRITE);
+		}
+
+		// Set the arguments to the compute kernel
+		err = CL_SUCCESS;
+		cl_uint n = 0;
+
+		if(Nastavenia->SDF_Mode == SDF_GPU)
+		{
+			err  = clSetKernelArg(kernel2, n++, sizeof(cl_mem), &b_outputs);
+			err |= clSetKernelArg(kernel2, n++, sizeof(cl_mem), &b_results);
+			err |= clSetKernelArg(kernel2, n++, sizeof(cl_mem), &b_weights);
+			err |= clSetKernelArg(kernel2, n++, sizeof(cl_uint), &n_triangles);
+			
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to set kernel arguments! " << err << endl;
+				return EXIT_FAIL_ARGUMENTS;
+			}
+
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to set kernel arguments! " << err << endl;
+				return EXIT_FAIL_ARGUMENTS;
+			}
+			// Execute the kernel1, localnu nech si nastavi sam
+			err = clEnqueueNDRangeKernel(commands, kernel2, 1, NULL, &global, NULL, 0, NULL, NULL);
+			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+			{
+				//"Error: Failed to execute kernel!"
+				return EXIT_FAIL_EXECUTE;
+			}
+			
+			err = clEnqueueReadBuffer(commands, b_results, CL_FALSE, 0, s_results, c_results, 0, NULL, NULL );
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to read from source array!"
+				return(EXIT_FAIL_READ);//CL_OUT_OF_RESOURCES
+			}
+		}
+		else
+		{
+			debugger->SetArgSize(4);
+			debugger->SetArgValue(n++, c_outputs);
+			debugger->SetArgValue(n++, c_results);
+			debugger->SetArgValue(n++, c_weights);
+			debugger->SetArgValue(n++, &n_triangles);
+
+			debugger->ExecuteKernel3(global, 0);
 		}
 
 		return EXIT_SUCCESS;

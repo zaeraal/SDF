@@ -100,13 +100,11 @@ namespace SDFStructures
 
 		float mean = CalcMean(values, size);
 
-		// create a copy of our values
-		std::vector<float> tmp(values);
 		for(unsigned int i = 0; i < size; i++)
 		{
-			tmp[i] = (tmp[i] - mean) * (tmp[i] - mean);
+			deviation += (values[i] - mean) * (values[i] - mean);
 		}
-		deviation = sqrt(CalcMean(tmp, size));
+		deviation = sqrt(deviation / (float)size);
 
 		return deviation;
 	}

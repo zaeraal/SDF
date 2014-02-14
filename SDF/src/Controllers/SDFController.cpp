@@ -213,10 +213,22 @@ namespace SDFController
 		err = OpenCLko->InitOpenCL();
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->LoadKernel("sdf.cl");
+		err = OpenCLko->LoadKernel1("sdf.cl");
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->BuildKernel();
+		err = OpenCLko->BuildKernel1();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->LoadKernel2("proces.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel2();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->LoadKernel3("smooth.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel3();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
 		err = OpenCLko->GetGPUVariables();
@@ -595,7 +607,7 @@ namespace SDFController
 	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list)
 	{
 		float maxval = pointik->ref->quality->value / 2.0f;
-		RadiusSearch2(pointik->P, maxval, m_root, ro_list);
+		RadiusSearch1(pointik->P, maxval, m_root, ro_list);
 
 		float sum_values = 0.0f;
 		float sum_weights = 0.0f;
@@ -1619,10 +1631,22 @@ namespace SDFController
 		err = OpenCLko->InitOpenCL();
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->LoadKernel("sdf2.cl");
+		err = OpenCLko->LoadKernel1("sdf2.cl");
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->BuildKernel();
+		err = OpenCLko->BuildKernel1();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->LoadKernel2("proces.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel2();
+		if(!CheckError(err, OpenCLko->debug_buffer)) return;
+
+		err = OpenCLko->LoadKernel3("smooth.cl");
+		if(!CheckError(err)) return;
+
+		err = OpenCLko->BuildKernel3();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
 		err = OpenCLko->GetGPUVariables();
@@ -1650,16 +1674,20 @@ namespace SDFController
 		cl_uint		*c_nodes;				// zoznam nodov v octree
 		cl_uint		*c_node_tria;			// zoznam trojuholnikov v nodoch v octree
 		cl_float4	*c_rays;				// zoznamy 30 lucov, ktore sa postupne vkladaju do OpenCL
-		cl_float	*c_outputs;			// vzdialenost a vaha pre kazdy luc, ktore je mojim vysledkom co si zapisem
+		cl_float	*c_outputs;				// vzdialenost pre kazdy luc
+		cl_float	*c_results;				// vzdialenost pre kazdy face, ktore je mojim vysledkom co si zapisem
+		cl_float	*c_weights;				// vahy
 
 		unsigned int s_triangles = n_triangles * 3 * sizeof(cl_float4);					// pocet trojuholnikov * 4 * 3 vertexy * float
 		unsigned int s_nodes = n_nodes * sizeof(cl_uint);								// pocet nodov * int
 		unsigned int s_node_tria = (n_leaves +  n_node_tria) * sizeof(cl_uint);			// (pocet nodov (velkosti) + pocet trojuholnikov) * int
 		unsigned int s_rays = n_rays * sizeof(cl_float4);								// 30 * 4 * float
-		unsigned int s_outputs = n_triangles * n_rays * sizeof(cl_float);				// trojuholniky * 30  * float
+		unsigned int s_outputs = n_triangles * n_rays * sizeof(cl_float);				// trojuholniky * 30 * float
+		unsigned int s_results = n_triangles * sizeof(cl_float);						// trojuholniky * float
+		unsigned int s_weights = n_rays * sizeof(cl_float);						// 30 * float
 
 		int ticks2 = GetTickCount();
-		err = OpenCLko->SetupMemory2(s_triangles, s_nodes, s_node_tria, s_rays, s_outputs);
+		err = OpenCLko->SetupMemory2(s_triangles, s_nodes, s_node_tria, s_rays, s_outputs, s_results, s_weights);
 		if(!CheckError(err)) return;
 		int ticks3 = GetTickCount();
 
@@ -1668,14 +1696,14 @@ namespace SDFController
 		c_node_tria = (cl_uint*) malloc(s_node_tria);//t_array;
 		c_rays = (cl_float4*) malloc(s_rays);
 		c_outputs = (cl_float*) malloc(s_outputs);
+		c_results = (cl_float*) malloc(s_results);
+		c_weights = (cl_float*) malloc(s_weights);
 
 		//-------------------------------------------
 		//---------------Memory Alloc------End-------
 		//-------------------------------------------
 
 		//------------------prealocated variables------------------	
-		float *weights = new float[n_rays];
-
 		Vector4 tangens, normal, binormal;
 		Mat4 t_mat;
 
@@ -1694,7 +1722,7 @@ namespace SDFController
 			c_rays[i].s[1] = ray.Y;
 			c_rays[i].s[2] = ray.Z;
 			c_rays[i].s[3] = 0.0f;
-			weights[i] = 180.0f - rndy[i];
+			c_weights[i] = 180.0f - rndy[i];
 		}
 		delete [] rndy;
 		delete [] rndx;
@@ -1782,14 +1810,36 @@ namespace SDFController
 		err = OpenCLko->LaunchKernel2(c_triangles, c_nodes, c_node_tria, oo_min, oo_max, bias, c_rays, n_rays, n_triangles, c_outputs);
 		if(!CheckError(err)) return;
 
-		OpenCLko->WaitForFinish();
+		//OpenCLko->WaitForFinish();
 
 		int ticks6 = GetTickCount();
+
+		float* c_cache = new float[n_rays];
+		for(unsigned int i = 0; i < n_rays; i++)
+			c_cache[i] = 0;
+
+		OpenCLko->global = n_triangles;
+		err = OpenCLko->LaunchKernel3(c_outputs, c_results, c_weights, n_triangles);
+		if(!CheckError(err)) return;
+
+		OpenCLko->WaitForFinish();
 
 		// spracuj ziskane hodnoty
 		float min = FLOAT_MAX;
 		float max = 0.0f;
-		float dist = 0.0f;
+
+		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+		for(unsigned int i = 0; i < n_triangles; i++)
+		{
+			current_face->data->quality->value = c_results[i];
+			if(current_face->data->quality->value < min)
+				min = current_face->data->quality->value;
+			if(current_face->data->quality->value > max)
+				max = current_face->data->quality->value;
+			
+			current_face = current_face->next;
+		}
+		/*float dist = 0.0f;
 		std::vector<float> rays;
 		std::vector<float> weightsx;
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
@@ -1816,7 +1866,7 @@ namespace SDFController
 			current_face = current_face->next;
 			rays.clear();
 			weightsx.clear();
-		}
+		}*/
 
 		int ticks7 = GetTickCount();
 
@@ -1843,14 +1893,15 @@ namespace SDFController
 
 		// Delete OpenCL to free GPU
 		delete OpenCLko;
-		delete weights;
 
 		// Free host memory
 		free(c_triangles);
 		free(c_rays);
 		free(c_outputs);
+		free(c_results);
 		free(c_nodes);
 		free(c_node_tria);
+		free(c_weights);
 	}
 
 	void CSDFController::DoSmoothing(LinkedList<Face> *triangles, float min, float max)

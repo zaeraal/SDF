@@ -15,13 +15,18 @@ namespace OpenCLForm
 		~COpenCL();
 
 		int InitOpenCL();
-		int LoadKernel(const char* cSourceFile);
-		int BuildKernel();
+		int LoadKernel1(const char* cSourceFile);
+		int LoadKernel2(const char* cSourceFile);
+		int LoadKernel3(const char* cSourceFile);
+		int BuildKernel1();
+		int BuildKernel2();
+		int BuildKernel3();
 		int GetGPUVariables();
 		int SetupMemory(unsigned int ss_triangles, unsigned int ss_vertices, unsigned int ss_origins, unsigned int ss_rays, unsigned int ss_targets, unsigned int ss_outputs);
-		int SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs);
+		int SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs, unsigned int ss_results, unsigned int ss_weights);
 		int LaunchKernel(cl_uint3	*c_triangles, cl_float4	*c_vertices, cl_uint *c_origins, cl_float4 *c_rays, cl_uint *c_targets, cl_float *c_outputs, cl_uint4 c_params);
 		int LaunchKernel2(cl_float4 *c_triangles, cl_uint *c_nodes, cl_uint *c_node_tria, cl_float4 o_min, cl_float4 o_max, cl_float bias, cl_float4 *c_rays, cl_uint n_rays, cl_uint n_triangles, cl_float *c_outputs);
+		int LaunchKernel3(cl_float *c_outputs, cl_float *c_results, cl_float *c_weights, cl_uint n_triangles);
 		void WaitForFinish();
 
 		cl_uint		num_cores;				// pocet paralelnych jednotiek
@@ -43,8 +48,12 @@ namespace OpenCLForm
 		cl_device_id device_id;		// compute device id
 		cl_context context;			// compute context
 		cl_command_queue commands;	// compute command queue
-		cl_program program;			// compute program
-		cl_kernel kernel;			// compute kernel
+		cl_program program1;			// compute program
+		cl_program program2;			// compute program
+		cl_program program3;			// compute program
+		cl_kernel kernel1;			// compute kernel
+		cl_kernel kernel2;			// compute kernel
+		cl_kernel kernel3;			// compute kernel
 		
 		size_t szKernelLength;		// Byte size of kernel code
 		char* cSourceCL;			// Buffer to hold source for compilation
@@ -58,6 +67,8 @@ namespace OpenCLForm
 		unsigned int s_rays;
 		unsigned int s_targets;
 		unsigned int s_outputs;
+		unsigned int s_weights;
+		unsigned int s_results;
 
 		// OpenCL Buffery
 		cl_mem b_triangles;
@@ -68,6 +79,8 @@ namespace OpenCLForm
 		cl_mem b_rays;
 		cl_mem b_targets;
 		cl_mem b_outputs;
+		cl_mem b_results;
+		cl_mem b_weights;
 
 		int moznost;
 	};
