@@ -3,6 +3,7 @@
 #include "SDFController.h"
 #include "MathHelper.h"
 #include "SDFOpenCL.h"
+#include "mtrand.h"
 
 #define FLOAT_MAX  99999.0f
 #define SQRT_THREE 1.7320508075f
@@ -604,14 +605,19 @@ namespace SDFController
 		tmp->quality->Smooth(_values, _weights);
 	}
 
-	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list)
+	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list, unsigned int poradie)
 	{
 		float maxval = pointik->ref->quality->value / 2.0f;
 		RadiusSearch1(pointik->P, maxval, m_root, ro_list);
 
-		float sum_values = 0.0f;
-		float sum_weights = 0.0f;
-
+		float weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, 0, maxval);
+		float sum_values = pointik->ref->quality->value * weight;
+		float sum_weights = weight;
+		if(poradie < 10000)
+		{
+			sum_values = 0;
+			sum_weights = 0;
+		}
 		LinkedList<ROctree>::Cell<ROctree>* tmp = ro_list->start;
 		while(tmp != NULL)
 		{
@@ -620,7 +626,7 @@ namespace SDFController
 				float distanc = pointik->P.Dist(tmp->data->pointy[i]->P);
 				if(distanc <= maxval)
 				{
-					float weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
+					weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
 					sum_values += tmp->data->pointy[i]->ref->quality->value * weight;
 					sum_weights += weight;
 				}
@@ -1943,39 +1949,56 @@ namespace SDFController
 	{
 		int ticks1 = GetTickCount();
 		int ticks2 = 0;
+		int ticks3 = 0;
 
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
 
 		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
 			LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
+			const unsigned int tsize = triangles->GetSize();
+			PPoint **point_array = new PPoint*[tsize];
+			unsigned int count = 0;
 			while(current_face != NULL)
 			{
 				// projektnute body
 				PPoint* tmp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
-				point_list->InsertToEnd(tmp);
+				point_array[count] = tmp;
 				current_face = current_face->next;
+				count++;
 			}
+			if(tsize > 10000)
+			{
+				RandomShuffle(point_array, tsize);
+			}
+			count = 0;
+			while((count < 10000) && (count < tsize))
+			{
+				point_list->InsertToEnd(point_array[count]);
+				count++;
+			}
+			ticks2 = GetTickCount();
 			float b_size;
 			Vector4 b_stred = ComputePointBoundary(point_list, b_size);
 			ROctree* m_root = CreateROctree(point_list, b_size, b_stred);
 
-			LinkedList<PPoint>::Cell<PPoint>* current_point = point_list->start;
 			LinkedList<ROctree>* ro_list = new LinkedList<ROctree>();
 			ro_list->Preallocate(10000);
 
-			ticks2 = GetTickCount();
+			ticks3 = GetTickCount();
 
-			while(current_point != NULL)
+			for(unsigned int i = 0; i < tsize; i++)
 			{
-				Smooth2(current_point->data, m_root, ro_list);
-				current_point->data->ref->quality->smoothed = current_point->data->diameter;
-				current_point->data->ref->quality->Normalize(min, max, 4.0);
-				current_point = current_point->next;
+				Smooth2(point_array[i], m_root, ro_list, i);
+				point_array[i]->ref->quality->smoothed = point_array[i]->diameter;
+				point_array[i]->ref->quality->Normalize(min, max, 4.0);
 				ro_list->Clear();
 			}
 			delete ro_list;
-			point_list->CompleteDelete();
+			for(unsigned int i = 0; i < tsize; i++)
+				delete point_array[i];
+			delete [] point_array;
+			delete point_list;
 		}
 		else
 		{
@@ -1990,12 +2013,13 @@ namespace SDFController
 		Nastavenia->DEBUG_Min_SDF = min;
 		Nastavenia->DEBUG_Max_SDF = max;
 
-		int ticks3 = GetTickCount();
+		int ticks4 = GetTickCount();
 
 		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
-			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks2 - ticks1)+ "ms"));
-			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks3 - ticks2)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Random Data Picking: " + (ticks2 - ticks1)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks3 - ticks2)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks4 - ticks3)+ "ms"));
 		}
 	}
 
@@ -2161,5 +2185,21 @@ namespace SDFController
 			m_root->Build(NULL, 0);
 
 		return m_root;
+	}
+
+	void CSDFController::RandomShuffle(PPoint **c_array, unsigned int size)
+	{
+		PPoint* temp = NULL;
+		int ridx = 0;
+		MTRand_int32 irand(123456);
+
+		for(unsigned int i = size-1; i > 0; i--) // one pass through array
+		{
+			ridx = irand()%(i+1);// index = 0 to j
+			temp = c_array[ridx];// value will be moved to end element
+			c_array[ridx] = c_array[i];// end element value in random spot
+			c_array[i] = temp;// selected element moved to end. This value is final
+		}
+		return;
 	}
 }

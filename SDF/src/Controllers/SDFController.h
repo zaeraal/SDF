@@ -22,7 +22,7 @@ namespace SDFController
 		float* ComputeGaussianKernel(int radius);
 		float ComputeGaussian(int radius, float value, float maxvalue);
 		void Smooth(Face* tmp, float* kernel, int kernel_size);
-		void Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list);
+		void Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list, unsigned int poradie);
 		HashTable<Face>* GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max);
 		void ComputeTNB(Face* tmp, Vector4& tang, Vector4& binor, Vector4& norm);
 		int first_node(float tx0, float ty0, float tz0, float txm, float tym, float tzm);
@@ -46,6 +46,7 @@ namespace SDFController
 		void RadiusSearch2(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees);
 		Vector4 ComputePointBoundary(LinkedList<PPoint>* point_list, float &b_size);
 		ROctree* CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred);
+		void RandomShuffle(PPoint **c_array, unsigned int size);
 	private:
 		float diagonal;
 		CAssimp* loggger;

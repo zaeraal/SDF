@@ -126,6 +126,9 @@
     <ClCompile Include="src\Structures\Mesh\PPoint.cpp">
       <Filter>Source Files\Structures\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="src\Helpers\mtrand.cpp">
+      <Filter>Source Files\Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -202,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="src\Structures\Mesh\PPoint.h">
       <Filter>Header Files\Structures\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Helpers\mtrand.h">
+      <Filter>Header Files\Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

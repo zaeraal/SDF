@@ -10,6 +10,7 @@ void GetDegrees(float& AngleX, float& Angley);
 Vector4 CalcRayFromAngle(float AngleX, float Angley);
 void CalcAnglesFromRay(Vector4 ray, float& AngleX, float& Angley);
 
+// Möller Ray - Triangle intersection algorithm
 bool rayIntersectsTriangle(Vector4 p, Vector4 d, Vector4 v0, Vector4 v1, Vector4 v2, float& t);
 
 /********************************************************/

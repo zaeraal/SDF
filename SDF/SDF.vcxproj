@@ -108,6 +108,7 @@
     <ClCompile Include="src\Controllers\SDFController.cpp" />
     <ClCompile Include="src\Controllers\VCG_lib.cpp" />
     <ClCompile Include="src\Helpers\MathHelper.cpp" />
+    <ClCompile Include="src\Helpers\mtrand.cpp" />
     <ClCompile Include="src\Helpers\SDFSettings.cpp" />
     <ClCompile Include="src\Helpers\StringHelper.cpp" />
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="src\Controllers\SDFController.h" />
     <ClInclude Include="src\Controllers\VCG_lib.h" />
     <ClInclude Include="src\Helpers\MathHelper.h" />
+    <ClInclude Include="src\Helpers\mtrand.h" />
     <ClInclude Include="src\Helpers\SDFSettings.h" />
     <ClInclude Include="src\Helpers\StringHelper.h" />
     <ClInclude Include="src\Structures\Generic\HashTable.h" />
