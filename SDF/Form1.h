@@ -1255,7 +1255,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 		OpenGL->Render();
 		OpenGL->SwapOpenGLBuffers();
 
-		
+		MController->Look_X = OpenGL->Look_X;
+		MController->Look_Y = OpenGL->Look_Y;
+		MController->Look_Z = OpenGL->Look_Z;
+
 		if(MController->selected != NULL)
 		{
 			this->TB_Face_ID->Text = "" + MController->selected->number;

@@ -14,6 +14,7 @@ namespace OpenCLDebugger
 		void ExecuteKernel( size_t   /* global_work_size */, size_t   /* local_work_size */);
 		void ExecuteKernel2( size_t   /* global_work_size */, size_t   /* local_work_size */);
 		void ExecuteKernel3( size_t   /* global_work_size */, size_t   /* local_work_size */);
+		void ExecuteKernel4( size_t   /* global_work_size */, size_t   /* local_work_size */);
 		unsigned int nodeCount;
 		unsigned int triangleCount;
 		unsigned int nn_triangles;
@@ -22,6 +23,7 @@ namespace OpenCLDebugger
 		void** args;
 		cl_uint arg_size;
 		// pomocne OpenCL funkcie
+		cl_float cl_distance(cl_float4 a, cl_float4 b);
 		cl_float4 cl_minus(cl_float4 a, cl_float4 b);
 		cl_float4 cl_plus(cl_float4 a, cl_float4 b);
 		cl_float cl_dot(cl_float4 a, cl_float4 b);
@@ -95,6 +97,15 @@ namespace OpenCLDebugger
 			float *c_results,
 			float *weights,
 			const cl_uint n_triangles,
+			const cl_uint gid
+			);
+		void smooth(const cl_float4 *c_points,
+			const cl_float4 *c_node_origins,
+			const cl_uint *c_nodes,
+			float *c_results,
+			const float weight,
+			const cl_uint n_points,
+			const float o_size,
 			const cl_uint gid
 			);
 	};

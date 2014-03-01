@@ -74,6 +74,11 @@ namespace OpenGLForm
 			{
 				SetRotation(c_w-(360.0f/(float)Width)*(float)(tmpx-Last_X), c_h-(180.0f/(float)Height)*(float)(tmpy-Last_Y));
 			}
+			if(m.WParam.ToInt32() & MK_MBUTTON)
+			{
+				//SetRotation(c_w-(360.0f/(float)Width)*(float)(tmpx-Last_X), c_h-(180.0f/(float)Height)*(float)(tmpy-Last_Y));
+			}
+			
 			SetLastMouse(tmpx, tmpy);
 				 
 		}
@@ -152,7 +157,7 @@ namespace OpenGLForm
 			// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 			gluLookAt (X, Y, Z, 0, 0, 0, 0.0, 1.0, 0.0);*/
 
-			glColor3f(1.0f,1.0f,1.0f);							// biela farba
+			glColor3f(0.0f,0.0f,0.0f);							// biela farba
 			GLUquadricObj *p = gluNewQuadric();
 			gluQuadricDrawStyle(p, GLU_LINE);
 			gluSphere(p, 1.0f, 20, 20);
@@ -215,6 +220,9 @@ namespace OpenGLForm
 		// gluLookAt (kde som ja, kam pozeram, kde je UP vector)
 		gluLookAt (X, Y, Z, c_X, c_Y, c_Z, 0.0, 1.0, 0.0);
 
+		Look_X = c_X - X;
+		Look_Y = c_Y - Y;
+		Look_Z = c_Z - Z;
 		//GLfloat LightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 		//glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 	}
@@ -315,7 +323,7 @@ namespace OpenGLForm
 		glLoadIdentity();
 
 		glShadeModel(GL_SMOOTH);							// Enable smooth shading
-		glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Background
+		glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// Background
 		glClearDepth(1.0f);									// Depth buffer setup
 		glEnable(GL_DEPTH_TEST);							// Enables depth testing
 		glDepthFunc(GL_LEQUAL);								// The type of depth testing to do

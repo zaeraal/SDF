@@ -56,7 +56,7 @@ namespace ModelController
 		bool show_octree;
 		bool show_normals;
 		Face* selected;
-
+		GLfloat Look_X, Look_Y, Look_Z;
 	private:
 		CAssimp* Assimp;
 		CVCG* VCGlib;

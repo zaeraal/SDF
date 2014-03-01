@@ -10,6 +10,7 @@ namespace MeshStructures
 		P.Init(x, y, z, 1.0f);
 		ref = refference;
 		diameter = 0.0f;
+		number = 0;
 	}
 
 	PPoint::PPoint(Vector4 position, Face* refference)

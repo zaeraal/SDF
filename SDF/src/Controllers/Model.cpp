@@ -513,6 +513,12 @@ namespace ModelController
 	// vykresli CModel
 	void CModel::DrawModel()
 	{
+		Vector4 look = Vector4(Look_X, Look_Y, Look_Z, 0.0f);
+		Vector4 upp = Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+		Vector4 rightt = look % upp; rightt.Normalize();
+		upp = look % rightt; upp.Normalize();
+		Vector4 projected;
+
 		if((Nastavenia->VISUAL_State == VISUAL_DEFAULT) || (Nastavenia->VISUAL_State == VISUAL_SDF))
 			glEnable(GL_LIGHTING);
 		else
@@ -524,7 +530,7 @@ namespace ModelController
 			glEnable(GL_DITHER);
 
 		float alpha = (float)Nastavenia->VISUAL_Alpha / 255.0f;
-		glColor4f(1.0f,1.0f,1.0f, alpha);							// biela farba
+		glColor4f(0.75f,0.75f,0.75f,alpha);							// biela farba
 		{
 			LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 			while(tmp != NULL)
@@ -534,14 +540,28 @@ namespace ModelController
 					tmp = tmp->next;
 					continue;
 				}
-
+				if((Nastavenia->VISUAL_State != VISUAL_PICKING) && (Nastavenia->VISUAL_Points == true))
+				{
+					glColor4f(1.0f,0.0f,0.0f,0.75f);			// red
+					glBegin(GL_QUADS);
+					glColor4f(1.0f,0.0f,0.0f,0.75f);			// red
+					float t_sf = b_sf * 0.02f;
+					glNormal3f(Look_X, Look_Y, Look_Z);
+					projected = tmp->data->center - tmp->data->normal * tmp->data->quality->smoothed * 0.5f;
+					glVertex3f(projected.X - (rightt.X + upp.X) * t_sf, projected.Y - (rightt.Y + upp.Y) * t_sf, projected.Z - (rightt.Z + upp.Z) * t_sf);
+					glVertex3f(projected.X + (rightt.X - upp.X) * t_sf, projected.Y + (rightt.Y - upp.Y) * t_sf, projected.Z + (rightt.Z - upp.Z) * t_sf);
+					glVertex3f(projected.X + (rightt.X + upp.X) * t_sf, projected.Y + (rightt.Y + upp.Y) * t_sf, projected.Z + (rightt.Z + upp.Z) * t_sf);
+					glVertex3f(projected.X - (rightt.X - upp.X) * t_sf, projected.Y - (rightt.Y - upp.Y) * t_sf, projected.Z - (rightt.Z - upp.Z) * t_sf);
+					glEnd();
+					glColor4f(0.75f,0.75f,0.75f,alpha);
+				}
 				// nech vykresli selectnuty trojuholnik
 				if(Nastavenia->VISUAL_State == VISUAL_DEFAULT)
 				{
 					if(tmp->data == selected)
 						glColor4f(1.0f,0.5f,0.0f,alpha);		// orange
 					else
-						glColor4f(1.0f,1.0f,1.0f,alpha);		// white
+						glColor4f(0.75f,0.75f,0.75f,alpha);		// white
 				}
 				// nech zorbazi picking hodnoty
 				else if(Nastavenia->VISUAL_State == VISUAL_PICKING)

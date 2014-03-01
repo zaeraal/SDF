@@ -69,6 +69,7 @@ __kernel void sdf(__global const uint3 *c_triangles,
 	float4 v2 = c_vertices[c_triangles[c_origins[ref_triangle]].z];
 	const float4 center = (v0 + v1 + v2) / 3.0f;
 	const float4 normal = normalize((-1.0f)*cross(v1-v0, v2-v0));
+	float4 tnormal;
 	
 	for(i = 0; i < c_params.z; i++)
 	{
@@ -82,10 +83,12 @@ __kernel void sdf(__global const uint3 *c_triangles,
 		v1 = c_vertices[c_triangles[ref_triangle].y];
 		v2 = c_vertices[c_triangles[ref_triangle].z];
 
+
 		dist2 = rayIntersectsTriangle(center, ray, v0, v1, v2);
 		if(dist2 < FLOAT_MAX)
 		{
-			theta = acos( dot(ray, normal) / length(ray) );
+			tnormal = normalize(cross(v1-v0, v2-v0));
+			theta = acos( dot(ray, tnormal) / length(ray) );
 			theta = theta * (180.0f / M_PI_F);
 			if((theta < 90.0f) && (dist2 < dist))
 				dist = dist2;

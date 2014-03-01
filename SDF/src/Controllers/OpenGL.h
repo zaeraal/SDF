@@ -18,6 +18,7 @@ namespace OpenGLForm
 		virtual System::Void Render(System::Void);
 		System::Void SwapOpenGLBuffers(System::Void) { SwapBuffers(m_hDC); }
 		void ReloadBoundary();
+		GLfloat Look_X, Look_Y, Look_Z;
 	private:
 		HDC m_hDC;
 		HGLRC m_hglrc;

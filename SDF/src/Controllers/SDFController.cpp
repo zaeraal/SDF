@@ -608,7 +608,7 @@ namespace SDFController
 	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list, unsigned int poradie)
 	{
 		float maxval = pointik->ref->quality->value / 2.0f;
-		RadiusSearch1(pointik->P, maxval, m_root, ro_list);
+		RadiusSearch2(pointik->P, maxval, m_root, ro_list);
 
 		float weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, 0, maxval);
 		float sum_values = pointik->ref->quality->value * weight;
@@ -631,7 +631,7 @@ namespace SDFController
 					sum_weights += weight;
 				}
 			}
-			tmp->data->pointy;
+			// tmp->data->pointy; // wtf? :D
 			tmp = tmp->next;
 		}
 
@@ -1673,15 +1673,13 @@ namespace SDFController
 		OpenCLko->global = (n_triangles * n_rays);
 
 		//-------------------------------------------
-		//---------------Memory Alloc------Begin-----
+		//---------------Memory Alloc-1----Begin-----
 		//-------------------------------------------
-
 		cl_float4	*c_triangles;			// zoznam trojuholnikov obsahujucich 3 vertexy
 		cl_uint		*c_nodes;				// zoznam nodov v octree
 		cl_uint		*c_node_tria;			// zoznam trojuholnikov v nodoch v octree
 		cl_float4	*c_rays;				// zoznamy 30 lucov, ktore sa postupne vkladaju do OpenCL
 		cl_float	*c_outputs;				// vzdialenost pre kazdy luc
-		cl_float	*c_results;				// vzdialenost pre kazdy face, ktore je mojim vysledkom co si zapisem
 		cl_float	*c_weights;				// vahy
 
 		unsigned int s_triangles = n_triangles * 3 * sizeof(cl_float4);					// pocet trojuholnikov * 4 * 3 vertexy * float
@@ -1689,11 +1687,10 @@ namespace SDFController
 		unsigned int s_node_tria = (n_leaves +  n_node_tria) * sizeof(cl_uint);			// (pocet nodov (velkosti) + pocet trojuholnikov) * int
 		unsigned int s_rays = n_rays * sizeof(cl_float4);								// 30 * 4 * float
 		unsigned int s_outputs = n_triangles * n_rays * sizeof(cl_float);				// trojuholniky * 30 * float
-		unsigned int s_results = n_triangles * sizeof(cl_float);						// trojuholniky * float
-		unsigned int s_weights = n_rays * sizeof(cl_float);						// 30 * float
+		unsigned int s_weights = n_rays * sizeof(cl_float);								// 30 * float
 
 		int ticks2 = GetTickCount();
-		err = OpenCLko->SetupMemory2(s_triangles, s_nodes, s_node_tria, s_rays, s_outputs, s_results, s_weights);
+		err = OpenCLko->SetupMemory2(s_triangles, s_nodes, s_node_tria, s_rays, s_outputs);
 		if(!CheckError(err)) return;
 		int ticks3 = GetTickCount();
 
@@ -1702,11 +1699,10 @@ namespace SDFController
 		c_node_tria = (cl_uint*) malloc(s_node_tria);//t_array;
 		c_rays = (cl_float4*) malloc(s_rays);
 		c_outputs = (cl_float*) malloc(s_outputs);
-		c_results = (cl_float*) malloc(s_results);
 		c_weights = (cl_float*) malloc(s_weights);
 
 		//-------------------------------------------
-		//---------------Memory Alloc------End-------
+		//---------------Memory Alloc-1----End-------
 		//-------------------------------------------
 
 		//------------------prealocated variables------------------	
@@ -1820,6 +1816,23 @@ namespace SDFController
 
 		int ticks6 = GetTickCount();
 
+		//-------------------------------------------
+		//---------------Memory Alloc-2----Begin-----
+		//-------------------------------------------
+
+		cl_float	*c_results;				// vzdialenost pre kazdy face, ktore je mojim vysledkom co si zapisem
+
+		unsigned int s_results = n_triangles * sizeof(cl_float);						// trojuholniky * float
+
+		err = OpenCLko->SetupMemory3(s_results, s_weights);
+		if(!CheckError(err)) return;
+
+		c_results = (cl_float*) malloc(s_results);
+
+		//-------------------------------------------
+		//---------------Memory Alloc-2----End-------
+		//-------------------------------------------
+
 		float* c_cache = new float[n_rays];
 		for(unsigned int i = 0; i < n_rays; i++)
 			c_cache[i] = 0;
@@ -1830,7 +1843,7 @@ namespace SDFController
 
 		OpenCLko->WaitForFinish();
 
-		// spracuj ziskane hodnoty
+		// spracuj ziskane hodnoty (spracovane nizsie)
 		float min = FLOAT_MAX;
 		float max = 0.0f;
 
@@ -1875,13 +1888,171 @@ namespace SDFController
 		}*/
 
 		int ticks7 = GetTickCount();
-
+		int ticks8 = GetTickCount();
+		int ticks9 = GetTickCount();
 		if(Nastavenia->SDF_Smooth_Projected == true)
-			DoSmoothing2(triangles, min, max);
+		{
+			//DoSmoothing2(triangles, min, max);
+
+			current_face = triangles->start;
+
+			if(Nastavenia->SDF_Smoothing_Radius > 0)
+			{
+				//LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
+				const unsigned int tsize = triangles->GetSize();
+				PPoint **point_array = new PPoint*[tsize];
+				unsigned int count = 0;
+				while(current_face != NULL)
+				{
+					// projektnute body
+					PPoint* tmp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
+					tmp->diameter = current_face->data->quality->value;
+					point_array[count] = tmp;
+					current_face = current_face->next;
+					count++;
+				}
+				if(tsize > 10000)
+				{
+					RandomShuffle(point_array, tsize);
+				}
+				count = tsize;
+
+				if(count > 10000)
+					count = 10000;
+
+				ticks8 = GetTickCount();
+				float b_size = 0.0f;
+				unsigned int n_pnodes = 0;
+				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth - 2;
+				Vector4 b_stred = ComputePointBoundary2(point_array, count, b_size);
+				ROctree* m_root = CreateROctree2(point_array, count, b_size, b_stred, n_pnodes);
+				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth + 2;
+
+				//-------------------------------------------
+				//---------------Memory Alloc-3----Begin-----
+				//-------------------------------------------
+
+				cl_float4	*c_points;				// zoznam pointov obsahujucich X, Y, Z, SDF
+				cl_float4	*c_pnode_origins;		// zoznam stredov nodov
+				cl_uint		*c_pnodes;				// zoznam nodov v octree
+
+				unsigned int s_points = tsize * sizeof(cl_float4);							// pocet trojuholnikov * 4  * float
+				unsigned int s_pnode_origins = n_pnodes * sizeof(cl_float4);				// pocet nodov * 4  * float
+				unsigned int s_pnodes = n_pnodes * sizeof(cl_uint);							// pocet nodov * uint
+
+				err = OpenCLko->SetupMemory4(s_points, s_pnodes, s_pnode_origins);
+				if(!CheckError(err)) return;
+
+				c_points = (cl_float4*) malloc(s_points);
+				c_pnode_origins = (cl_float4*) malloc(s_pnode_origins);
+				c_pnodes = (cl_uint*) malloc(s_pnodes);
+
+				//-------------------------------------------
+				//---------------Memory Alloc-3----End-------
+				//-------------------------------------------
+
+				for (unsigned int i = 0; i < tsize; i++)
+				{
+					for(int ii = 0; ii < 3; ii++)
+					{
+						c_points[i].s[0] = point_array[i]->P.X;
+						c_points[i].s[1] = point_array[i]->P.Y;
+						c_points[i].s[2] = point_array[i]->P.Z;
+						c_points[i].s[3] = point_array[i]->diameter;
+						point_array[i]->number = i;
+					}
+				}
+
+
+				{
+					ROctree** oc_array = new ROctree*[n_pnodes];
+
+					ROctree* node = m_root;
+					unsigned int end = 0;
+					oc_array[0] = m_root;
+					unsigned int tidx = 0;
+					bool jeden_krat = true;
+					for(unsigned int idx = 0; idx < n_pnodes; idx++)
+					{
+						node = oc_array[idx];
+						if(node->isLeaf)
+						{
+							unsigned int safe_num = node->pointy[0]->number << 8;
+							c_pnodes[idx] = safe_num;
+							for(int ii = 0; ii < 3; ii++)
+							{
+								c_pnode_origins[idx].s[0] = node->origin.X;
+								c_pnode_origins[idx].s[1] = node->origin.Y;
+								c_pnode_origins[idx].s[2] = node->origin.Z;
+								c_pnode_origins[idx].s[3] = 1.0f;
+							}
+							continue;
+						}
+						jeden_krat = true;
+						for(int i = 0; i < 8; i++)
+						{
+							if((node->sons >> i) & 1)
+							{
+								end++;
+								if(jeden_krat == true)
+								{
+									unsigned int safe_end = end << 8;
+									safe_end = safe_end + node->sons;
+									c_pnodes[idx] = safe_end;
+									for(int ii = 0; ii < 3; ii++)
+									{
+										c_pnode_origins[idx].s[0] = node->origin.X;
+										c_pnode_origins[idx].s[1] = node->origin.Y;
+										c_pnode_origins[idx].s[2] = node->origin.Z;
+										c_pnode_origins[idx].s[3] = 1.0f;
+									}
+									jeden_krat = false;
+								}
+								oc_array[end] = node->son[i];
+							}
+						}
+					}
+					delete [] oc_array;
+				}
+				ticks9 = GetTickCount();
+				cl_float wei = (float)Nastavenia->SDF_Smoothing_Radius;
+				err = OpenCLko->LaunchKernel4(c_points, c_pnode_origins, c_pnodes, c_results, tsize, b_size, wei);
+				if(!CheckError(err)) return;
+
+				OpenCLko->WaitForFinish();
+				
+				for(unsigned int i = 0; i < tsize; i++)
+				{
+					point_array[i]->ref->quality->smoothed = c_results[i];
+					point_array[i]->ref->quality->Normalize(min, max, 4.0);
+				}
+
+				for(unsigned int i = 0; i < tsize; i++)
+					delete point_array[i];
+				delete [] point_array;
+				delete m_root;
+
+				free(c_points);
+				free(c_pnodes);
+				free(c_pnode_origins);
+
+			}
+			else
+			{
+				while(current_face != NULL)
+				{
+					current_face->data->quality->smoothed = current_face->data->quality->value;
+					current_face->data->quality->Normalize(min, max, 4.0);
+					current_face = current_face->next;
+				}
+			}
+			Nastavenia->DEBUG_Min_SDF = min;
+			Nastavenia->DEBUG_Max_SDF = max;
+		}
 		else
 			DoSmoothing(triangles, min, max);
 
-		int ticks8 = GetTickCount();
+		int ticks10 = GetTickCount();
 
 
 		loggger->logInfo(MarshalString("Inicializacia OpenCL: " + (ticks2 - ticks1)+ "ms"));
@@ -1890,8 +2061,14 @@ namespace SDFController
 		loggger->logInfo(MarshalString("Nacitanie zoznamu trojuholnikov: " + (ticks5 - ticks4)+ "ms"));
 		loggger->logInfo(MarshalString("!!VYPOCET OpenCL!!: " + (ticks6 - ticks5)+ "ms"));
 		loggger->logInfo(MarshalString("Spracovanie: " + (ticks7 - ticks6)+ "ms"));
-		loggger->logInfo(MarshalString("Smoothing: " + (ticks8 - ticks7)+ "ms"));
-		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (ticks8 - ticks1)+ "ms, pre " + n_triangles + " trojuholnikov"));
+		if(Nastavenia->SDF_Smoothing_Radius > 0)
+		{
+			loggger->logInfo(MarshalString("Smoothing - Random Data Picking: " + (ticks8 - ticks7)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks9 - ticks8)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks10 - ticks9)+ "ms"));
+		}
+		loggger->logInfo(MarshalString("Smoothing: " + (ticks10 - ticks7)+ "ms"));
+		loggger->logInfo(MarshalString("Celkovy vypocet trval: " + (ticks10 - ticks1)+ "ms, pre " + n_triangles + " trojuholnikov"));
 		//loggger->logInfo(MarshalString("pocet: " + pocet));
 		//loggger->logInfo(MarshalString("min a max pre SDF su: " + min + ", "+max));
 		//loggger->logInfo(MarshalString("nmin a nmax pre SDF su: " + nmin + ", "+nmax));
@@ -1986,7 +2163,7 @@ namespace SDFController
 			ro_list->Preallocate(10000);
 
 			ticks3 = GetTickCount();
-
+			// toto je to co robim
 			for(unsigned int i = 0; i < tsize; i++)
 			{
 				Smooth2(point_array[i], m_root, ro_list, i);
@@ -1999,6 +2176,7 @@ namespace SDFController
 				delete point_array[i];
 			delete [] point_array;
 			delete point_list;
+			delete m_root;
 		}
 		else
 		{
@@ -2064,6 +2242,31 @@ namespace SDFController
 		U8              tstack[10];
 	};
 
+	// funguje to tak ze mi to najde dalsi index na ktory mam ist
+	const unsigned char c_pipc8LUT[] =
+	{
+		8, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
+	};
+	unsigned char pipc8(unsigned char mask)
+	{
+		return c_pipc8LUT[mask];
+	}
+
 	// stack based
 	void CSDFController::RadiusSearch2(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees)
 	{
@@ -2071,7 +2274,7 @@ namespace SDFController
 		ROctree* tmp = NULL;
 		int idx = 0;
 		U8 id = 0;
-
+		U8 sons = 0;
 		stack.write(idx, node, 0); 
 		while (idx >= 0)
 		{
@@ -2088,24 +2291,36 @@ namespace SDFController
 					idx--;
 					continue;
 				}
-				if(CheckValid(tmp->sons, id) == true)
+				//if(CheckValid(tmp->sons, id) == true)
 				{
 					float vzdialenost = center.Dist(tmp->son[id]->origin) - (tmp->son[id]->size * SQRT_THREE);
 					if(vzdialenost <= dist)
 					{
-						stack.write(idx, tmp, id + 1);
-						stack.write(idx + 1, tmp->son[id], 0);
+						stack.write(idx + 1, tmp->son[id], pipc8(tmp->son[id]->sons));
+						sons = tmp->sons;
+						sons = sons >> (id + 1);
+						sons = sons << (id + 1);
+						id = pipc8(sons);
+						stack.write(idx, tmp, id);
 						idx = idx + 1;
 					}
 					else
 					{
-						stack.write(idx, tmp, id + 1); 
+						sons = tmp->sons;
+						sons = sons >> (id + 1);
+						sons = sons << (id + 1);
+						id = pipc8(sons);
+						stack.write(idx, tmp, id); 
 					}
 				}
-				else
+				/*else
 				{
-					stack.write(idx, tmp, id + 1); 
-				}
+					sons = tmp->sons;
+					sons = sons >> (id + 1);
+					sons = sons << (id + 1);
+					id = pipc8(sons);
+					stack.write(idx, tmp, id); 
+				}*/
 			}
 		}
 	}
@@ -2133,6 +2348,52 @@ namespace SDFController
 				maxz = tmp->data->P.Z;
 
 			tmp = tmp->next;
+		}
+
+		Vector4 b_stred = Vector4((minx+maxx) / 2.0f, (miny+maxy) / 2.0f, (minz+maxz) / 2.0f);
+		float sizex = 0;
+		float sizey = 0;
+		float sizez = 0;
+
+		if(((minx<=0.0)&&(maxx<=0.0)) || ((minx>=0.0)&&(maxx>=0.0)))
+			sizex = abs(maxx-minx);
+		else
+			sizex = abs(minx-maxx);
+
+		if(((miny<=0.0)&&(maxy<=0.0)) || ((miny>=0.0)&&(maxy>=0.0)))
+			sizey = abs(maxy-miny);
+		else
+			sizey = abs(miny-maxy);
+
+		if(((minz<=0.0)&&(maxz<=0.0)) || ((minz>=0.0)&&(maxz>=0.0)))
+			sizez = abs(maxz-minz);
+		else
+			sizez = abs(minz-maxz);
+
+		b_size = max(max(sizex, sizey), sizez) / 2.0f + 0.005f;
+		return b_stred;
+	}
+
+	Vector4 CSDFController::ComputePointBoundary2(PPoint **point_list, unsigned int psize, float &b_size)
+	{
+		float minx = 99999.0, miny = 99999.0, minz = 99999.0;
+		float maxx = -99999.0, maxy = -99999.0, maxz = -99999.0;
+
+		for(unsigned int i = 0; i < psize; i++)
+		{
+			if(point_list[i]->P.X < minx)
+				minx = point_list[i]->P.X;
+			if(point_list[i]->P.Y < miny)
+				miny = point_list[i]->P.Y;
+			if(point_list[i]->P.Z < minz)
+				minz = point_list[i]->P.Z;
+
+			if(point_list[i]->P.X > maxx)
+				maxx = point_list[i]->P.X;
+			if(point_list[i]->P.Y > maxy)
+				maxy = point_list[i]->P.Y;
+			if(point_list[i]->P.Z > maxz)
+				maxz = point_list[i]->P.Z;
 		}
 
 		Vector4 b_stred = Vector4((minx+maxx) / 2.0f, (miny+maxy) / 2.0f, (minz+maxz) / 2.0f);
@@ -2187,6 +2448,20 @@ namespace SDFController
 		return m_root;
 	}
 
+	ROctree* CSDFController::CreateROctree2(PPoint** pointiky, unsigned int siz, float b_size, Vector4 b_stred, unsigned int &n_pnodes)
+	{
+		ROctree* m_root = new ROctree(1, b_size, b_stred);
+
+		if(siz > 0)
+		{
+			unsigned int leafCount = 0, triangleCount = 0;
+			m_root->Build2(pointiky, 0, siz, n_pnodes, triangleCount, leafCount);
+		}
+		else
+			m_root->Build(NULL, 0);
+
+		return m_root;
+	}
 	void CSDFController::RandomShuffle(PPoint **c_array, unsigned int size)
 	{
 		PPoint* temp = NULL;

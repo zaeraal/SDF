@@ -46,6 +46,9 @@ namespace OpenCLForm
 		b_outputs = NULL;
 		b_results = NULL;
 		b_weights = NULL;
+		b_points = NULL;
+		b_pnodes = NULL;
+		b_pnode_origins = NULL;
 		moznost = 0;
 
 		debugger = new COpenCLDebug();
@@ -63,13 +66,10 @@ namespace OpenCLForm
 		}
 		else if(moznost == 2)
 		{
-			clReleaseMemObject(b_triangles);
-			clReleaseMemObject(b_nodes);
-			clReleaseMemObject(b_node_tria);
-			clReleaseMemObject(b_rays);
-			clReleaseMemObject(b_outputs);
 			clReleaseMemObject(b_results);
-			clReleaseMemObject(b_weights);
+			clReleaseMemObject(b_points);
+			clReleaseMemObject(b_pnodes);
+			clReleaseMemObject(b_pnode_origins);
 		}
 		clReleaseProgram(program1);
 		clReleaseKernel(kernel1);
@@ -160,7 +160,7 @@ namespace OpenCLForm
 		cSourceCL = NULL;
 
 		// Read the OpenCL kernel in from source file
-		std::string depth = MarshalString("#define STACK_SIZE  " + (Nastavenia->OCTREE_Depth - 4));
+		std::string depth = MarshalString("#define STACK_SIZE  " + (Nastavenia->OCTREE_Depth - 2));
 		cSourceCL = oclLoadProgSource(cSourceFile, depth.c_str(), &szKernelLength);
 
 		if(cSourceCL != NULL)
@@ -352,7 +352,7 @@ namespace OpenCLForm
 		return EXIT_SUCCESS;
 	}
 
-	int COpenCL::SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs, unsigned int ss_results, unsigned int ss_weights)
+	int COpenCL::SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs)
 	{
 		moznost = 2;
 		s_triangles = ss_triangles;
@@ -360,8 +360,6 @@ namespace OpenCLForm
 		s_node_tria = ss_node_tria;
 		s_rays = ss_rays;
 		s_outputs = ss_outputs;
-		s_weights = ss_weights;
-		s_results = ss_results;
 
 		err = CL_SUCCESS;
 
@@ -390,13 +388,31 @@ namespace OpenCLForm
 			//"Error: Failed to allocate memory!"
 			return EXIT_FAIL_MEMORY;
 		}
-		b_outputs = clCreateBuffer(context, CL_MEM_WRITE_ONLY, s_outputs, NULL, &err);
+		b_outputs = clCreateBuffer(context, CL_MEM_READ_WRITE, s_outputs, NULL, &err);
 		if (err != CL_SUCCESS)
 		{
 			//"Error: Failed to allocate memory!"
 			return EXIT_FAIL_MEMORY;
 		}
-		b_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY, s_results, NULL, &err);
+
+		return EXIT_SUCCESS;
+	}
+
+	int COpenCL::SetupMemory3(unsigned int ss_results, unsigned int ss_weights)
+	{
+		s_weights = ss_weights;
+		s_results = ss_results;
+
+		// delete unnecessary data
+		clReleaseMemObject(b_triangles);
+		clReleaseMemObject(b_nodes);
+		clReleaseMemObject(b_node_tria);
+		clReleaseMemObject(b_rays);
+
+		err = CL_SUCCESS;
+
+		// Setup device memory
+		b_results = clCreateBuffer(context, CL_MEM_READ_WRITE, s_results, NULL, &err);
 		if (err != CL_SUCCESS)
 		{
 			//"Error: Failed to allocate memory!"
@@ -411,6 +427,42 @@ namespace OpenCLForm
 
 		return EXIT_SUCCESS;
 	}
+
+	int COpenCL::SetupMemory4(unsigned int ss_points, unsigned int ss_pnodes, unsigned int ss_pnode_origins)
+	{
+		s_points = ss_points;
+		s_pnodes = ss_pnodes;
+		s_pnode_origins = ss_pnode_origins;
+
+		// delete unnecessary data
+		clReleaseMemObject(b_outputs);
+		clReleaseMemObject(b_weights);
+
+		err = CL_SUCCESS;
+
+		// Setup device memory
+		b_points = clCreateBuffer(context, CL_MEM_READ_ONLY, s_points, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
+		b_pnodes = clCreateBuffer(context, CL_MEM_READ_ONLY, s_pnodes, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
+		b_pnode_origins = clCreateBuffer(context, CL_MEM_READ_ONLY, s_pnode_origins, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
+
+		return EXIT_SUCCESS;
+	}
+
 	int COpenCL::LaunchKernel(cl_uint3	*c_triangles, cl_float4	*c_vertices, cl_uint *c_origins, cl_float4 *c_rays, cl_uint *c_targets, cl_float *c_outputs, cl_uint4 c_params)
 	{
 		// Transfer the input vectors into device memory
@@ -589,6 +641,7 @@ namespace OpenCLForm
 
 	int COpenCL::LaunchKernel3(cl_float *c_outputs, cl_float *c_results, cl_float *c_weights, cl_uint n_triangles)
 	{
+
 		// Transfer the input vectors into device memory
 		err = CL_SUCCESS;
 		err |= clEnqueueWriteBuffer(commands, b_weights, CL_FALSE, 0, s_weights, c_weights, 0, NULL, NULL);
@@ -615,11 +668,6 @@ namespace OpenCLForm
 				return EXIT_FAIL_ARGUMENTS;
 			}
 
-			if (err != CL_SUCCESS)
-			{
-				//"Error: Failed to set kernel arguments! " << err << endl;
-				return EXIT_FAIL_ARGUMENTS;
-			}
 			// Execute the kernel1, localnu nech si nastavi sam
 			err = clEnqueueNDRangeKernel(commands, kernel2, 1, NULL, &global, NULL, 0, NULL, NULL);
 			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
@@ -644,6 +692,70 @@ namespace OpenCLForm
 			debugger->SetArgValue(n++, &n_triangles);
 
 			debugger->ExecuteKernel3(global, 0);
+		}
+
+		return EXIT_SUCCESS;
+	}
+
+	int COpenCL::LaunchKernel4(cl_float4 *c_points, cl_float4 *c_pnode_origins, cl_uint *c_pnodes, cl_float *c_results, cl_uint n_points, cl_float o_size, cl_float weight)
+	{
+		// Transfer the input vectors into device memory
+		err = CL_SUCCESS;
+		err |= clEnqueueWriteBuffer(commands, b_points, CL_FALSE, 0, s_points, c_points, 0, NULL, NULL);
+		err |= clEnqueueWriteBuffer(commands, b_pnode_origins, CL_FALSE, 0, s_pnode_origins, c_pnode_origins, 0, NULL, NULL);
+		err |= clEnqueueWriteBuffer(commands, b_pnodes, CL_FALSE, 0, s_pnodes, c_pnodes, 0, NULL, NULL);
+		//err |= clEnqueueWriteBuffer(commands, b_results, CL_FALSE, 0, s_results, c_results, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to write to source array!"
+			return(EXIT_FAIL_WRITE);
+		}
+
+		// Set the arguments to the compute kernel
+		err = CL_SUCCESS;
+		cl_uint n = 0;
+		if(Nastavenia->SDF_Mode == SDF_GPU)
+		{
+			err  = clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_points);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnode_origins);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnodes);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_results);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_float), &weight);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_uint), &n_points);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_float), &o_size);
+
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to set kernel arguments! " << err << endl;
+				return EXIT_FAIL_ARGUMENTS;
+			}
+			// Execute the kernel1, localnu nech si nastavi sam
+			err = clEnqueueNDRangeKernel(commands, kernel3, 1, NULL, &global, NULL, 0, NULL, NULL);
+			if (err != CL_SUCCESS)//CL_INVALID_WORK_GROUP_SIZE;
+			{
+				//"Error: Failed to execute kernel!"
+				return EXIT_FAIL_EXECUTE;
+			}
+
+			err = clEnqueueReadBuffer(commands, b_results, CL_FALSE, 0, s_results, c_results, 0, NULL, NULL );
+			if (err != CL_SUCCESS)
+			{
+				//"Error: Failed to read from source array!"
+				return(EXIT_FAIL_READ);//CL_OUT_OF_RESOURCES
+			}
+		}
+		else
+		{
+			debugger->SetArgSize(7);
+			debugger->SetArgValue(n++, c_points);
+			debugger->SetArgValue(n++, c_pnode_origins);
+			debugger->SetArgValue(n++, c_pnodes);
+			debugger->SetArgValue(n++, c_results);
+			debugger->SetArgValue(n++, &weight);
+			debugger->SetArgValue(n++, &n_points);
+			debugger->SetArgValue(n++, &o_size);
+
+			debugger->ExecuteKernel4(global, 0);
 		}
 
 		return EXIT_SUCCESS;

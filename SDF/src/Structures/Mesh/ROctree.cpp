@@ -151,7 +151,11 @@ namespace MeshStructures
 			count = length;
 			pointy = new PPoint* [length];
 			for(unsigned int i = start; i < start+length; i++)
+			{
+				if(i == start)
+					pointiky[i]->diameter = -pointiky[i]->diameter;
 				pointy[i - start] = pointiky[i];
+			}
 			isLeaf = true;
 			PointCount = count;
 			NodeCount = 1;

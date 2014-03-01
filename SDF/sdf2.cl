@@ -106,7 +106,7 @@ typedef struct {
 	unsigned int	ostack[STACK_SIZE];
 }CastStack;
 
-inline inline uint read (CastStack *stack, int idx, float4 *t0, float4 *t1, int *cnode)
+inline uint read (CastStack *stack, int idx, float4 *t0, float4 *t1, int *cnode)
 {
 	(*t0) = (*stack).t0stack[idx];
 	(*t1) = (*stack).t1stack[idx];

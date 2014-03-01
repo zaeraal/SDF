@@ -45,7 +45,9 @@ namespace SDFController
 		void RadiusSearch1(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees);
 		void RadiusSearch2(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees);
 		Vector4 ComputePointBoundary(LinkedList<PPoint>* point_list, float &b_size);
+		Vector4 ComputePointBoundary2(PPoint **point_list, unsigned int psize, float &b_size);
 		ROctree* CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred);
+		ROctree* CreateROctree2(PPoint** pointiky, unsigned int siz, float b_size, Vector4 b_stred, unsigned int &n_pnodes);
 		void RandomShuffle(PPoint **c_array, unsigned int size);
 	private:
 		float diagonal;
