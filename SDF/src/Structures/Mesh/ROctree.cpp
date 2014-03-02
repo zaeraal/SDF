@@ -27,11 +27,10 @@ namespace MeshStructures
 		// -----------------	-----------------
 		// x smeruje doprava, y smeruje hore, z ODOMNA!! - bacha opengl ma Z inak
 		// tabulka offsetov
-		isLeaf = true;
 		depth = dep;	// root ma 1, najnizsi list ma Nastavenia->OCTREE_Depth
 		size = siz;
 		origin = ori;
-		pointy = NULL;
+		value = 0.0f;
 		count = 0;
 
 		son = new ROctree* [8];
@@ -40,10 +39,7 @@ namespace MeshStructures
 
 	ROctree::~ROctree()
 	{
-		if(count > 0)
-			delete [] pointy;
-
-		if(!isLeaf)
+		if(!isLeaf())
 		{
 			for(int i = 0; i < 8; i++)
 			{
@@ -58,11 +54,13 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
+		count = length;
 		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold))
 		{
-			count = length;
-			pointy = pointiky;
-			isLeaf = true;
+			value = 0.0f;
+			for(unsigned int i = 0; i < length; i++)
+				value += pointiky[i]->diameter;
+			value = value / (float)length;
 		}
 		else
 		{
@@ -77,8 +75,6 @@ namespace MeshStructures
 				{+1.0, +1.0, -1.0},
 				{+1.0, +1.0, +1.0}
 			};
-			isLeaf = false;
-			count = 0;
 			int new_depth = depth + 1;
 			float new_size = size / 2.0f;
 
@@ -136,7 +132,7 @@ namespace MeshStructures
 			delete [] son_pointiky;
 		}
 	}
-
+	#define SQRT_THREE 1.7320508075f
 	void ROctree::Build2(PPoint** pointiky, unsigned int start, unsigned int length, unsigned int &NodeCount, unsigned int &PointCount, unsigned int &LeafCount)
 	{
 		NodeCount = 0;
@@ -146,17 +142,18 @@ namespace MeshStructures
 		if(length == 0)
 			return;
 
-		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold))
+		value = 0.0f;
+		for(unsigned int i = 0; i < length; i++)
+			value += pointiky[start+i]->diameter;
+		value = value / (float)length;
+		count = length;
+		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold) || ((value * 0.5) >= size * SQRT_THREE))
 		{
-			count = length;
-			pointy = new PPoint* [length];
-			for(unsigned int i = start; i < start+length; i++)
-			{
-				if(i == start)
-					pointiky[i]->diameter = -pointiky[i]->diameter;
-				pointy[i - start] = pointiky[i];
-			}
-			isLeaf = true;
+			/*value = 0.0f;
+			for(unsigned int i = 0; i < length; i++)
+				value += pointiky[start+i]->diameter;
+			value = value / (float)length;*/
+
 			PointCount = count;
 			NodeCount = 1;
 			LeafCount = 1;
@@ -177,8 +174,6 @@ namespace MeshStructures
 			unsigned int nodeCount = 1;
 			unsigned int pointCount = 0;
 			unsigned int leafCount = 0;
-			isLeaf = false;
-			count = 0;
 			int new_depth = depth + 1;
 			float new_size = size / 2.0f;
 
@@ -214,6 +209,38 @@ namespace MeshStructures
 			NodeCount = nodeCount;
 			PointCount = pointCount;
 			LeafCount = leafCount;
+		}
+	}
+
+	bool ROctree::CheckValid(int num)
+	{
+		return((sons >> num) & 1);
+	}
+
+	void ROctree::DoValueSmoothing()
+	{
+		if(isLeaf())
+			return;
+
+		/*unsigned int weight = 0;
+		value = 0.0f;
+		for(int i = 0; i < 8; i++)
+		{
+			if(CheckValid(i) == true)
+			{
+				son[i]->DoValueSmoothing();
+				value += son[i]->value * son[i]->count;
+				weight += son[i]->count;
+			}
+		}
+		value = value / (float)weight;*/
+		for(int i = 0; i < 8; i++)
+		{
+			if(CheckValid(i) == true)
+			{
+				son[i]->value = son[i]->value * 4.0f + value;
+				son[i]->value = son[i]->value * 0.20f;
+			}
 		}
 	}
 
@@ -297,7 +324,7 @@ namespace MeshStructures
 
 		if((recursive == true) && (depth > 5))
 			return;
-		if((count == 0) && (isLeaf == true))
+		if((count == 0) && (isLeaf() == true))
 			return;
 
 		glBegin(GL_LINES);
@@ -338,7 +365,7 @@ namespace MeshStructures
 			glVertex3f(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 		glEnd();
 
-		if((isLeaf == false) && (recursive == true))
+		if((isLeaf() == false) && (recursive == true))
 		{
 			for(int i = 0; i < 8; i++)
 			{

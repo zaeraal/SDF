@@ -1299,7 +1299,7 @@ namespace OpenCLDebugger
 	float ComputeGaussian(float val, float maxval)
 	{
 		float num = min((val / maxval), 1.0f);
-		return ((1.0f / sqrt(2*M_PI_F)) * exp( (-num*num)/2.0f) * 100.0f);
+		return ((1.0f / (float)sqrt(2*M_PI_F)) * exp( (-num*num)/2.0f) * 100.0f);
 	}
 
 	typedef struct {

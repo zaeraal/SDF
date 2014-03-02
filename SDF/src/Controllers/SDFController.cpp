@@ -7,6 +7,7 @@
 
 #define FLOAT_MAX  99999.0f
 #define SQRT_THREE 1.7320508075f
+#define SQRT_TWO 1.4142135623f
 #define FLD_NODE 0
 #define BLD_NODE 1
 #define FLT_NODE 2
@@ -607,35 +608,32 @@ namespace SDFController
 
 	void CSDFController::Smooth2(PPoint* pointik, ROctree* m_root, LinkedList<ROctree>* ro_list, unsigned int poradie)
 	{
-		float maxval = pointik->ref->quality->value / 2.0f;
+		float maxval = pointik->ref->quality->value * 0.5f;
 		RadiusSearch2(pointik->P, maxval, m_root, ro_list);
 
-		float weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, 0, maxval);
-		float sum_values = pointik->ref->quality->value * weight;
-		float sum_weights = weight;
-		if(poradie < 10000)
-		{
-			sum_values = 0;
-			sum_weights = 0;
-		}
+		float weight = 0.0f;//ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, 0, maxval) * 5.0f;
+		float sum_values = 0.0f;//pointik->ref->quality->value * weight;
+		float sum_weights = 0.0f;//weight;
+
+
 		LinkedList<ROctree>::Cell<ROctree>* tmp = ro_list->start;
 		while(tmp != NULL)
 		{
-			for(unsigned int i = 0; i < tmp->data->count; i++)
-			{
-				float distanc = pointik->P.Dist(tmp->data->pointy[i]->P);
-				if(distanc <= maxval)
-				{
-					weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
-					sum_values += tmp->data->pointy[i]->ref->quality->value * weight;
-					sum_weights += weight;
-				}
-			}
-			// tmp->data->pointy; // wtf? :D
+			float distanc = pointik->P.Dist(tmp->data->origin);
+			if(distanc > maxval)
+				distanc = maxval;
+			weight = tmp->data->count; //(float)(Nastavenia->OCTREE_Depth + 1 - tmp->data->depth) ;
+			//weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
+			sum_values += tmp->data->value * weight;
+			sum_weights += weight;
+
 			tmp = tmp->next;
 		}
+		sum_values = (sum_values / sum_weights) * 2.0f;
+		sum_values += pointik->ref->quality->value;
+		sum_values = sum_values / 3.0f;
 
-		pointik->diameter = sum_values / sum_weights;
+		pointik->diameter = sum_values;// / sum_weights;
 	}
 
 	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max)
@@ -1892,9 +1890,9 @@ namespace SDFController
 		int ticks9 = GetTickCount();
 		if(Nastavenia->SDF_Smooth_Projected == true)
 		{
-			//DoSmoothing2(triangles, min, max);
+			DoSmoothing2(triangles, min, max);
 
-			current_face = triangles->start;
+			/*current_face = triangles->start;
 
 			if(Nastavenia->SDF_Smoothing_Radius > 0)
 			{
@@ -1975,7 +1973,7 @@ namespace SDFController
 					for(unsigned int idx = 0; idx < n_pnodes; idx++)
 					{
 						node = oc_array[idx];
-						if(node->isLeaf)
+						if(node->isLeaf())
 						{
 							unsigned int safe_num = node->pointy[0]->number << 8;
 							c_pnodes[idx] = safe_num;
@@ -2047,7 +2045,7 @@ namespace SDFController
 				}
 			}
 			Nastavenia->DEBUG_Min_SDF = min;
-			Nastavenia->DEBUG_Max_SDF = max;
+			Nastavenia->DEBUG_Max_SDF = max;*/
 		}
 		else
 			DoSmoothing(triangles, min, max);
@@ -2140,20 +2138,13 @@ namespace SDFController
 			{
 				// projektnute body
 				PPoint* tmp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
+				tmp->diameter = current_face->data->quality->value;
 				point_array[count] = tmp;
 				current_face = current_face->next;
-				count++;
-			}
-			if(tsize > 10000)
-			{
-				RandomShuffle(point_array, tsize);
-			}
-			count = 0;
-			while((count < 10000) && (count < tsize))
-			{
 				point_list->InsertToEnd(point_array[count]);
 				count++;
 			}
+
 			ticks2 = GetTickCount();
 			float b_size;
 			Vector4 b_stred = ComputePointBoundary(point_list, b_size);
@@ -2204,7 +2195,7 @@ namespace SDFController
 	// recursive
 	void CSDFController::RadiusSearch1(Vector4 center, float dist, ROctree* node, LinkedList<ROctree>* octrees)
 	{
-		if(node->isLeaf == true)
+		if(node->isLeaf() == true)
 		{
 			octrees->InsertToEnd(node);
 		}
@@ -2214,8 +2205,11 @@ namespace SDFController
 			{
 				if(CheckValid(node->sons, i) == true)
 				{
-					float vzdialenost = center.Dist(node->son[i]->origin) - (node->son[i]->size * SQRT_THREE);
-					if(vzdialenost <= dist)
+					float vzdialenost = center.Dist(node->son[i]->origin) - dist;
+					float cube_radius = node->son[i]->size * SQRT_THREE;
+					if(vzdialenost <= (-cube_radius))
+						octrees->InsertToEnd(node);
+					else if(vzdialenost <= cube_radius)
 						RadiusSearch1(center, dist, node->son[i], octrees);
 				}
 			}
@@ -2293,8 +2287,14 @@ namespace SDFController
 				}
 				//if(CheckValid(tmp->sons, id) == true)
 				{
-					float vzdialenost = center.Dist(tmp->son[id]->origin) - (tmp->son[id]->size * SQRT_THREE);
-					if(vzdialenost <= dist)
+					float vzdialenost = center.Dist(tmp->son[id]->origin) - dist;
+					float cube_radius = tmp->son[id]->size * SQRT_THREE;
+					if(vzdialenost <= (-cube_radius))
+					{
+						octrees->InsertToEnd(tmp);
+						idx--;
+					}
+					else if(vzdialenost <= cube_radius)
 					{
 						stack.write(idx + 1, tmp->son[id], pipc8(tmp->son[id]->sons));
 						sons = tmp->sons;
@@ -2313,14 +2313,6 @@ namespace SDFController
 						stack.write(idx, tmp, id); 
 					}
 				}
-				/*else
-				{
-					sons = tmp->sons;
-					sons = sons >> (id + 1);
-					sons = sons << (id + 1);
-					id = pipc8(sons);
-					stack.write(idx, tmp, id); 
-				}*/
 			}
 		}
 	}
@@ -2439,6 +2431,7 @@ namespace SDFController
 			}
 			unsigned int nodeCount = 0, triangleCount = 0, leafCount = 0;
 			m_root->Build2(pointiky, 0, siz, nodeCount, triangleCount, leafCount);
+			m_root->DoValueSmoothing();
 
 			delete [] pointiky;
 		}
