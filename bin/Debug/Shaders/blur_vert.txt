@@ -1,0 +1,19 @@
+#version 110
+#pragma optimize(on)
+
+varying vec2 PixelCoordinates;
+varying float SamplesCount;
+varying vec2 Direction;
+
+uniform float BlurSize;
+uniform vec2 BlurDirection;
+
+
+void main() 
+{
+  gl_Position = 2.0 * gl_Vertex - vec4( 1.0 );
+        
+  PixelCoordinates = gl_Vertex.xy;
+  SamplesCount = BlurSize;
+  Direction = BlurDirection;
+}

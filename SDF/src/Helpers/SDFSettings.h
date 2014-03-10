@@ -31,7 +31,8 @@ public:
 	SDF_MODE			SDF_Mode;				// ci pocitam na CPU / GPU
 	unsigned int		SDF_Rays;				// pocet lucov
 	float				SDF_Cone;				// velkost conu
-	unsigned int		SDF_Smoothing_Radius;	// velkost conu
+	unsigned int		SDF_Smoothing_Radius;	// velkost radiusu smoothovania
+	unsigned int		SDF_Smoothing_Texture;	// velkost textury pri smoothovani
 	bool				SDF_Smooth_Projected;	// ci vyhladit mesh, alebo projektnute body
 	bool				SDF_Revert_Rays;		// ci aj obratene luce								x
 	bool				SDF_Distribution;		// random (false) / uniform (true) distribucia

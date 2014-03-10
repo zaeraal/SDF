@@ -1,0 +1,14 @@
+#version 110
+#pragma optimize(on)
+
+varying vec2 PixelCoordinates;
+
+uniform float BlurSize;
+
+
+void main() 
+{
+  gl_Position = 2.0 * gl_Vertex - vec4( 1.0 );
+        
+  PixelCoordinates = gl_Vertex.xy;
+}

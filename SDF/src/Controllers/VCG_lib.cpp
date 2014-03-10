@@ -34,6 +34,12 @@ namespace VCGFileHandler
 					q_max = it->Q();
 				has_quality = true;
 			}
+
+			if(it->HasTexCoord())
+			{
+				tmp_points[i]->texCoord_U = it->T().U();
+				tmp_points[i]->texCoord_V = it->T().V();
+			}
 			it->Q() = MyMesh::VertexType::QualityType (i);
 			pts->InsertToEnd(tmp_points[i]);
 			i++;
@@ -95,6 +101,7 @@ namespace VCGFileHandler
 			ivp[idx]=&*vi;
 			vi->P() = MyMesh::CoordType ( tmv->data->P.X, tmv->data->P.Y, tmv->data->P.Z);
 			vi->Q() = MyMesh::VertexType::QualityType (tmv->data->quality->smoothed);
+			vi->T() = MyMesh::VertexType::TexCoordType (tmv->data->texCoord_U, tmv->data->texCoord_V);
 			vi++;
 			tmv = tmv->next;
 		}

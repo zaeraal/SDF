@@ -14,6 +14,7 @@ namespace OpenGLForm
 	public:
 		COpenGL(System::Windows::Forms::Panel ^ parentForm, CModel* MController);
 		System::Void ResizeOpengl(GLsizei width, GLsizei height);
+		GLvoid ReloadViewport();
 		virtual void WndProc(System::Windows::Forms::Message %m) override;
 		virtual System::Void Render(System::Void);
 		System::Void SwapOpenGLBuffers(System::Void) { SwapBuffers(m_hDC); }

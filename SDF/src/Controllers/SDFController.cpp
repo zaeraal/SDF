@@ -215,19 +215,19 @@ namespace SDFController
 		err = OpenCLko->InitOpenCL();
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->LoadKernel1("sdf.cl");
+		err = OpenCLko->LoadKernel1("OpenCL/sdf.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel1();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
-		err = OpenCLko->LoadKernel2("proces.cl");
+		err = OpenCLko->LoadKernel2("OpenCL/proces.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel2();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
-		err = OpenCLko->LoadKernel3("smooth.cl");
+		err = OpenCLko->LoadKernel3("OpenCL/smooth.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel3();
@@ -470,6 +470,7 @@ namespace SDFController
 				weightsx.clear();
 			}
 		}
+
 		int ticks8 = GetTickCount();
 
 		if(Nastavenia->SDF_Smooth_Projected == true)
@@ -613,27 +614,48 @@ namespace SDFController
 
 		float weight = 0.0f;//ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, 0, maxval) * 5.0f;
 		float sum_values = 0.0f;//pointik->ref->quality->value * weight;
+		//Vector4 sum_position = Vector4();
 		float sum_weights = 0.0f;//weight;
 
 
 		LinkedList<ROctree>::Cell<ROctree>* tmp = ro_list->start;
 		while(tmp != NULL)
 		{
-			float distanc = pointik->P.Dist(tmp->data->origin);
-			if(distanc > maxval)
-				distanc = maxval;
-			weight = tmp->data->count; //(float)(Nastavenia->OCTREE_Depth + 1 - tmp->data->depth) ;
+			weight = (float)tmp->data->count;
+			//weight = 1.0;
+
+			float cube_radius = tmp->data->size * SQRT_THREE;
+			float distanc_act = pointik->P.Dist(tmp->data->origin) + cube_radius - maxval;
+			if(distanc_act > 0.0001f)
+			{
+				float pct = (distanc_act / cube_radius) * 100.0f;	// kolko % je vonku
+				if(pct < 0.0001f)									// nesmu byt priliz male!!
+					pct = 0.0001f;
+				pct = 1 / pct;										// kolko % je vnutry
+				weight *= pct;
+			}
+
+			//weight = (float)(Nastavenia->OCTREE_Depth + 1 - tmp->data->depth) ;
 			//weight = ComputeGaussian(Nastavenia->SDF_Smoothing_Radius, distanc, maxval);
 			sum_values += tmp->data->value * weight;
+			//sum_position = sum_position + (tmp->data->value_center * weight);
 			sum_weights += weight;
 
 			tmp = tmp->next;
 		}
-		sum_values = (sum_values / sum_weights) * 2.0f;
+		/*sum_values = (sum_values / sum_weights) * 2.0f;
 		sum_values += pointik->ref->quality->value;
-		sum_values = sum_values / 3.0f;
+		sum_values = sum_values / 3.0f;*/
+		sum_weights += 4;
+		sum_values += pointik->ref->quality->value * 4;
+		//sum_position = sum_position + (pointik->P * 4);
+		sum_values = sum_values / sum_weights;
+		//sum_position = sum_position / sum_weights;
 
-		pointik->diameter = sum_values;// / sum_weights;
+		pointik->diameter = sum_values;
+		/*pointik->diameter = sum_position.Dist(pointik->ref->center) * 2.0f;
+		pointik->ref->normal = pointik->ref->center - sum_position;
+		pointik->ref->normal.Normalize();*/
 	}
 
 	HashTable<Face>* CSDFController::GetFaceList(LinkedList<Face>* triangles, Octree* root, Vector4 center, Vector4 ray, Vector4 o_min, Vector4 o_max)
@@ -1635,19 +1657,19 @@ namespace SDFController
 		err = OpenCLko->InitOpenCL();
 		if(!CheckError(err)) return;
 
-		err = OpenCLko->LoadKernel1("sdf2.cl");
+		err = OpenCLko->LoadKernel1("OpenCL/sdf2.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel1();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
-		err = OpenCLko->LoadKernel2("proces.cl");
+		err = OpenCLko->LoadKernel2("OpenCL/proces.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel2();
 		if(!CheckError(err, OpenCLko->debug_buffer)) return;
 
-		err = OpenCLko->LoadKernel3("smooth.cl");
+		err = OpenCLko->LoadKernel3("OpenCL/smooth.cl");
 		if(!CheckError(err)) return;
 
 		err = OpenCLko->BuildKernel3();
@@ -1856,6 +1878,10 @@ namespace SDFController
 			
 			current_face = current_face->next;
 		}
+
+		CopySDF_Faces_to_Vertices(points);
+		CopySDF_Vertices_to_Faces(triangles);
+
 		/*float dist = 0.0f;
 		std::vector<float> rays;
 		std::vector<float> weightsx;
@@ -2141,7 +2167,8 @@ namespace SDFController
 				tmp->diameter = current_face->data->quality->value;
 				point_array[count] = tmp;
 				current_face = current_face->next;
-				point_list->InsertToEnd(point_array[count]);
+				if(tmp->diameter >= 0.1f)
+					point_list->InsertToEnd(point_array[count]);
 				count++;
 			}
 
@@ -2159,6 +2186,7 @@ namespace SDFController
 			{
 				Smooth2(point_array[i], m_root, ro_list, i);
 				point_array[i]->ref->quality->smoothed = point_array[i]->diameter;
+				point_array[i]->ref->quality->value = point_array[i]->diameter;
 				point_array[i]->ref->quality->Normalize(min, max, 4.0);
 				ro_list->Clear();
 			}
@@ -2469,5 +2497,496 @@ namespace SDFController
 			c_array[i] = temp;// selected element moved to end. This value is final
 		}
 		return;
+	}
+
+	void CSDFController::CopySDF_Vertices_to_Faces(LinkedList<Face>* triangles)
+	{
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			float h_value		= 0;
+
+			float total = 3.0f;
+			for(int i = 0; i<3; i++)
+			{
+				h_value += tmp->data->v[i]->quality->value;
+			}
+
+			h_value = h_value / total;
+
+			tmp->data->quality->value = h_value;
+
+			tmp = tmp->next;
+		}
+	}
+
+	void CSDFController::CopySDF_Faces_to_Vertices(LinkedList<Vertex>* points)
+	{
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		while(tmp != NULL)
+		{
+			float h_value		= 0;
+
+			float total = float(tmp->data->susedia->GetSize());
+			LinkedList<void>::Cell<void>* tm = tmp->data->susedia->start;
+			while(tm != NULL)
+			{
+				h_value += ((Face*)tm->data)->quality->value;
+
+				tm = tm->next;
+			}
+			h_value = h_value / total;
+
+			tmp->data->quality->value = h_value;
+
+			tmp = tmp->next;
+		}
+	}
+
+	void CSDFController::SmoothTexture(float** textur)
+	{
+		GLsizei width = Nastavenia->SDF_Smoothing_Texture;
+		GLsizei height = Nastavenia->SDF_Smoothing_Texture;
+
+		CPUSmooth(textur, width, height, (float)Nastavenia->SDF_Smoothing_Radius);
+		return;
+
+		GLenum err = glewInit();
+		if (GLEW_OK != err)
+		{
+			/* Problem: glewInit failed, something is seriously wrong. */
+			//fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+			string str = string((char*)glewGetErrorString(err));
+			loggger->logInfo("Error: " + str);
+			assert(false);
+		}
+
+		glDisable( GL_LIGHTING );
+		glDisable( GL_BLEND );
+		glDisable( GL_DEPTH_TEST );
+
+		FrameBufferObject* FBO;
+		FBO = new FrameBufferObject( width, height );
+
+		GLfloat* mojaTextura = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+
+		int Ch = 0;											// pouzivam cerveny channel
+		for(unsigned int i = 0; i < height; i++)
+		{
+			for(unsigned int j = 0; j < width; j++)
+			{
+				mojaTextura[(i * width + j)*4 + Ch] = textur[i][j];
+				mojaTextura[(i * width + j)*4 + 1] = textur[i][j];
+				mojaTextura[(i * width + j)*4 + 2] = textur[i][j];
+				mojaTextura[(i * width + j)*4 + 3] = textur[i][j];
+			}
+		}
+
+		FBO->BindLayer( 0, FBO->Layer(0) );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura );
+		FBO->AssignLayerTexture( 0, FBO->Layer(0) );
+		FBO->AssignLayerTexture( 1, FBO->Layer(1) );
+
+		FBO->RenderHere();
+		BlurObject* BO = new BlurObject();
+
+		glLoadIdentity();
+		glViewport( 0, 0, width, height );     //treba nastavi viewport
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);      //závisí od kontextu, ale väèšinou chceme zaèa s èistými textúrami
+		//gluOrtho2D(0, width, 0, height);
+
+		//blur 9x9 dát z 0-tej textúry framebuffera s využitím pomocnej 1-ej textúry
+		BO->Apply( 4.0, Vector4(1.0f, 1.0f, 1.0f, 1.0f), Vector4(1.0f/float(width), 0.0f, 0.0f, 0.0f), FBO->Layer(0), FBO->Layer(1) );
+		BO->Apply( 4.0, Vector4(1.0f, 1.0f, 1.0f, 1.0f), Vector4(0.0f, 1.0f/float(height), 0.0f, 0.0f), FBO->Layer(1), FBO->Layer(0) );
+
+		FBO->ReadBuffer(FBO->Layer(0));
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, mojaTextura);
+
+		FBO->StopRenderingToFBO();   //výstup sa odteraz presmeruje do zvyèajného backbuffera
+
+		for(unsigned int i = 0; i < height; i++)
+		{
+			for(unsigned int j = 0; j < width; j++)
+			{
+				textur[i][j] = mojaTextura[(i * width + j)*4 + Ch];
+			}
+		}
+		free(mojaTextura);
+
+		glEnable( GL_LIGHTING );
+		glEnable( GL_BLEND );
+		glEnable( GL_DEPTH_TEST );
+	}
+
+	void CSDFController::CPUSmooth(float** textur, GLsizei width, GLsizei height, float SamplesCount)
+	{
+		float** textur2 = new float*[height];
+		for(int i = 0; i < height; i++)
+			textur2[i] = new float[width];
+
+		for(int i = 0; i < height; i++)
+		{
+			for(int j = 0; j < width; j++)
+			{
+				CPUBlur(textur, textur2, j, i, SamplesCount, 1, 0, width, height);
+			}
+		}
+		for(int i = 0; i < height; i++)
+		{
+			for(int j = 0; j < width; j++)
+			{
+				CPUBlur(textur2, textur, j, i, SamplesCount, 0, 1, width, height);
+			}
+		}
+		for(int i = 0; i < height; i++)
+		{
+			delete [] textur2[i];
+		}
+		delete [] textur2;
+	}
+
+	void CSDFController::CPUBlur(float** textur, float** textur2, int x, int y, float SamplesCount, int x_dir, int y_dir, GLsizei width, GLsizei height)
+	{
+		float mixedValue = 0.0f;  
+		float weightSum = 0.0f;
+
+		float samplePositionMultiplier = -SamplesCount;
+		while ( samplePositionMultiplier <= SamplesCount )
+		{
+			int samplePosition_x = x + (int)( x_dir * samplePositionMultiplier );
+			int samplePosition_y = y + (int)( y_dir * samplePositionMultiplier );
+			float weight = 1.0f - ( abs(samplePositionMultiplier) / (SamplesCount+1) );
+			if(samplePosition_x < 0) samplePosition_x = 0; if(samplePosition_x >= width) samplePosition_x = width-1;
+			if(samplePosition_y < 0) samplePosition_y = 0; if(samplePosition_y >= height) samplePosition_y = height-1;
+			float sampleValue = textur[samplePosition_y][samplePosition_x];
+			samplePositionMultiplier += 1.0;
+			if(sampleValue < 0.0f)
+			{
+				continue;
+			}
+			mixedValue += weight * sampleValue;
+			weightSum += weight;
+		}
+		if(weightSum < 0.00001f)
+		{
+			mixedValue += 1.0f * textur[y][x];
+			weightSum += 1.0f;
+		}
+
+		float finalValue = mixedValue / weightSum;
+		textur2[y][x] = finalValue;
+	}
+
+	float** CSDFController::GetTexture(LinkedList<Face>* triangles)
+	{
+		float** result = new float*[Nastavenia->SDF_Smoothing_Texture];
+		unsigned int** X_kontura = new unsigned int*[Nastavenia->SDF_Smoothing_Texture];
+		float** XX_kontura = new float*[Nastavenia->SDF_Smoothing_Texture];
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			result[i] = new float[Nastavenia->SDF_Smoothing_Texture];
+			X_kontura[i] = new unsigned int[2];
+			XX_kontura[i] = new float[2];
+		}
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			for(unsigned int j = 0; j < Nastavenia->SDF_Smoothing_Texture; j++)
+			{
+				result[i][j] = -1.0f;
+			}
+		}
+		
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			DrawTriangle(result, XX_kontura, X_kontura, tmp->data);
+			tmp = tmp->next;
+		}
+
+		return result;
+	}
+
+	/*void clamp(int &num, int min, int max)
+	{
+		if(num > max)
+			num = max;
+		else if(num < min)
+			num = min;
+	}*/
+	/*void clamp(float &num, float min, float max)
+	{
+		if(num > max)
+			num = max;
+		else if(num < min)
+			num = min;
+	}*/
+
+	void CSDFController::ApplyTexture(LinkedList<Face>* triangles, float** textur)
+	{
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		float x0, y0, x1, y1, x2, y2;
+		int x, y;
+		while(tmp != NULL)
+		{
+			x0 = tmp->data->v[0]->texCoord_U;
+			y0 = tmp->data->v[0]->texCoord_V;
+			x1 = tmp->data->v[1]->texCoord_U;
+			y1 = tmp->data->v[1]->texCoord_V;
+			x2 = tmp->data->v[2]->texCoord_U;
+			y2 = tmp->data->v[2]->texCoord_V;
+			x = (int)(((x0 + x1 + x2) / 3.0f) * (Nastavenia->SDF_Smoothing_Texture - 1));
+			y = (int)(((y0 + y1 + y2) / 3.0f) * (Nastavenia->SDF_Smoothing_Texture - 1));
+
+			float val = textur[y][x];
+			if(val < 0.0f)
+				val = 0.0f;
+			SetNormalizedvalue(tmp->data->quality, val);
+
+			tmp = tmp->next;
+		}
+	}
+
+	void CSDFController::ApplyTexture(LinkedList<Vertex>* points, float** textur)
+	{
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		int x, y;
+		while(tmp != NULL)
+		{
+			x = (int)(tmp->data->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1));
+			y = (int)(tmp->data->texCoord_V * (Nastavenia->SDF_Smoothing_Texture - 1));
+
+			float val = textur[y][x];
+			if(val < 0.0f)
+				val = 0.0f;
+			SetNormalizedvalue(tmp->data->quality, val);
+			tmp = tmp->next;
+		}
+	}
+
+	float CSDFController::GetNormalizedvalue(CSDF* quality)
+	{
+		switch(Nastavenia->VISUAL_SDF_Type)
+		{
+		case VISUAL_NORMALIZED_0_1:
+			return quality->normalized1;
+		case VISUAL_NORMALIZED_MIN_1:
+			return quality->normalized2;
+		case VISUAL_NORMALIZED_0_MAX:
+			return quality->normalized3;
+		case VISUAL_NORMALIZED_MIN_MAX:
+			return quality->normalized4;
+		default: break;
+		}
+		return 0.0f;
+	}
+
+	void CSDFController::SetNormalizedvalue(CSDF* quality, float value)
+	{
+		switch(Nastavenia->VISUAL_SDF_Type)
+		{
+		case VISUAL_NORMALIZED_0_1:
+			quality->normalized1 = value;
+			break;
+		case VISUAL_NORMALIZED_MIN_1:
+			quality->normalized2 = value;
+			break;
+		case VISUAL_NORMALIZED_0_MAX:
+			quality->normalized3 = value;
+			break;
+		case VISUAL_NORMALIZED_MIN_MAX:
+			quality->normalized4 = value;
+			break;
+		default: break;
+		}
+	}
+
+	void CSDFController::DrawTriangle(float** textur, float** XX_kontura, unsigned int** X_kontura, Face* triangle)
+	{
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			X_kontura[i][0] = Nastavenia->SDF_Smoothing_Texture;
+			X_kontura[i][1] = 0;
+			XX_kontura[i][0] = 0.0f;
+			XX_kontura[i][1] = 0.0f;
+		}
+
+		int x0, y0, x1, y1, x2, y2;
+		x0 = (int)(triangle->v[0]->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(x0, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		y0 = (int)(triangle->v[0]->texCoord_V * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(y0, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		x1 = (int)(triangle->v[1]->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(x1, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		y1 = (int)(triangle->v[1]->texCoord_V * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(y1, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		x2 = (int)(triangle->v[2]->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(x2, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		y2 = (int)(triangle->v[2]->texCoord_V * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(y2, 0, Nastavenia->SDF_Smoothing_Texture-1);
+		float f0, f1, f2;
+		f0 = GetNormalizedvalue(triangle->v[0]->quality);
+		f1 = GetNormalizedvalue(triangle->v[1]->quality);
+		f2 = GetNormalizedvalue(triangle->v[2]->quality);
+		ScanLine(X_kontura, XX_kontura, x0, y0, x1, y1, f0, f1);
+		ScanLine(X_kontura, XX_kontura, x1, y1, x2, y2, f1, f2);
+		ScanLine(X_kontura, XX_kontura, x2, y2, x0, y0, f2, f0);
+
+		int miny = min(min(y0,y1),y2);
+		int maxy = max(max(y0,y1),y2);
+		for (unsigned int y = miny; y <= maxy; y++)
+		{
+			if (X_kontura[y][1] >= X_kontura[y][0])
+			{
+				unsigned int x = X_kontura[y][0];
+				unsigned int len = 1 + X_kontura[y][1] - X_kontura[y][0];
+				float val = XX_kontura[y][0];
+				float step = 0.0f;
+				if(len > 1)
+					step = (XX_kontura[y][1] - XX_kontura[y][0]) / (float)(len-1);
+				else
+					val = (XX_kontura[y][0] + XX_kontura[y][1]) / 2.0f;
+
+				if(val < 0.0f)
+				{
+					// keby nahodou zlyhala interpolacia
+					assert(false);
+				}
+
+				while (len--)
+				{
+					DrawPixel(textur, triangle, x++, y, x0, x1, x2, y0, y1, y2, val);
+					val += step;
+				}
+			}
+		}
+	}
+
+	void CSDFController::ScanLine(unsigned int** X_kontura, float** XX_kontura, int x1, int y1, int x2, int y2, float f1, float f2)
+	{
+		int sx, sy, dx1, dy1, dx2, dy2, x, y, m, n, k, cnt, ref_val;
+		float dif_f, step_f, val_f;
+
+		step_f = 0.0f;
+
+		sx = x2 - x1;
+		sy = y2 - y1;
+		dif_f = f2 - f1;
+		val_f = f1;
+
+		if ((sy < 0) || ((sy == 0) && (sx < 0)))
+		{
+			k = x1; x1 = x2; x2 = k;
+			k = y1; y1 = y2; y2 = k;
+			sx = -sx;
+			sy = -sy;
+			dif_f = -dif_f;
+			val_f = f2;
+		}
+
+		if (sx > 0) dx1 = 1;
+		else if (sx < 0) dx1 = -1;
+		else dx1 = 0;
+
+		if (sy > 0) dy1 = 1;
+		else if (sy < 0) dy1 = -1;
+		else dy1 = 0;
+
+		// ideme podla x
+		m = abs(sx);
+		n = abs(sy);
+		ref_val = x1;
+
+		dx2 = dx1;
+		dy2 = 0;
+
+		// ideme podla y
+		if (m < n)
+		{
+			m = abs(sy);
+			n = abs(sx);
+			dx2 = 0;
+			dy2 = dy1;
+			ref_val = y1;
+		}
+
+		// zaciname v x1 (uz pripadne prehodene)
+		x = x1; y = y1;
+		cnt = m + 1;
+		k = n / 2;
+
+		if(m > 0)
+			step_f = dif_f / (float)(m);
+		while (cnt--)
+		{
+			if ((y >= 0) && (y < Nastavenia->SDF_Smoothing_Texture))
+			{
+				if ((x >= 0) && (x < Nastavenia->SDF_Smoothing_Texture))
+				{
+					if (x < X_kontura[y][0])
+					{
+						X_kontura[y][0] = x;
+						XX_kontura[y][0] = val_f;
+					}
+					if (x > X_kontura[y][1])
+					{
+						X_kontura[y][1] = x;
+						XX_kontura[y][1] = val_f;
+					}
+				}
+			}
+
+			k += n;
+			if (k < m)
+			{
+				x += dx2;
+				y += dy2;
+			}
+			else
+			{
+				k -= m;
+				x += dx1;
+				y += dy1;
+			}
+			val_f += step_f;
+		}
+	}
+
+	void CSDFController::DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3)
+	{
+		if ((x >= Nastavenia->SDF_Smoothing_Texture) || (y >= Nastavenia->SDF_Smoothing_Texture))
+		{
+			return;
+		}
+		// interpolovanie bodov.. nefunguje dako extra
+		/*float t[3]; t[0] = 0.0f; t[1] = 0.0f; t[2] = 0.0f;
+		float m[3]; m[0] = 0.0f; m[1] = 0.0f; m[2] = 0.0f;
+
+		t[0] = GetNormalizedvalue(triangle->v[0]->quality);
+		t[1] = GetNormalizedvalue(triangle->v[1]->quality);
+		t[2] = GetNormalizedvalue(triangle->v[2]->quality);
+
+		float det = (float)((y2-y3) * (x1-x3) + (x3-x2) * (y1-y3));
+		if(abs(det) <= 0.0001f)
+		{
+			m[0] = 0.333f;
+			m[1] = 0.333f;
+		}
+		else
+		{
+			m[0] = (float)((y2-y3) * (x-x3) + (x3-x2) * (y-y3)) / det;
+			m[1] = (float)((y3-y1) * (x-x3) + (x1-x3) * (y-y3)) / det;
+		}
+		clamp(m[0], 0.0f, 1.0f);
+		clamp(m[1], 0.0f, 1.0f);
+
+		m[2] = 1.0f - m[0] - m[1];
+		textur[y][x] = t[0] * m[0] + t[1] * m[1] + t[2] * m[2];*/
+
+		textur[y][x] = GetNormalizedvalue(triangle->quality);
+	}
+
+	void CSDFController::DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3, float value)
+	{
+		if ((x >= Nastavenia->SDF_Smoothing_Texture) || (y >= Nastavenia->SDF_Smoothing_Texture))
+		{
+			return;
+		}
+
+		textur[y][x] = value;
 	}
 }

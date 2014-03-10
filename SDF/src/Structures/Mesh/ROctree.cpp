@@ -31,6 +31,7 @@ namespace MeshStructures
 		size = siz;
 		origin = ori;
 		value = 0.0f;
+		value_center = Vector4();
 		count = 0;
 
 		son = new ROctree* [8];
@@ -58,9 +59,14 @@ namespace MeshStructures
 		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold))
 		{
 			value = 0.0f;
+			value_center = Vector4();
 			for(unsigned int i = 0; i < length; i++)
+			{
 				value += pointiky[i]->diameter;
+				value_center = value_center + pointiky[i]->P;
+			}
 			value = value / (float)length;
+			value_center = value_center / (float)length;
 		}
 		else
 		{
@@ -143,9 +149,14 @@ namespace MeshStructures
 			return;
 
 		value = 0.0f;
+		value_center = Vector4();
 		for(unsigned int i = 0; i < length; i++)
+		{
 			value += pointiky[start+i]->diameter;
+			value_center = value_center + pointiky[start+i]->P;
+		}
 		value = value / (float)length;
+		value_center = value_center / (float)length;
 		count = length;
 		if((depth >= Nastavenia->OCTREE_Depth) || (length <= Nastavenia->OCTREE_Threshold) || ((value * 0.5) >= size * SQRT_THREE))
 		{

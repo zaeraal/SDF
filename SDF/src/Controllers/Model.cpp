@@ -94,6 +94,7 @@ namespace ModelController
 		SetColors();
 		ComputeSusedov();
 		ComputeSoftNormals();
+		NormalizeTextureCoords();
 
 		int ticks6 = GetTickCount();
 
@@ -157,6 +158,7 @@ namespace ModelController
 		SetColors();
 		ComputeSusedov();
 		ComputeSoftNormals();
+		NormalizeTextureCoords();
 
 		int ticks6 = GetTickCount();
 
@@ -219,6 +221,7 @@ namespace ModelController
 		SetColors();
 		ComputeSusedov();
 		ComputeSoftNormals();
+		NormalizeTextureCoords();
 
 		Nastavenia->INFO_Total_Triangles = triangles->GetSize();
 		Nastavenia->INFO_Total_Vertices = points->GetSize();
@@ -1112,5 +1115,97 @@ namespace ModelController
 			SDF_control->DoSmoothing(triangles, min, max);
 
 		CopySDF_Faces_to_Vertices();
+	}
+	unsigned char*** CModel::GetTexture()
+	{
+		float** texttur = SDF_control->GetTexture(triangles);
+
+		unsigned char R, G, B;
+		unsigned char*** result = new unsigned char**[Nastavenia->SDF_Smoothing_Texture];
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			result[i] = new unsigned char*[Nastavenia->SDF_Smoothing_Texture];
+		}
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			for(unsigned int j = 0; j < Nastavenia->SDF_Smoothing_Texture; j++)
+			{
+				result[i][j] = new unsigned char[3];
+				if(texttur[i][j] < 0.0f)
+				{
+					result[i][j][0] = 0;
+					result[i][j][1] = 0;
+					result[i][j][2] = 0;
+				}
+				else
+				{
+					R = 0; G = 0; B = 0;
+					HLSToRGB(texttur[i][j], R, G, B);
+					result[i][j][0] = R;
+					result[i][j][1] = G;
+					result[i][j][2] = B;
+				}
+			}
+		}
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			delete [] texttur[i];
+		}
+		delete [] texttur;
+
+		return result;
+	}
+	void CModel::NormalizeTextureCoords()
+	{
+		float min_u = 99999.0f;
+		float max_u = -99999.0f;
+		float min_v = 99999.0f;
+		float max_v = -99999.0f;
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		while(tmp != NULL)
+		{
+			if(tmp->data->texCoord_U < min_u)
+				min_u = tmp->data->texCoord_U;
+			if(tmp->data->texCoord_V < min_v)
+				min_v = tmp->data->texCoord_V;
+
+			if(tmp->data->texCoord_U > max_u)
+				max_u = tmp->data->texCoord_U;
+			if(tmp->data->texCoord_V > max_v)
+				max_v = tmp->data->texCoord_V;
+
+			tmp = tmp->next;
+		}
+		if(abs(max_u - min_u) < 0.0001f)
+			return;
+		if(abs(max_v - min_v) < 0.0001f)
+			return;
+
+		tmp = points->start;
+		while(tmp != NULL)
+		{
+			tmp->data->texCoord_U = (tmp->data->texCoord_U - min_u) / (max_u - min_u);
+			tmp->data->texCoord_V = (tmp->data->texCoord_V - min_v) / (max_v - min_v);
+
+			tmp = tmp->next;
+		}
+	}
+
+	void CModel::SmoothTexture()
+	{
+		float** textur = SDF_control->GetTexture(triangles);
+		SDF_control->SmoothTexture(textur);
+		/*SDF_control->ApplyTexture(triangles, textur);
+		CopySDF_Faces_to_Vertices();*/
+		SDF_control->ApplyTexture(points, textur);
+		CopySDF_Vertices_to_Faces();
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			delete [] textur[i];
+		}
+		delete [] textur;
 	}
 }

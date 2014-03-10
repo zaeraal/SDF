@@ -365,5 +365,11 @@ namespace OpenGLForm
 
 		ZoomAndRotate();
 		//control->logDebug(str_format("ReSizeGLScene width: %d, height: %d",width,height));
-	}	
+	}
+	GLvoid COpenGL::ReloadViewport()
+	{
+		glViewport(0,0,Width,Height);						// Reset The Current Viewport
+
+		ZoomAndRotate();
+	}
 }

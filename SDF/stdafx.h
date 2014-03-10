@@ -17,6 +17,7 @@
 #include <iomanip>*/
 
 // necessary for drawing
+#include "glew.h"
 #include "GL\freeglut.h"
 #include <cmath>
 

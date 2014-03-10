@@ -1,0 +1,42 @@
+#version 420
+#pragma optimize(on)
+
+in vec2 PixelCoordinates;
+in vec2 Direction;
+in float SamplesCount;
+
+
+uniform sampler2D SourceTexture;
+uniform vec4 Channels;
+
+out vec4 gl_FragColor;
+
+       
+
+                                     
+void main()                                          
+{
+  vec4 mixedValue = vec4(0.0);  
+  float weightSum = 0.0;
+  
+  float samplePositionMultiplier = -SamplesCount;
+  while ( samplePositionMultiplier <= SamplesCount )
+  {
+    vec2 samplePosition = PixelCoordinates + ( Direction * samplePositionMultiplier );
+    float weight = 1.0 - ( abs(samplePositionMultiplier) / (SamplesCount+1) );
+    vec4 sampleValue = texture2D( SourceTexture, samplePosition ).rgba;
+    mixedValue += weight * sampleValue;
+    weightSum += weight;
+    samplePositionMultiplier += 1.0;
+  }  
+  
+  vec4 originalValue = texture2D( SourceTexture, PixelCoordinates ).rgba;
+  vec4 finalValue = mixedValue / weightSum;
+  
+  finalValue = Channels * finalValue + ( vec4(1.0) - Channels ) * originalValue;
+  
+  gl_FragColor = finalValue;
+  
+  //gl_FragColor = vec4( PixelCoordinates, 1.0, 1.0 );
+  //gl_FragColor = vec4( mixedValue, 1.0 );
+}

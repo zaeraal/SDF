@@ -25,6 +25,8 @@ namespace MeshStructures
 		LinkedList<void>*		susedia;					// susedia
 		unsigned int			number;						// cislo v zozname
 		CSDF*					quality;
+		float					texCoord_U;
+		float					texCoord_V;
 	private:
 		bool					has_normal;
 		Vector4					normal;

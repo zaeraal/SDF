@@ -10,6 +10,7 @@ CSettings::CSettings()
 	SDF_Rays = 30;
 	SDF_Cone = 120.0f;
 	SDF_Smoothing_Radius = 2;
+	SDF_Smoothing_Texture = 1024;
 	SDF_Smooth_Projected = true;
 	SDF_Revert_Rays = false;
 	SDF_Distribution = true;

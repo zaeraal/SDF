@@ -12,6 +12,8 @@ namespace MeshStructures
 		quality = new CSDF();
 		normal.Init(0.0f, 0.0f, 0.0f);
 		has_normal = false;
+		texCoord_U = 0.0f;
+		texCoord_V = 0.0f;
 	}
 
 	Vertex::Vertex(Vector4 position)
@@ -22,6 +24,8 @@ namespace MeshStructures
 		quality = new CSDF();
 		normal.Init(0.0f, 0.0f, 0.0f);
 		has_normal = false;
+		texCoord_U = 0.0f;
+		texCoord_V = 0.0f;
 	}
 
 	// destruktor

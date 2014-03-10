@@ -27,6 +27,7 @@ namespace MeshStructures
 
 		ROctree** son;						// synovia
 		float value;
+		Vector4 value_center;
 		unsigned int count;					// pocet trojuholnikov, hranica pre robenie synov je Nastavenia->OCTREE_Threshold
 		unsigned int depth;					// ako hlboko sme v octree, max je Nastavenia->OCTREE_Depth
 		float size;							// hranica kocky

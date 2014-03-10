@@ -144,6 +144,8 @@ private: System::Windows::Forms::ToolStripSeparator^  toolStripSeparator3;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_ComputeSmoothing;
 private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
+private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Export_bmp;
+private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 
 
 
@@ -168,6 +170,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->toolStripSeparator = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->TSMI_Save = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Export = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->TSMI_Export_bmp = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolStripSeparator2 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->TSMI_Exit = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->showToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -180,6 +183,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->TSMI_Octree = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Normals = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Axes = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->TSMI_Points = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->toolsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Compute_SDF = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_Compute_Triangulation = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -250,7 +254,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->groupBox_Status = (gcnew System::Windows::Forms::GroupBox());
 			this->TB_Status = (gcnew System::Windows::Forms::TextBox());
 			this->progressBar = (gcnew System::Windows::Forms::ProgressBar());
-			this->TSMI_Points = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->TSMI_SmoothTexture = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->tabControl1->SuspendLayout();
@@ -283,8 +287,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			// 
 			// fileToolStripMenuItem
 			// 
-			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->TSMI_Open, 
-				this->toolStripSeparator, this->TSMI_Save, this->TSMI_Export, this->toolStripSeparator2, this->TSMI_Exit});
+			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(7) {this->TSMI_Open, 
+				this->toolStripSeparator, this->TSMI_Save, this->TSMI_Export, this->TSMI_Export_bmp, this->toolStripSeparator2, this->TSMI_Exit});
 			this->fileToolStripMenuItem->Name = L"fileToolStripMenuItem";
 			this->fileToolStripMenuItem->Size = System::Drawing::Size(37, 20);
 			this->fileToolStripMenuItem->Text = L"&File";
@@ -321,6 +325,13 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->TSMI_Export->Size = System::Drawing::Size(152, 22);
 			this->TSMI_Export->Text = L"&Export";
 			this->TSMI_Export->Click += gcnew System::EventHandler(this, &Form1::TSMI_Export_Click);
+			// 
+			// TSMI_Export_bmp
+			// 
+			this->TSMI_Export_bmp->Name = L"TSMI_Export_bmp";
+			this->TSMI_Export_bmp->Size = System::Drawing::Size(152, 22);
+			this->TSMI_Export_bmp->Text = L"Export as .&bmp";
+			this->TSMI_Export_bmp->Click += gcnew System::EventHandler(this, &Form1::TSMI_Export_bmp_Click);
 			// 
 			// toolStripSeparator2
 			// 
@@ -415,10 +426,18 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->TSMI_Axes->Text = L"&Axes";
 			this->TSMI_Axes->Click += gcnew System::EventHandler(this, &Form1::TSMI_Axes_Click);
 			// 
+			// TSMI_Points
+			// 
+			this->TSMI_Points->Name = L"TSMI_Points";
+			this->TSMI_Points->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::P));
+			this->TSMI_Points->Size = System::Drawing::Size(197, 22);
+			this->TSMI_Points->Text = L"&Projected Points";
+			this->TSMI_Points->Click += gcnew System::EventHandler(this, &Form1::TSMI_Points_Click);
+			// 
 			// toolsToolStripMenuItem
 			// 
-			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->TSMI_Compute_SDF, 
-				this->TSMI_Compute_Triangulation, this->toolStripSeparator3, this->TSMI_Compute_Octree, this->TSMI_ComputeSmoothing});
+			this->toolsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6) {this->TSMI_Compute_SDF, 
+				this->TSMI_Compute_Triangulation, this->toolStripSeparator3, this->TSMI_Compute_Octree, this->TSMI_ComputeSmoothing, this->TSMI_SmoothTexture});
 			this->toolsToolStripMenuItem->Enabled = false;
 			this->toolsToolStripMenuItem->Name = L"toolsToolStripMenuItem";
 			this->toolsToolStripMenuItem->Size = System::Drawing::Size(48, 20);
@@ -1150,13 +1169,13 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			this->progressBar->Step = 1;
 			this->progressBar->TabIndex = 11;
 			// 
-			// TSMI_Points
+			// TSMI_SmoothTexture
 			// 
-			this->TSMI_Points->Name = L"TSMI_Points";
-			this->TSMI_Points->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Alt | System::Windows::Forms::Keys::P));
-			this->TSMI_Points->Size = System::Drawing::Size(197, 22);
-			this->TSMI_Points->Text = L"&Projected Points";
-			this->TSMI_Points->Click += gcnew System::EventHandler(this, &Form1::TSMI_Points_Click);
+			this->TSMI_SmoothTexture->Name = L"TSMI_SmoothTexture";
+			this->TSMI_SmoothTexture->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::U));
+			this->TSMI_SmoothTexture->Size = System::Drawing::Size(242, 22);
+			this->TSMI_SmoothTexture->Text = L"Smooth in Text&ure";
+			this->TSMI_SmoothTexture->Click += gcnew System::EventHandler(this, &Form1::TSMI_SmoothTexture_Click);
 			// 
 			// Form1
 			// 
@@ -1262,7 +1281,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 		if(MController->selected != NULL)
 		{
 			this->TB_Face_ID->Text = "" + MController->selected->number;
-			this->TB_SDF_Value->Text = "" + MController->selected->quality->smoothed;
+			this->TB_SDF_Value->Text = "" + MController->selected->quality->normalized3;
 		}
 		else
 		{
@@ -1546,10 +1565,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 			Nastavenia->DEBUG_Max_SDF = 0;
 			TB_Status->Text = "Loading File";
 			String^ extension = System::IO::Path::GetExtension(openFileDialog1->FileName);
-			if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
+			/*if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
 			//if(extension == ".ply")
 				MController->LoadFileVCG(MarshalString(openFileDialog1->FileName));
-			else
+			else*/
 				MController->LoadFile(MarshalString(openFileDialog1->FileName));
 			OpenGL->ReloadBoundary();
 			this->TB_Filename->Text = System::IO::Path::GetFileName(openFileDialog1->FileName);
@@ -1588,6 +1607,9 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 	}
 	private: System::Void TSMI_Export_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		if(this->MController->loaded == false)
+			return;
+
 		timer1->Enabled = false;
 		float* values1 = NULL;
 		float* values2 = NULL;
@@ -1608,6 +1630,52 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 		TB_Status->Text = "SDF values Exported";
 		delete [] values1;
 		delete [] values2;
+		timer1->Enabled = true;
+	}
+	private: System::Void TSMI_Export_bmp_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if(this->MController->loaded == false)
+			return;
+
+		timer1->Enabled = false;
+		Bitmap ^bmp = gcnew Bitmap(Nastavenia->SDF_Smoothing_Texture, Nastavenia->SDF_Smoothing_Texture);
+		unsigned char*** pole = MController->GetTexture();
+
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			for(unsigned int j = 0; j < Nastavenia->SDF_Smoothing_Texture; j++)
+			{
+				bmp->SetPixel(j, i, Color::FromArgb(pole[i][j][0], pole[i][j][1], pole[i][j][2]));
+				//bmp->SetPixel(j, i, Color::FromArgb(0,0,0));
+			}
+		}
+
+		SaveFileDialog^ saveFileDialog1 = gcnew SaveFileDialog;
+		saveFileDialog1->Filter = "Bitmap files (*.bmp)|*.bmp";
+		saveFileDialog1->Title = "Select Bitmap file";
+		saveFileDialog1->RestoreDirectory = true;
+
+		if ( saveFileDialog1->ShowDialog() == ::DialogResult::OK )
+		{
+			bmp->Save(saveFileDialog1->FileName);
+		}
+
+		MController->logInfo("SDF values Exported to Texture");
+		TB_Status->Text = "SDF values Exported to Texture";
+
+		/*for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			for(unsigned int j = 0; j < Nastavenia->SDF_Smoothing_Texture; j++)
+			{
+				delete [] pole[i][j];
+			}
+		}*/
+		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
+		{
+			delete [] pole[i];
+		}
+		delete [] pole;
+
 		timer1->Enabled = true;
 	}
 	private: System::Void TSMI_Exit_Click(System::Object^  sender, System::EventArgs^  e)
@@ -1700,6 +1768,11 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 	{
 		MController->ReloadOctreeData();
 	}
+	private: System::Void TSMI_SmoothTexture_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		MController->SmoothTexture();
+		OpenGL->ReloadViewport();
+	}
 #pragma endregion
 
 #pragma region About
@@ -1709,6 +1782,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 		form2->ShowDialog();
 	}
 #pragma endregion
+
 };
 }
 

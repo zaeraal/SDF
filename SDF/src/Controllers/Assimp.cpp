@@ -129,9 +129,16 @@ namespace AssimpFileHandler
 													   mesh->mVertices[vertexIndex].y,// * 10000.0f,
 													   mesh->mVertices[vertexIndex].z,// * 10000.0f,
 													   1.0);							// ide o bod a teda ma W = 1, vtedy pouzije aj posunutie ak existuje v matici
-							Vector4 transformed = original * mat;
 
-							tmp_points[vertexIndex] = new Vertex(transformed);
+							Vector4 transformed = original * mat;
+							Vertex* vertik = new Vertex(transformed);
+							if(mesh->HasTextureCoords(0))
+							{
+								vertik->texCoord_U = mesh->mTextureCoords[0][vertexIndex].x;
+								vertik->texCoord_V = mesh->mTextureCoords[0][vertexIndex].y;
+								//logInfo(MarshalString("uv pre vertex "+ vertexIndex + ": " + vertik->texCoord_U + ", "+ vertik->texCoord_V));
+							}
+							tmp_points[vertexIndex] = vertik;
 						}
 					}
 					tmp_faces[t] = new Face(tmp_points[face->mIndices[0]], tmp_points[face->mIndices[1]], tmp_points[face->mIndices[2]]);

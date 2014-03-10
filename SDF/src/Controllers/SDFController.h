@@ -4,11 +4,14 @@
 #include "Octree.h"
 #include "ROctree.h"
 #include "HashTable.h"
+#include "FrameBufferObject.h"
+#include "BlurObject.h"
 
 namespace SDFController
 {
 	using namespace MeshStructures;
 	using namespace AssimpFileHandler;
+	using namespace ShaderManipulation;
 
 	public class CSDFController
 	{
@@ -49,6 +52,21 @@ namespace SDFController
 		ROctree* CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred);
 		ROctree* CreateROctree2(PPoint** pointiky, unsigned int siz, float b_size, Vector4 b_stred, unsigned int &n_pnodes);
 		void RandomShuffle(PPoint **c_array, unsigned int size);
+		void CopySDF_Vertices_to_Faces(LinkedList<Face>* triangles);
+		void CopySDF_Faces_to_Vertices(LinkedList<Vertex>* points);
+		float GetNormalizedvalue(CSDF* quality);
+		void SetNormalizedvalue(CSDF* quality, float value);
+		void SmoothTexture(float** textur);
+		void ApplyTexture(LinkedList<Face>* triangles, float** textur);
+		void ApplyTexture(LinkedList<Vertex>* points, float** textur);
+		float** GetTexture(LinkedList<Face>* triangles);
+		void DrawTriangle(float** textur, float** XX_kontura, unsigned int** X_kontura, Face* triangle);
+		void ScanLine(unsigned int** X_kontura, float** XX_kontura, int x1, int y1, int x2, int y2, float f1, float f2);
+		void DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3);
+		void DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3, float value);
+		void CPUSmooth(float** textur, GLsizei width, GLsizei height, float SamplesCount);
+		void CPUBlur(float** textur, float** textur2, int x, int y, float SamplesCount, int x_dir, int y_dir, GLsizei width, GLsizei height);
+
 	private:
 		float diagonal;
 		CAssimp* loggger;

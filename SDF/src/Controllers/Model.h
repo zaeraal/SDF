@@ -51,6 +51,9 @@ namespace ModelController
 		void ComputeSoftNormals();
 		void MergeResults(LinkedList<Face>* triangles_backup, LinkedList<Vertex>* points_backup);
 		void RecomputeSmoothing();
+		void NormalizeTextureCoords();
+		unsigned char*** GetTexture();
+		void SmoothTexture();
 
 		bool loaded;
 		bool show_octree;
