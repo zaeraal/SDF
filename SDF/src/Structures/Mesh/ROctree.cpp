@@ -333,10 +333,16 @@ namespace MeshStructures
 			{+1.0, +1.0, +1.0}
 		};
 
-		if((recursive == true) && (depth > 5))
-			return;
+		/*if((recursive == true) && (depth > 5))
+			return;*/
 		if((count == 0) && (isLeaf() == true))
 			return;
+		if(isLeaf() == true)
+		{
+		GLubyte r = 0, g = 0, b = 0;
+		float valu = log(((value) / (Nastavenia->DEBUG_Max_SDF)) * 4.0f + 1.0f) / log(4.0f + 1.0f);
+		HLSToRGB(valu, r, g, b);
+		glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
 
 		glBegin(GL_LINES);
 			glVertex3f(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
@@ -375,7 +381,7 @@ namespace MeshStructures
 			glVertex3f(origin.X + size*Table[5][0], origin.Y + size*Table[5][1], origin.Z + size*Table[5][2]);
 			glVertex3f(origin.X + size*Table[4][0], origin.Y + size*Table[4][1], origin.Z + size*Table[4][2]);
 		glEnd();
-
+		}
 		if((isLeaf() == false) && (recursive == true))
 		{
 			for(int i = 0; i < 8; i++)
@@ -384,6 +390,23 @@ namespace MeshStructures
 			}
 		}
 	}
+
+	void ROctree::HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B)
+	{
+		//#pragma comment( lib, "shlwapi.lib" )  // needed for the ColorHLSToRGB() function
+
+		int hue, lum, sat;
+		hue = int(SDF_value * 240.0);
+		lum = 120;
+		sat = 240;
+
+		COLORREF rgbColor = ColorHLSToRGB( hue, lum, sat );
+		R = GetRValue(rgbColor);
+		G = GetGValue(rgbColor);
+		B = GetBValue(rgbColor);
+		//logInfo(MarshalString("value: " + SDF_value + ", R: " + R + ", G: "+G+", B: "+B));
+	}
+
 	void ROctree::DrawAxes()
 	{
 		glBegin(GL_LINES);

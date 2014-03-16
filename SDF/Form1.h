@@ -1565,10 +1565,10 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			Nastavenia->DEBUG_Max_SDF = 0;
 			TB_Status->Text = "Loading File";
 			String^ extension = System::IO::Path::GetExtension(openFileDialog1->FileName);
-			/*if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
+			if((extension == ".ply") ||(extension == ".stl") ||(extension == ".obj") ||(extension == ".off") ||(extension == ".vmi"))
 			//if(extension == ".ply")
 				MController->LoadFileVCG(MarshalString(openFileDialog1->FileName));
-			else*/
+			else
 				MController->LoadFile(MarshalString(openFileDialog1->FileName));
 			OpenGL->ReloadBoundary();
 			this->TB_Filename->Text = System::IO::Path::GetFileName(openFileDialog1->FileName);

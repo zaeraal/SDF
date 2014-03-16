@@ -147,7 +147,7 @@ namespace ModelController
 		int ticks3 = GetTickCount();
 		VCGlib->LoadData(triangles, points);
 		ComputeBoundary();
-		EraseIdenticalVertices();
+		//EraseIdenticalVertices();
 		CopySDF_Vertices_to_Faces();
 		loaded = true;
 
@@ -548,9 +548,23 @@ namespace ModelController
 				}
 				if((Nastavenia->VISUAL_State != VISUAL_PICKING) && (Nastavenia->VISUAL_Points == true))
 				{
-					glColor4f(1.0f,0.0f,0.0f,0.75f);			// red
+					if(Nastavenia->SDF_Smoothing_Radius < 2)
+						glColor4f(0.0f,0.0f,0.0f,1.0f);			// red
+					else
+					{
+						GLubyte r = 0, g = 0, b = 0;
+						switch(Nastavenia->VISUAL_SDF_Type)
+						{
+						case VISUAL_NORMALIZED_0_1: HLSToRGB(tmp->data->quality->normalized1, r, g, b); break;
+						case VISUAL_NORMALIZED_MIN_1: HLSToRGB(tmp->data->quality->normalized2, r, g, b); break;
+						case VISUAL_NORMALIZED_0_MAX: HLSToRGB(tmp->data->quality->normalized3, r, g, b); break;
+						case VISUAL_NORMALIZED_MIN_MAX: HLSToRGB(tmp->data->quality->normalized4, r, g, b); break;
+						default: break;
+						}
+						glColor4ub(r, g, b, 255);
+					}
 					glBegin(GL_QUADS);
-					glColor4f(1.0f,0.0f,0.0f,0.75f);			// red
+					//glColor4f(1.0f,0.0f,0.0f,0.75f);			// red
 					float t_sf = b_sf * 0.02f;
 					glNormal3f(Look_X, Look_Y, Look_Z);
 					projected = tmp->data->center - tmp->data->normal * tmp->data->quality->smoothed * 0.5f;
@@ -639,8 +653,35 @@ namespace ModelController
 		{
 			if(Nastavenia->VISUAL_Octree == true)
 			{
-				glColor4f(0.5f,0.5f,0.5f,1.0f);							// seda farba
-				m_root->DrawOctree(true);
+				//glColor4f(0.5f,0.5f,0.5f,1.0f);							// seda farba
+				//m_root->DrawOctree(true);
+				int tmp_threshold = Nastavenia->OCTREE_Threshold;
+				Nastavenia->OCTREE_Threshold = ((triangles->GetSize() / 450) > 4) ? (triangles->GetSize() / 450) : 4;
+				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth - 2;
+
+				LinkedList<Face>::Cell<Face>* current_face = triangles->start;
+				LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
+				while(current_face != NULL)
+				{
+					// projektnute body
+					PPoint* tmpp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
+					tmpp->diameter = current_face->data->quality->value;
+
+					if(tmpp->diameter >= 0.1f)
+						point_list->InsertToEnd(tmpp);
+
+					current_face = current_face->next;
+				}
+
+				float b_size; unsigned int n_pnodes;
+				Vector4 b_stred = SDF_control->ComputePointBoundary(point_list, b_size);
+				ROctree* mm_root = SDF_control->CreateROctree(point_list, b_size, b_stred, n_pnodes);
+
+				mm_root->DrawOctree(true);
+
+				point_list->CompleteDelete();
+				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth + 2;
+				Nastavenia->OCTREE_Threshold = tmp_threshold;
 			}
 			if(Nastavenia->VISUAL_Axes == true)
 			{

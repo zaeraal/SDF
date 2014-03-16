@@ -20,6 +20,7 @@ namespace MeshStructures
 		byte GetCode(const Vector4 pt);
 		bool isLeaf() { return (sons != 0 ? false : true);};
 		void GetBoundary(float &siz, float &x, float &y, float &z);
+		void HLSToRGB(float SDF_value, GLubyte &R, GLubyte &G, GLubyte &B);
 		void DrawOctree(bool recursive);
 		void DrawAxes();
 		bool CheckValid(int num);
