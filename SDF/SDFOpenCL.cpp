@@ -49,6 +49,8 @@ namespace OpenCLForm
 		b_points = NULL;
 		b_pnodes = NULL;
 		b_pnode_origins = NULL;
+		b_pnode_values = NULL;
+		b_pnode_counts = NULL;
 		moznost = 0;
 
 		debugger = new COpenCLDebug();
@@ -70,6 +72,8 @@ namespace OpenCLForm
 			clReleaseMemObject(b_points);
 			clReleaseMemObject(b_pnodes);
 			clReleaseMemObject(b_pnode_origins);
+			clReleaseMemObject(b_pnode_values);
+			clReleaseMemObject(b_pnode_counts);
 		}
 		clReleaseProgram(program1);
 		clReleaseKernel(kernel1);
@@ -428,11 +432,13 @@ namespace OpenCLForm
 		return EXIT_SUCCESS;
 	}
 
-	int COpenCL::SetupMemory4(unsigned int ss_points, unsigned int ss_pnodes, unsigned int ss_pnode_origins)
+	int COpenCL::SetupMemory4(unsigned int ss_points, unsigned int ss_pnodes, unsigned int ss_pnode_origins, unsigned int ss_pnode_values, unsigned int ss_pnode_counts)
 	{
 		s_points = ss_points;
 		s_pnodes = ss_pnodes;
 		s_pnode_origins = ss_pnode_origins;
+		s_pnode_values = ss_pnode_values;
+		s_pnode_counts = ss_pnode_counts;
 
 		// delete unnecessary data
 		clReleaseMemObject(b_outputs);
@@ -459,7 +465,19 @@ namespace OpenCLForm
 			//"Error: Failed to allocate memory!"
 			return EXIT_FAIL_MEMORY;
 		}
+		b_pnode_values = clCreateBuffer(context, CL_MEM_READ_ONLY, s_pnode_values, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
 
+		b_pnode_counts = clCreateBuffer(context, CL_MEM_READ_ONLY, s_pnode_counts, NULL, &err);
+		if (err != CL_SUCCESS)
+		{
+			//"Error: Failed to allocate memory!"
+			return EXIT_FAIL_MEMORY;
+		}
 		return EXIT_SUCCESS;
 	}
 
@@ -697,13 +715,15 @@ namespace OpenCLForm
 		return EXIT_SUCCESS;
 	}
 
-	int COpenCL::LaunchKernel4(cl_float4 *c_points, cl_float4 *c_pnode_origins, cl_uint *c_pnodes, cl_float *c_results, cl_uint n_points, cl_float o_size, cl_float weight)
+	int COpenCL::LaunchKernel4(cl_float4 *c_points, cl_float4 *c_pnode_origins, cl_uint *c_pnodes, cl_float *c_pnode_values, cl_uint *c_pnode_counts, cl_float *c_results, cl_uint n_points, cl_float o_size)
 	{
 		// Transfer the input vectors into device memory
 		err = CL_SUCCESS;
 		err |= clEnqueueWriteBuffer(commands, b_points, CL_FALSE, 0, s_points, c_points, 0, NULL, NULL);
 		err |= clEnqueueWriteBuffer(commands, b_pnode_origins, CL_FALSE, 0, s_pnode_origins, c_pnode_origins, 0, NULL, NULL);
 		err |= clEnqueueWriteBuffer(commands, b_pnodes, CL_FALSE, 0, s_pnodes, c_pnodes, 0, NULL, NULL);
+		err |= clEnqueueWriteBuffer(commands, b_pnode_values, CL_FALSE, 0, s_pnode_values, c_pnode_values, 0, NULL, NULL);
+		err |= clEnqueueWriteBuffer(commands, b_pnode_counts, CL_FALSE, 0, s_pnode_counts, c_pnode_counts, 0, NULL, NULL);
 		//err |= clEnqueueWriteBuffer(commands, b_results, CL_FALSE, 0, s_results, c_results, 0, NULL, NULL);
 		if (err != CL_SUCCESS)
 		{
@@ -719,8 +739,9 @@ namespace OpenCLForm
 			err  = clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_points);
 			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnode_origins);
 			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnodes);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnode_values);
+			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_pnode_counts);
 			err |= clSetKernelArg(kernel3, n++, sizeof(cl_mem), &b_results);
-			err |= clSetKernelArg(kernel3, n++, sizeof(cl_float), &weight);
 			err |= clSetKernelArg(kernel3, n++, sizeof(cl_uint), &n_points);
 			err |= clSetKernelArg(kernel3, n++, sizeof(cl_float), &o_size);
 
@@ -746,12 +767,13 @@ namespace OpenCLForm
 		}
 		else
 		{
-			debugger->SetArgSize(7);
+			debugger->SetArgSize(8);
 			debugger->SetArgValue(n++, c_points);
 			debugger->SetArgValue(n++, c_pnode_origins);
 			debugger->SetArgValue(n++, c_pnodes);
+			debugger->SetArgValue(n++, c_pnode_values);
+			debugger->SetArgValue(n++, c_pnode_counts);
 			debugger->SetArgValue(n++, c_results);
-			debugger->SetArgValue(n++, &weight);
 			debugger->SetArgValue(n++, &n_points);
 			debugger->SetArgValue(n++, &o_size);
 

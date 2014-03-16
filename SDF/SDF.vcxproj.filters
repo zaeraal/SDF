@@ -144,6 +144,12 @@
     <ClCompile Include="src\Shaders\ShaderObject.cpp">
       <Filter>Source Files\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="src\Shaders\TextureObject.cpp">
+      <Filter>Source Files\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shaders\TextureDataObject.cpp">
+      <Filter>Source Files\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -231,6 +237,12 @@
       <Filter>Header Files\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="src\Shaders\ShaderObject.h">
+      <Filter>Header Files\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shaders\TextureObject.h">
+      <Filter>Header Files\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shaders\TextureDataObject.h">
       <Filter>Header Files\Shaders</Filter>
     </ClInclude>
   </ItemGroup>

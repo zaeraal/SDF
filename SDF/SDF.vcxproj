@@ -114,6 +114,8 @@
     <ClCompile Include="src\Shaders\BlurObject.cpp" />
     <ClCompile Include="src\Shaders\FrameBufferObject.cpp" />
     <ClCompile Include="src\Shaders\ShaderObject.cpp" />
+    <ClCompile Include="src\Shaders\TextureDataObject.cpp" />
+    <ClCompile Include="src\Shaders\TextureObject.cpp" />
     <ClCompile Include="src\Structures\Mesh\Face.cpp" />
     <ClCompile Include="src\Structures\Mesh\Grid.cpp" />
     <ClCompile Include="src\Structures\Mesh\Octree.cpp" />
@@ -149,6 +151,8 @@
     <ClInclude Include="src\Shaders\BlurObject.h" />
     <ClInclude Include="src\Shaders\FrameBufferObject.h" />
     <ClInclude Include="src\Shaders\ShaderObject.h" />
+    <ClInclude Include="src\Shaders\TextureDataObject.h" />
+    <ClInclude Include="src\Shaders\TextureObject.h" />
     <ClInclude Include="src\Structures\Generic\HashTable.h" />
     <ClInclude Include="src\Structures\Generic\LinkedList.h" />
     <ClInclude Include="src\Structures\Math\Mat4.h" />

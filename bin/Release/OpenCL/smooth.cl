@@ -78,8 +78,9 @@ unsigned char pipc8(unsigned char mask)
 __kernel void smooth(__global const float4 *c_points,
 					 __global const float4 *c_node_origins,
 					 __global const uint *c_nodes,
+					 __global const float *c_node_values,
+					 __global const uint *c_node_counts,
 					 __global float *c_results,
-					 const float weight,
 					 const uint n_points,
 					 const float o_size
 					)
@@ -89,26 +90,18 @@ __kernel void smooth(__global const float4 *c_points,
 	if(ref_point > n_points)										// thready navyse ignorujeme (nemali by byt)
 		return;
 
-	//Smooth2(point_array[i], m_root, ro_list, i);
 	float4 pointik1 = c_points[ref_point];
-	float value1 = fabs(pointik1.w);
+	float value = pointik1.w;
 	pointik1.w = 1.0f;
 
-	float4 pointik2;
-	float value2 = 0;
-
-	float maxval = value1 * 0.25f * weight;
+	float maxval = value * 0.5f;
 	float distanc = 0;
 
-	float gweight = ComputeGaussian(0, maxval);
-	float sum_values = value1 * gweight;
-	float sum_weights = gweight;
-
-	if(ref_point < 10000)
-	{
-		sum_values = 0;
-		sum_weights = 0;
-	}
+	float weight = 0;
+	float pct = 0.0f;
+	float cube_radius = SQRT_THREE;
+	float sum_values = 0.0f;
+	float sum_weights = 0.0f;
 
 	CastStackz stack;
 	int idx = 0;
@@ -132,27 +125,21 @@ __kernel void smooth(__global const float4 *c_points,
 		if(sons == 0)					// leaf
 		{
 			tmp = tmp >> 8;
-			pointik2 = c_points[tmp];
-			value2 = fabs(pointik2.w);
-			pointik2.w = 1.0f;
-			while(value2 >= 0.0f)
+			
+			weight = (float)c_node_counts[tmp];
+			cube_radius = o_size_array[idx] * SQRT_THREE;
+			distanc = distance(pointik1, c_node_origins[tmp]) - cube_radius - maxval;
+			if(distanc < 0.0f)
 			{
-				distanc = distance(pointik1, pointik2);
-				if(distanc <= maxval)
-				{
-					gweight = ComputeGaussian(distanc, maxval);
-					sum_values += value2 * gweight;
-					sum_weights += gweight;
-				}
-				tmp = tmp + 1;
-
-				if((tmp >= n_points) || (tmp >= 10000))
-					break;
-
-				pointik2 = c_points[tmp];
-				value2 = pointik2.w;
-				pointik2.w = 1.0f;
+				distanc = -distanc;
+				pct = (distanc / (cube_radius + cube_radius)) * 100.0f;	// kolko % je vnutri
+				if(pct > 100.0f)										// nesmu byt priliz velke
+					pct = 100.0f;
+				weight = weight * pct;
 			}
+			sum_values += c_node_values[tmp] * weight;
+			sum_weights += weight;
+
 			idx--;
 		}
 		else
@@ -170,8 +157,25 @@ __kernel void smooth(__global const float4 *c_points,
 			node = node + popc8(sons);		// idem na dalsi node
 
 			// vzdialenost od mojho bodu k synovy nodu
-			distanc = distance(pointik1, c_node_origins[node]) - (o_size_array[idx+1] * SQRT_THREE);
-			if(distanc <= maxval)
+			distanc = distance(pointik1, c_node_origins[node]) - maxval;
+			cube_radius = o_size_array[idx+1] * SQRT_THREE;
+			if(distanc <= (-cube_radius))
+			{
+				// copy pasta ak som v leafe, ale pre SYNA!!!
+				// cela kocka je v radiuse
+				pct = 100.0f;
+				weight = (float)c_node_counts[node] * pct;
+
+				sum_values = sum_values + (c_node_values[node] * weight);
+				sum_weights = sum_weights + weight;
+
+				sons = (tmp & 0xFF);
+				sons = sons >> (id + 1);
+				sons = sons << (id + 1);
+				id = pipc8(sons);
+				write(&stack, idx, tmp, id);
+			}
+			else if(distanc <= cube_radius)
 			{
 				write(&stack, idx + 1, c_nodes[node], pipc8(c_nodes[node] & 0xFF));
 				sons = (tmp & 0xFF);
@@ -192,5 +196,8 @@ __kernel void smooth(__global const float4 *c_points,
 		}
 	}
 
+	weight = 4.0f;
+	sum_weights = sum_weights + weight;
+	sum_values = sum_values + (value * weight);
 	c_results[ref_point] = sum_values / sum_weights;
 }

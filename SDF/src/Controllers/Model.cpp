@@ -25,7 +25,7 @@ namespace ModelController
 		/*
 		/// -------------------------------------
 		/// STRASNE DLHO TRVA ZATVORENIE PROGRAMU
-		/// DOCASNE ZAKOMENTOVANE
+		/// NATRVALO ZAKOMENTOVANE, neni nutne :D
 		/// -------------------------------------
 
 		// bacha na deletovanie v spravnom poradi
@@ -82,11 +82,12 @@ namespace ModelController
 
 		int ticks3 = GetTickCount();
 		Assimp->LoadData(triangles, points);
+		ComputeBoundary();
+		EraseIdenticalVertices();
 		loaded = true;
 
 		int ticks4 = GetTickCount();
 		AssignNumber();
-		ComputeBoundary();
 		CreateOctree();
 
 		int ticks5 = GetTickCount();
@@ -145,12 +146,13 @@ namespace ModelController
 
 		int ticks3 = GetTickCount();
 		VCGlib->LoadData(triangles, points);
+		ComputeBoundary();
+		EraseIdenticalVertices();
 		CopySDF_Vertices_to_Faces();
 		loaded = true;
 
 		int ticks4 = GetTickCount();
 		AssignNumber();
-		ComputeBoundary();
 		CreateOctree();
 
 		int ticks5 = GetTickCount();
@@ -213,10 +215,11 @@ namespace ModelController
 
 		Assimp->SetScene(scene);
 		Assimp->LoadData(triangles, points);
+		ComputeBoundary();
+		EraseIdenticalVertices();
 		loaded = true;
 
 		AssignNumber();
-		ComputeBoundary();
 		CreateOctree();
 		SetColors();
 		ComputeSusedov();
@@ -820,6 +823,15 @@ namespace ModelController
 		delete triangles;
 		triangles = new LinkedList<Face>();
 
+		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		while(tmp != NULL)
+		{
+			tmp->data->susedia->Clear();
+			delete tmp->data->susedia;
+
+			tmp = tmp->next;
+		}
+
 		DeleteIdenticalVertices();
 
 		PointCloudTriangulation::DeleunayTriangulator *pTriangulator = new PointCloudTriangulation::DeleunayTriangulator();
@@ -833,7 +845,7 @@ namespace ModelController
 		Vertex** tmp_points = new Vertex* [numOfVertices];
 
 		// prekopcime do pola, koli lepsiemu pristupu
-		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
+		tmp = points->start;
 		unsigned int i = 0;
 		while(tmp != NULL)
 		{
@@ -907,6 +919,7 @@ namespace ModelController
 		delete [] normals;
 		delete [] tmp_points;
 	}
+
 	void CModel::DeleteIdenticalVertices()
 	{
 		float delta = b_size * 2 * 0.00001f;
@@ -935,6 +948,65 @@ namespace ModelController
 		delete points;
 		points = new_vertices;
 	}
+
+	void CModel::EraseIdenticalVertices()
+	{
+		float delta = b_size * 2 * 0.00001f;
+		LinkedList<Vertex>* new_vertices = new LinkedList<Vertex>();
+		LinkedList<Face>::Cell<Face>* tmp1 = triangles->start;
+		while(tmp1 != NULL)
+		{
+			for(int i = 0; i < 3; i++)
+			{
+				bool add = true;
+				LinkedList<Vertex>::Cell<Vertex>* tmp2 = new_vertices->start;
+				while(tmp2 != NULL)
+				{
+					// nemalo by nastat kedze vytvaram uplne nove
+					if(tmp1->data->v[i] == tmp2->data)
+						break;
+					float distance = tmp1->data->v[i]->P.Dist(tmp2->data->P);
+					if(distance < delta)
+					{
+						if(abs(tmp2->data->texCoord_U - tmp1->data->v[i]->texCoord_U) > 0.01f)
+						{
+							tmp2 = tmp2->next;
+							continue;
+						}
+						if(abs(tmp2->data->texCoord_V - tmp1->data->v[i]->texCoord_V) > 0.01f)
+						{
+							tmp2 = tmp2->next;
+							continue;
+						}
+						tmp1->data->v[i] = tmp2->data;
+						add = false;
+						break;
+					}	
+					tmp2 = tmp2->next;
+				}
+				if(add == true)
+				{
+					Vertex* new_vert = new Vertex(tmp1->data->v[i]->P);
+					new_vert->texCoord_U = tmp1->data->v[i]->texCoord_U;
+					new_vert->texCoord_V = tmp1->data->v[i]->texCoord_V;
+					if(tmp1->data->v[i]->HasNormal())
+					{
+						new_vert->SetNormal(tmp1->data->v[i]->GetNormal());
+					}
+					new_vert->susedia->InsertToEnd(tmp1->data);
+					tmp1->data->v[i] = new_vert;
+					new_vertices->InsertToEnd(new_vert);
+					
+				}
+			}
+			tmp1 = tmp1->next;
+		}
+		points->CompleteDelete();
+		delete points;
+
+		points = new_vertices;
+	}
+
 	void CModel::ReloadOctreeData()
 	{
 		int ticks1 = GetTickCount();
@@ -1118,7 +1190,7 @@ namespace ModelController
 	}
 	unsigned char*** CModel::GetTexture()
 	{
-		float** texttur = SDF_control->GetTexture(triangles);
+		float** texttur = SDF_control->GetTexture(triangles, true);
 
 		unsigned char R, G, B;
 		unsigned char*** result = new unsigned char**[Nastavenia->SDF_Smoothing_Texture];
@@ -1195,11 +1267,12 @@ namespace ModelController
 
 	void CModel::SmoothTexture()
 	{
-		float** textur = SDF_control->GetTexture(triangles);
+		bool normalized = false;
+		float** textur = SDF_control->GetTexture(triangles, normalized);
 		SDF_control->SmoothTexture(textur);
-		/*SDF_control->ApplyTexture(triangles, textur);
+		/*SDF_control->ApplyTexture(triangles, textur, normalized);
 		CopySDF_Faces_to_Vertices();*/
-		SDF_control->ApplyTexture(points, textur);
+		SDF_control->ApplyTexture(points, textur, normalized);
 		CopySDF_Vertices_to_Faces();
 
 		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)

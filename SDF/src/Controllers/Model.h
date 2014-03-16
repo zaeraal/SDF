@@ -47,6 +47,7 @@ namespace ModelController
 		void TriangulatePoints();
 		void ReloadOctreeData();
 		void DeleteIdenticalVertices();
+		void EraseIdenticalVertices();
 		void BuildArrays();
 		void ComputeSoftNormals();
 		void MergeResults(LinkedList<Face>* triangles_backup, LinkedList<Vertex>* points_backup);

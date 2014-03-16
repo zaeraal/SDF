@@ -1281,7 +1281,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 		if(MController->selected != NULL)
 		{
 			this->TB_Face_ID->Text = "" + MController->selected->number;
-			this->TB_SDF_Value->Text = "" + MController->selected->quality->normalized3;
+			this->TB_SDF_Value->Text = "" + MController->selected->quality->smoothed;
 		}
 		else
 		{
@@ -1770,8 +1770,11 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 	}
 	private: System::Void TSMI_SmoothTexture_Click(System::Object^  sender, System::EventArgs^  e)
 	{
+		timer1->Enabled = false;
 		MController->SmoothTexture();
+		//OpenGL->SwapOpenGLBuffers();
 		OpenGL->ReloadViewport();
+		timer1->Enabled = true;
 	}
 #pragma endregion
 

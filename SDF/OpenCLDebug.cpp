@@ -73,7 +73,7 @@ namespace OpenCLDebugger
 	{
 		for(cl_uint i = 0; i < (cl_uint)global; i++)
 		{
-			smooth((cl_float4*)args[0], (cl_float4*)args[1], (cl_uint*)args[2], (cl_float*)(args[3]), (*(cl_float*)(args[4])), (*(cl_uint*)(args[5])), (*(cl_float*)(args[6])), i);
+			smooth((cl_float4*)args[0], (cl_float4*)args[1], (cl_uint*)args[2], (cl_float*)(args[3]), (cl_uint*)(args[4]), (cl_float*)(args[5]), (*(cl_uint*)(args[6])), (*(cl_float*)(args[7])), i);
 		}
 	}
 
@@ -1348,38 +1348,31 @@ namespace OpenCLDebugger
 	void COpenCLDebug::smooth(const cl_float4 *c_points,
 		const cl_float4 *c_node_origins,
 		const cl_uint *c_nodes,
+		const cl_float *c_node_values,
+		const cl_uint *c_node_counts,
 		float *c_results,
-		const float weight,
 		const cl_uint n_points,
 		const float o_size,
-		const cl_uint gid
-		)
+		const cl_uint gid)
 	{
 		cl_uint ref_point = gid;										// kolkaty som point v poradi
 
 		if(ref_point > n_points)										// thready navyse ignorujeme (nemali by byt)
 			return;
 
-		//Smooth2(point_array[i], m_root, ro_list, i);
 		cl_float4 pointik1 = c_points[ref_point];
-		float value1 = fabs(pointik1.s[3]);
+		float value = pointik1.s[3];
 		pointik1.s[3] = 1.0f;
 
-		cl_float4 pointik2;
-		float value2 = 0;
-
-		float maxval = value1 * 0.25f * weight;
+		float maxval = value * 0.5f;
 		float distanc = 0;
 
-		float gweight = ComputeGaussian(0, maxval);
-		float sum_values = value1 * gweight;
-		float sum_weights = gweight;
+		float weight = 0;
+		float pct = 0.0f;
+		float cube_radius = SQRT_THREE;
+		float sum_values = 0.0f;
+		float sum_weights = 0.0f;
 
-		if(ref_point < 10000)
-		{
-			sum_values = 0;
-			sum_weights = 0;
-		}
 
 		CastStackz stack;
 		int idx = 0;
@@ -1403,27 +1396,21 @@ namespace OpenCLDebugger
 			if(sons == 0)					// leaf
 			{
 				tmp = tmp >> 8;
-				pointik2 = c_points[tmp];
-				value2 = fabs(pointik2.s[3]);
-				pointik2.s[3] = 1.0f;
-				while(value2 >= 0.0f)
+			
+				weight = (float)c_node_counts[tmp];
+				cube_radius = o_size_array[idx] * SQRT_THREE;
+				distanc = cl_distance(pointik1, c_node_origins[tmp]) - cube_radius - maxval;
+				if(distanc < 0.0f)
 				{
-					distanc = cl_distance(pointik1, pointik2);
-					if(distanc <= maxval)
-					{
-						gweight = ComputeGaussian(distanc, maxval);
-						sum_values += value2 * gweight;
-						sum_weights += gweight;
-					}
-					tmp = tmp + 1;
-
-					if((tmp >= n_points) || (tmp >= 10000))
-						break;
-
-					pointik2 = c_points[tmp];
-					value2 = pointik2.s[3];
-					pointik2.s[3] = 1.0f;
+					distanc = -distanc;
+					pct = (distanc / (cube_radius + cube_radius)) * 100.0f;	// kolko % je vnutri
+					if(pct > 100.0f)										// nesmu byt priliz velke
+						pct = 100.0f;
+					weight = weight * pct;
 				}
+				sum_values += c_node_values[tmp] * weight;
+				sum_weights += weight;
+
 				idx--;
 			}
 			else
@@ -1441,8 +1428,25 @@ namespace OpenCLDebugger
 				node = node + popc8(sons);		// idem na dalsi node
 
 				// vzdialenost od mojho bodu k synovy nodu
-				distanc = cl_distance(pointik1, c_node_origins[node]) - (o_size_array[idx+1] * SQRT_THREE);
-				if(distanc <= maxval)
+				distanc = cl_distance(pointik1, c_node_origins[node]) - maxval;
+				cube_radius = o_size_array[idx+1] * SQRT_THREE;
+				if(distanc <= (-cube_radius))
+				{
+					// copy pasta ak som v leafe, ale pre SYNA!!!
+					// cela kocka je v radiuse
+					pct = 100.0f;
+					weight = (float)c_node_counts[node] * pct;
+
+					sum_values = sum_values + (c_node_values[node] * weight);
+					sum_weights = sum_weights + weight;
+
+					sons = (tmp & 0xFF);
+					sons = sons >> (id + 1);
+					sons = sons << (id + 1);
+					id = pipc8(sons);
+					write(&stack, idx, tmp, id);
+				}
+				else if(distanc <= cube_radius)
 				{
 					write(&stack, idx + 1, c_nodes[node], pipc8(c_nodes[node] & 0xFF));
 					sons = (tmp & 0xFF);
@@ -1462,7 +1466,9 @@ namespace OpenCLDebugger
 				}
 			}
 		}
-
+		weight = 4.0f;
+		sum_weights = sum_weights + weight;
+		sum_values = sum_values + (value * weight);
 		c_results[ref_point] = sum_values / sum_weights;
 	}
 }

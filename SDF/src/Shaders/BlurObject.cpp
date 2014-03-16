@@ -41,16 +41,16 @@ namespace ShaderManipulation
 		delete [] buffers;
 
 		glBegin(GL_QUADS);
-		glTexCoord2f (0.0, 0.0);
 		glVertex2f(0.0, 0.0);
-		glTexCoord2f (1.0, 0.0);
+		//glTexCoord2f(0.0, 0.0);
 		glVertex2f(1.0, 0.0);
-		glTexCoord2f (1.0, 1.0);
+		//glTexCoord2f(1.0, 0.0);
 		glVertex2f(1.0, 1.0);
-		glTexCoord2f (0.0, 1.0);
+		//glTexCoord2f(1.0, 1.0);
 		glVertex2f(0.0, 1.0);
+		//glTexCoord2f(0.0, 1.0);
 		glEnd();
-		
+
 		GaussianBlurShader->Stop();
 
 		glMatrixMode( GL_MODELVIEW );
@@ -59,6 +59,9 @@ namespace ShaderManipulation
 		glPopMatrix();	
 		glPopAttrib();
 	}
+
+
+
 
 	void BlurObject::Apply( float Size, Vector4 Channels, GLuint Source, GLuint Destination )
 	{
@@ -103,5 +106,4 @@ namespace ShaderManipulation
 		glPopMatrix();	
 		glPopAttrib();
 	}
-
 }

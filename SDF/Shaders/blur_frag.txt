@@ -20,23 +20,33 @@ void main()
   float weightSum = 0.0;
   
   float samplePositionMultiplier = -SamplesCount;
+  
   while ( samplePositionMultiplier <= SamplesCount )
   {
     vec2 samplePosition = PixelCoordinates + ( Direction * samplePositionMultiplier );
-    float weight = 1.0 - ( abs(samplePositionMultiplier) / (SamplesCount+1) );
     vec4 sampleValue = texture2D( SourceTexture, samplePosition ).rgba;
+    float weight = 1.0;// - ( abs(samplePositionMultiplier) / (SamplesCount+1) );
+    if ( sampleValue.a < 0.01 ) weight = 0.0;
     mixedValue += weight * sampleValue;
     weightSum += weight;
     samplePositionMultiplier += 1.0;
-  }  
+  } 
+   
   
   vec4 originalValue = texture2D( SourceTexture, PixelCoordinates ).rgba;
-  vec4 finalValue = mixedValue / weightSum;
+  vec4 finalValue;
+  if ( weightSum < 0.01 )
+  {
+    finalValue = originalValue;
+  } else {
+    finalValue = mixedValue / weightSum;
+  }
   
   finalValue = Channels * finalValue + ( vec4(1.0) - Channels ) * originalValue;
   
   gl_FragColor = finalValue;
   
+  //gl_FragColor = texture2D( SourceTexture, PixelCoordinates ).aaaa;
   //gl_FragColor = vec4( PixelCoordinates, 1.0, 1.0 );
   //gl_FragColor = vec4( mixedValue, 1.0 );
 }

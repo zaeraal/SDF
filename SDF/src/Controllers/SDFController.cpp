@@ -625,13 +625,13 @@ namespace SDFController
 			//weight = 1.0;
 
 			float cube_radius = tmp->data->size * SQRT_THREE;
-			float distanc_act = pointik->P.Dist(tmp->data->origin) + cube_radius - maxval;
-			if(distanc_act > 0.0001f)
+			float distanc_act = pointik->P.Dist(tmp->data->origin) - cube_radius - maxval;
+			if(distanc_act < 0.0f)
 			{
-				float pct = (distanc_act / cube_radius) * 100.0f;	// kolko % je vonku
-				if(pct < 0.0001f)									// nesmu byt priliz male!!
-					pct = 0.0001f;
-				pct = 1 / pct;										// kolko % je vnutry
+				distanc_act = -distanc_act;
+				float pct = (distanc_act / (cube_radius + cube_radius)) * 100.0f;	// kolko % je vnutri
+				if(pct > 100.0f)									// nesmu byt priliz velke
+					pct = 100.0f;
 				weight *= pct;
 			}
 
@@ -1879,8 +1879,8 @@ namespace SDFController
 			current_face = current_face->next;
 		}
 
-		CopySDF_Faces_to_Vertices(points);
-		CopySDF_Vertices_to_Faces(triangles);
+		//CopySDF_Faces_to_Vertices(points);
+		//CopySDF_Vertices_to_Faces(triangles);
 
 		/*float dist = 0.0f;
 		std::vector<float> rays;
@@ -1916,13 +1916,17 @@ namespace SDFController
 		int ticks9 = GetTickCount();
 		if(Nastavenia->SDF_Smooth_Projected == true)
 		{
+			int tmp_threshold = Nastavenia->OCTREE_Threshold;
+			Nastavenia->OCTREE_Threshold = min((n_triangles / 450), 4);
+			/*Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth - 2;
 			DoSmoothing2(triangles, min, max);
+			Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth + 2;*/
 
-			/*current_face = triangles->start;
+			current_face = triangles->start;
 
 			if(Nastavenia->SDF_Smoothing_Radius > 0)
 			{
-				//LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
+				LinkedList<PPoint>* point_list = new LinkedList<PPoint>();
 				const unsigned int tsize = triangles->GetSize();
 				PPoint **point_array = new PPoint*[tsize];
 				unsigned int count = 0;
@@ -1932,25 +1936,20 @@ namespace SDFController
 					PPoint* tmp = new PPoint(current_face->data->center + ((current_face->data->normal * -1.0f) * current_face->data->quality->value) / 2.0f, current_face->data);
 					tmp->diameter = current_face->data->quality->value;
 					point_array[count] = tmp;
-					current_face = current_face->next;
+					if(tmp->diameter >= 0.01f)
+						point_list->InsertToEnd(tmp);
 					count++;
+					current_face = current_face->next;
 				}
-				if(tsize > 10000)
-				{
-					RandomShuffle(point_array, tsize);
-				}
-				count = tsize;
 
-				if(count > 10000)
-					count = 10000;
-
-				ticks8 = GetTickCount();
-				float b_size = 0.0f;
+				float b_size;
 				unsigned int n_pnodes = 0;
 				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth - 2;
-				Vector4 b_stred = ComputePointBoundary2(point_array, count, b_size);
-				ROctree* m_root = CreateROctree2(point_array, count, b_size, b_stred, n_pnodes);
+				Vector4 b_stred = ComputePointBoundary(point_list, b_size);
+				ROctree* m_root = CreateROctree(point_list, b_size, b_stred, n_pnodes);
 				Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth + 2;
+
+				ticks8 = GetTickCount();
 
 				//-------------------------------------------
 				//---------------Memory Alloc-3----Begin-----
@@ -1959,17 +1958,23 @@ namespace SDFController
 				cl_float4	*c_points;				// zoznam pointov obsahujucich X, Y, Z, SDF
 				cl_float4	*c_pnode_origins;		// zoznam stredov nodov
 				cl_uint		*c_pnodes;				// zoznam nodov v octree
+				cl_float	*c_pnode_values;		// zoznam hodnot v nodoch octree
+				cl_uint		*c_pnode_counts;		// pocty hodnot v nodoch octree
 
 				unsigned int s_points = tsize * sizeof(cl_float4);							// pocet trojuholnikov * 4  * float
 				unsigned int s_pnode_origins = n_pnodes * sizeof(cl_float4);				// pocet nodov * 4  * float
 				unsigned int s_pnodes = n_pnodes * sizeof(cl_uint);							// pocet nodov * uint
+				unsigned int s_pnode_values = n_pnodes * sizeof(cl_float);					// pocet nodov * float
+				unsigned int s_pnode_counts = n_pnodes * sizeof(cl_uint);					// pocet nodov * uint
 
-				err = OpenCLko->SetupMemory4(s_points, s_pnodes, s_pnode_origins);
+				err = OpenCLko->SetupMemory4(s_points, s_pnodes, s_pnode_origins, s_pnode_values, s_pnode_counts);
 				if(!CheckError(err)) return;
 
 				c_points = (cl_float4*) malloc(s_points);
 				c_pnode_origins = (cl_float4*) malloc(s_pnode_origins);
 				c_pnodes = (cl_uint*) malloc(s_pnodes);
+				c_pnode_values = (cl_float*) malloc(s_pnode_values);
+				c_pnode_counts = (cl_uint*) malloc(s_pnode_counts);
 
 				//-------------------------------------------
 				//---------------Memory Alloc-3----End-------
@@ -2001,8 +2006,10 @@ namespace SDFController
 						node = oc_array[idx];
 						if(node->isLeaf())
 						{
-							unsigned int safe_num = node->pointy[0]->number << 8;
-							c_pnodes[idx] = safe_num;
+							unsigned int safe_end = idx << 8;
+							c_pnodes[idx] = safe_end;
+							c_pnode_values[idx] = node->value;
+							c_pnode_counts[idx] = node->count;
 							for(int ii = 0; ii < 3; ii++)
 							{
 								c_pnode_origins[idx].s[0] = node->origin.X;
@@ -2023,6 +2030,8 @@ namespace SDFController
 									unsigned int safe_end = end << 8;
 									safe_end = safe_end + node->sons;
 									c_pnodes[idx] = safe_end;
+									c_pnode_values[idx] = node->value;
+									c_pnode_counts[idx] = node->count;
 									for(int ii = 0; ii < 3; ii++)
 									{
 										c_pnode_origins[idx].s[0] = node->origin.X;
@@ -2039,27 +2048,40 @@ namespace SDFController
 					delete [] oc_array;
 				}
 				ticks9 = GetTickCount();
-				cl_float wei = (float)Nastavenia->SDF_Smoothing_Radius;
-				err = OpenCLko->LaunchKernel4(c_points, c_pnode_origins, c_pnodes, c_results, tsize, b_size, wei);
+				//cl_float wei = (float)Nastavenia->SDF_Smoothing_Radius;
+				err = OpenCLko->LaunchKernel4(c_points, c_pnode_origins, c_pnodes, c_pnode_values, c_pnode_counts, c_results, tsize, b_size);
 				if(!CheckError(err)) return;
 
 				OpenCLko->WaitForFinish();
-				
+				min = FLOAT_MAX;
+				max = 0.0f;
+
+				for(unsigned int i = 0; i < tsize; i++)
+				{
+					if(c_results[i] < min)
+						min = c_results[i];
+					if(c_results[i] > max)
+						max = c_results[i];
+				}
+
 				for(unsigned int i = 0; i < tsize; i++)
 				{
 					point_array[i]->ref->quality->smoothed = c_results[i];
+					//point_array[i]->ref->quality->value = c_results[i];
 					point_array[i]->ref->quality->Normalize(min, max, 4.0);
 				}
 
 				for(unsigned int i = 0; i < tsize; i++)
 					delete point_array[i];
 				delete [] point_array;
+				delete point_list;
 				delete m_root;
 
 				free(c_points);
 				free(c_pnodes);
 				free(c_pnode_origins);
-
+				free(c_pnode_values);
+				free(c_pnode_counts);
 			}
 			else
 			{
@@ -2070,11 +2092,14 @@ namespace SDFController
 					current_face = current_face->next;
 				}
 			}
-			Nastavenia->DEBUG_Min_SDF = min;
-			Nastavenia->DEBUG_Max_SDF = max;*/
+
+			Nastavenia->OCTREE_Threshold = tmp_threshold;
 		}
 		else
 			DoSmoothing(triangles, min, max);
+
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
 
 		int ticks10 = GetTickCount();
 
@@ -2087,8 +2112,8 @@ namespace SDFController
 		loggger->logInfo(MarshalString("Spracovanie: " + (ticks7 - ticks6)+ "ms"));
 		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
-			loggger->logInfo(MarshalString("Smoothing - Random Data Picking: " + (ticks8 - ticks7)+ "ms"));
-			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks9 - ticks8)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks8 - ticks7)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - OpenCL Setup: " + (ticks9 - ticks8)+ "ms"));
 			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks10 - ticks9)+ "ms"));
 		}
 		loggger->logInfo(MarshalString("Smoothing: " + (ticks10 - ticks7)+ "ms"));
@@ -2173,9 +2198,9 @@ namespace SDFController
 			}
 
 			ticks2 = GetTickCount();
-			float b_size;
+			float b_size; unsigned int n_pnodes;
 			Vector4 b_stred = ComputePointBoundary(point_list, b_size);
-			ROctree* m_root = CreateROctree(point_list, b_size, b_stred);
+			ROctree* m_root = CreateROctree(point_list, b_size, b_stred, n_pnodes);
 
 			LinkedList<ROctree>* ro_list = new LinkedList<ROctree>();
 			ro_list->Preallocate(10000);
@@ -2186,7 +2211,7 @@ namespace SDFController
 			{
 				Smooth2(point_array[i], m_root, ro_list, i);
 				point_array[i]->ref->quality->smoothed = point_array[i]->diameter;
-				point_array[i]->ref->quality->value = point_array[i]->diameter;
+				//point_array[i]->ref->quality->value = point_array[i]->diameter;
 				point_array[i]->ref->quality->Normalize(min, max, 4.0);
 				ro_list->Clear();
 			}
@@ -2214,7 +2239,7 @@ namespace SDFController
 
 		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
-			loggger->logInfo(MarshalString("Smoothing - Random Data Picking: " + (ticks2 - ticks1)+ "ms"));
+			loggger->logInfo(MarshalString("Smoothing - Data Allocation: " + (ticks2 - ticks1)+ "ms"));
 			loggger->logInfo(MarshalString("Smoothing - Octree Creation: " + (ticks3 - ticks2)+ "ms"));
 			loggger->logInfo(MarshalString("Smoothing - Octree Parsing: " + (ticks4 - ticks3)+ "ms"));
 		}
@@ -2319,8 +2344,13 @@ namespace SDFController
 					float cube_radius = tmp->son[id]->size * SQRT_THREE;
 					if(vzdialenost <= (-cube_radius))
 					{
-						octrees->InsertToEnd(tmp);
-						idx--;
+						octrees->InsertToEnd(tmp->son[id]);
+						//idx--;
+						sons = tmp->sons;
+						sons = sons >> (id + 1);
+						sons = sons << (id + 1);
+						id = pipc8(sons);
+						stack.write(idx, tmp, id);
 					}
 					else if(vzdialenost <= cube_radius)
 					{
@@ -2441,7 +2471,7 @@ namespace SDFController
 	}
 
 	// vytvori Octree strukturu
-	ROctree* CSDFController::CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred)
+	ROctree* CSDFController::CreateROctree(LinkedList<PPoint>* point_list, float b_size, Vector4 b_stred, unsigned int &n_pnodes)
 	{
 		ROctree* m_root = new ROctree(1, b_size, b_stred);
 
@@ -2457,8 +2487,8 @@ namespace SDFController
 				tmp = tmp->next;
 				i++;
 			}
-			unsigned int nodeCount = 0, triangleCount = 0, leafCount = 0;
-			m_root->Build2(pointiky, 0, siz, nodeCount, triangleCount, leafCount);
+			unsigned int triangleCount = 0, leafCount = 0;
+			m_root->Build2(pointiky, 0, siz, n_pnodes, triangleCount, leafCount);
 			m_root->DoValueSmoothing();
 
 			delete [] pointiky;
@@ -2477,6 +2507,7 @@ namespace SDFController
 		{
 			unsigned int leafCount = 0, triangleCount = 0;
 			m_root->Build2(pointiky, 0, siz, n_pnodes, triangleCount, leafCount);
+			m_root->DoValueSmoothing();
 		}
 		else
 			m_root->Build(NULL, 0);
@@ -2547,9 +2578,12 @@ namespace SDFController
 	{
 		GLsizei width = Nastavenia->SDF_Smoothing_Texture;
 		GLsizei height = Nastavenia->SDF_Smoothing_Texture;
-
-		CPUSmooth(textur, width, height, (float)Nastavenia->SDF_Smoothing_Radius);
-		return;
+		GLfloat radius = (float)Nastavenia->SDF_Smoothing_Radius;
+		//int ticksx1 = GetTickCount();
+		//CPUSmooth(textur, width, height, radius);
+		//int ticksx2 = GetTickCount();
+		//loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na CPU: " + (ticksx2 - ticksx1)+ "ms"));
+		//return;
 
 		GLenum err = glewInit();
 		if (GLEW_OK != err)
@@ -2561,46 +2595,61 @@ namespace SDFController
 			assert(false);
 		}
 
+		int ticks1 = GetTickCount();
 		glDisable( GL_LIGHTING );
 		glDisable( GL_BLEND );
 		glDisable( GL_DEPTH_TEST );
+		//glEnable(GL_TEXTURE_2D);
 
 		FrameBufferObject* FBO;
 		FBO = new FrameBufferObject( width, height );
 
 		GLfloat* mojaTextura = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+		GLfloat* mojaTextura1 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+		GLfloat* mojaTextura2 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
 
-		int Ch = 0;											// pouzivam cerveny channel
 		for(unsigned int i = 0; i < height; i++)
 		{
 			for(unsigned int j = 0; j < width; j++)
 			{
-				mojaTextura[(i * width + j)*4 + Ch] = textur[i][j];
-				mojaTextura[(i * width + j)*4 + 1] = textur[i][j];
-				mojaTextura[(i * width + j)*4 + 2] = textur[i][j];
-				mojaTextura[(i * width + j)*4 + 3] = textur[i][j];
+				if(textur[i][j] >= 0)
+				{
+					mojaTextura1[(i * width + j)*4 + 3] = 1.0f;
+					mojaTextura1[(i * width + j)*4 + 0] = textur[i][j];
+				}
 			}
 		}
-
-		FBO->BindLayer( 0, FBO->Layer(0) );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura );
-		FBO->AssignLayerTexture( 0, FBO->Layer(0) );
-		FBO->AssignLayerTexture( 1, FBO->Layer(1) );
-
-		FBO->RenderHere();
-		BlurObject* BO = new BlurObject();
-
 		glLoadIdentity();
 		glViewport( 0, 0, width, height );     //treba nastavi viewport
+		glClearColor(0.0, 0.0, 0.0, 0.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);      //závisí od kontextu, ale väèšinou chceme zaèa s èistými textúrami
-		//gluOrtho2D(0, width, 0, height);
+
+		FBO->RenderHere();
+
+		FBO->SetLayer( 0, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );    //vytvorím layer 0 a 1 (zatia¾ sú len alokované, nie sú automaticky attachnuté)
+		FBO->SetLayer( 1, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );
+
+		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura1 );
+		FBO->BindLayer( 1, FBO->LayerHandle( 1 ) );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura2 );
+
+		FBO->AssignLayer( 0, 0 );    //teraz ich attachnem do aktívneho FBO
+		FBO->AssignLayer( 1, 1 );
+
+		FBO->RenderHere();
+		//FBO->DrawBuffers(0,1);     // bude sa renderova do vrstiev 0,1 a 2
+		
+		BlurObject* BO = new BlurObject();
 
 		//blur 9x9 dát z 0-tej textúry framebuffera s využitím pomocnej 1-ej textúry
-		BO->Apply( 4.0, Vector4(1.0f, 1.0f, 1.0f, 1.0f), Vector4(1.0f/float(width), 0.0f, 0.0f, 0.0f), FBO->Layer(0), FBO->Layer(1) );
-		BO->Apply( 4.0, Vector4(1.0f, 1.0f, 1.0f, 1.0f), Vector4(0.0f, 1.0f/float(height), 0.0f, 0.0f), FBO->Layer(1), FBO->Layer(0) );
+		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(1.0f/float(width), 0.0f, 0.0f, 0.0f), FBO->LayerHandle( 0 ), FBO->Target( 1 ) );
+		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(0.0f, 1.0f/float(height), 0.0f, 0.0f),FBO->LayerHandle( 1 ), FBO->Target( 0 ) );
 
-		FBO->ReadBuffer(FBO->Layer(0));
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, mojaTextura);
+		//FBO->ReadBuffer(0);
+		//glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, mojaTextura);
+		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, mojaTextura);
 
 		FBO->StopRenderingToFBO();   //výstup sa odteraz presmeruje do zvyèajného backbuffera
 
@@ -2608,14 +2657,24 @@ namespace SDFController
 		{
 			for(unsigned int j = 0; j < width; j++)
 			{
-				textur[i][j] = mojaTextura[(i * width + j)*4 + Ch];
+				textur[i][j] = mojaTextura[(i * width + j)*4 + 0];
 			}
 		}
-		free(mojaTextura);
+		int ticks3 = GetTickCount();
+		loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na GPU: " + (ticks3 - ticks1)+ "ms"));
 
+		free(mojaTextura);
+		free(mojaTextura1);
+		free(mojaTextura2);
+
+		glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// Background
+		//glDisable(GL_TEXTURE_2D);
 		glEnable( GL_LIGHTING );
 		glEnable( GL_BLEND );
 		glEnable( GL_DEPTH_TEST );
+
+		delete BO;
+		delete FBO;
 	}
 
 	void CSDFController::CPUSmooth(float** textur, GLsizei width, GLsizei height, float SamplesCount)
@@ -2677,8 +2736,9 @@ namespace SDFController
 		textur2[y][x] = finalValue;
 	}
 
-	float** CSDFController::GetTexture(LinkedList<Face>* triangles)
+	float** CSDFController::GetTexture(LinkedList<Face>* triangles, bool normalized)
 	{
+		int ticks1 = GetTickCount();
 		float** result = new float*[Nastavenia->SDF_Smoothing_Texture];
 		unsigned int** X_kontura = new unsigned int*[Nastavenia->SDF_Smoothing_Texture];
 		float** XX_kontura = new float*[Nastavenia->SDF_Smoothing_Texture];
@@ -2700,9 +2760,11 @@ namespace SDFController
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		while(tmp != NULL)
 		{
-			DrawTriangle(result, XX_kontura, X_kontura, tmp->data);
+			DrawTriangle(result, XX_kontura, X_kontura, tmp->data, normalized);
 			tmp = tmp->next;
 		}
+		int ticks2 = GetTickCount();
+		loggger->logInfo(MarshalString("Projektnute trojuholniky do textury " + Nastavenia->SDF_Smoothing_Texture + "x" + Nastavenia->SDF_Smoothing_Texture + ": " + (ticks2 - ticks1)+ "ms"));
 
 		return result;
 	}
@@ -2722,7 +2784,7 @@ namespace SDFController
 			num = min;
 	}*/
 
-	void CSDFController::ApplyTexture(LinkedList<Face>* triangles, float** textur)
+	void CSDFController::ApplyTexture(LinkedList<Face>* triangles, float** textur, bool normalized)
 	{
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		float x0, y0, x1, y1, x2, y2;
@@ -2741,16 +2803,18 @@ namespace SDFController
 			float val = textur[y][x];
 			if(val < 0.0f)
 				val = 0.0f;
-			SetNormalizedvalue(tmp->data->quality, val);
+			SetNormalizedvalue(tmp->data->quality, val, normalized);
 
 			tmp = tmp->next;
 		}
 	}
 
-	void CSDFController::ApplyTexture(LinkedList<Vertex>* points, float** textur)
+	void CSDFController::ApplyTexture(LinkedList<Vertex>* points, float** textur, bool normalized)
 	{
 		LinkedList<Vertex>::Cell<Vertex>* tmp = points->start;
 		int x, y;
+	    float min = FLOAT_MAX;
+		float max = 0.0f;
 		while(tmp != NULL)
 		{
 			x = (int)(tmp->data->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1));
@@ -2759,13 +2823,32 @@ namespace SDFController
 			float val = textur[y][x];
 			if(val < 0.0f)
 				val = 0.0f;
-			SetNormalizedvalue(tmp->data->quality, val);
+			if(val < min)
+				min = val;
+			if(val > max)
+				max = val;
+			SetNormalizedvalue(tmp->data->quality, val, normalized);
 			tmp = tmp->next;
 		}
+
+		if(normalized == false)
+		{
+			tmp = points->start;
+			while(tmp != NULL)
+			{
+				tmp->data->quality->Normalize(min, max, 4.0f);
+				tmp = tmp->next;
+			}
+		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
 	}
 
-	float CSDFController::GetNormalizedvalue(CSDF* quality)
+	float CSDFController::GetNormalizedvalue(CSDF* quality, bool normalized)
 	{
+		if(normalized == false)
+			return quality->value;
+
 		switch(Nastavenia->VISUAL_SDF_Type)
 		{
 		case VISUAL_NORMALIZED_0_1:
@@ -2781,8 +2864,14 @@ namespace SDFController
 		return 0.0f;
 	}
 
-	void CSDFController::SetNormalizedvalue(CSDF* quality, float value)
+	void CSDFController::SetNormalizedvalue(CSDF* quality, float value, bool normalized)
 	{
+		if(normalized == false)
+		{
+			quality->smoothed = value;
+			return;
+		}
+
 		switch(Nastavenia->VISUAL_SDF_Type)
 		{
 		case VISUAL_NORMALIZED_0_1:
@@ -2801,7 +2890,7 @@ namespace SDFController
 		}
 	}
 
-	void CSDFController::DrawTriangle(float** textur, float** XX_kontura, unsigned int** X_kontura, Face* triangle)
+	void CSDFController::DrawTriangle(float** textur, float** XX_kontura, unsigned int** X_kontura, Face* triangle, bool normalized)
 	{
 		for(unsigned int i = 0; i < Nastavenia->SDF_Smoothing_Texture; i++)
 		{
@@ -2819,9 +2908,9 @@ namespace SDFController
 		x2 = (int)(triangle->v[2]->texCoord_U * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(x2, 0, Nastavenia->SDF_Smoothing_Texture-1);
 		y2 = (int)(triangle->v[2]->texCoord_V * (Nastavenia->SDF_Smoothing_Texture - 1)); //clamp(y2, 0, Nastavenia->SDF_Smoothing_Texture-1);
 		float f0, f1, f2;
-		f0 = GetNormalizedvalue(triangle->v[0]->quality);
-		f1 = GetNormalizedvalue(triangle->v[1]->quality);
-		f2 = GetNormalizedvalue(triangle->v[2]->quality);
+		f0 = GetNormalizedvalue(triangle->v[0]->quality, normalized);
+		f1 = GetNormalizedvalue(triangle->v[1]->quality, normalized);
+		f2 = GetNormalizedvalue(triangle->v[2]->quality, normalized);
 		ScanLine(X_kontura, XX_kontura, x0, y0, x1, y1, f0, f1);
 		ScanLine(X_kontura, XX_kontura, x1, y1, x2, y2, f1, f2);
 		ScanLine(X_kontura, XX_kontura, x2, y2, x0, y0, f2, f0);
@@ -2946,7 +3035,7 @@ namespace SDFController
 		}
 	}
 
-	void CSDFController::DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3)
+	void CSDFController::DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3, bool normalized)
 	{
 		if ((x >= Nastavenia->SDF_Smoothing_Texture) || (y >= Nastavenia->SDF_Smoothing_Texture))
 		{
@@ -2977,7 +3066,7 @@ namespace SDFController
 		m[2] = 1.0f - m[0] - m[1];
 		textur[y][x] = t[0] * m[0] + t[1] * m[1] + t[2] * m[2];*/
 
-		textur[y][x] = GetNormalizedvalue(triangle->quality);
+		textur[y][x] = GetNormalizedvalue(triangle->quality, normalized);
 	}
 
 	void CSDFController::DrawPixel(float** textur, Face* triangle, unsigned int x, unsigned int y, int x1, int x2, int x3, int y1, int y2, int y3, float value)

@@ -52,7 +52,7 @@ void main()
   vec4 mixedValue = vec4(0.0);  
   float weightSum = 0.0;
   
-  for ( int sampleID = 0; sampleID < 8; sampleID++ )
+  for ( int sampleID = 0; sampleID < 32; sampleID++ )
   {
     vec2 samplePosition = PixelCoordinates + 0.012 * getRandomTap( sampleID, PixelCoordinates );
     vec4 sampleValue = texture2D( SourceTexture, samplePosition ).rgba;

@@ -15,7 +15,6 @@ namespace ShaderManipulation
 	ShaderObject::ShaderObject( std::string VertexShaderFileName, std::string PixelShaderFileName )
 	{
 		Handle = glCreateProgramObjectARB();
-
 		Compiled = false;
 
 		ShaderCode VertexShader;
@@ -111,6 +110,16 @@ namespace ShaderManipulation
 	}
 
 
+
+
+
+
+
+
+
+
+
+
 	ShaderCode::ShaderCode()
 	{
 		Handle = 0;
@@ -124,11 +133,11 @@ namespace ShaderManipulation
 
 	void ShaderCode::CreateFromFile( std::string FileName, GLuint target )
 	{
-		//std::cout<<"Loading from '"<<FileName<<"'.\n";
+		std::cout<<"Loading from '"<<FileName<<"'.\n";
 		std::ifstream File ( FileName );
 		if ( !File.is_open())
 		{
-			//std::cout<<"File '"<<FileName<<"' not found."<<std::endl;
+			std::cout<<"File '"<<FileName<<"' not found."<<std::endl;
 			return;
 		}
 
@@ -144,9 +153,8 @@ namespace ShaderManipulation
 	}
 	void ShaderCode::CompileSource( std::string Source, GLuint target )
 	{
-		if ( (target != GL_VERTEX_SHADER_ARB) && (target != GL_FRAGMENT_SHADER_ARB) )
+		if ( target != GL_VERTEX_SHADER_ARB  &&  target != GL_FRAGMENT_SHADER_ARB )
 		{
-			assert(false);
 			return;
 		}
 
@@ -181,11 +189,10 @@ namespace ShaderManipulation
 
 		if ( Compiled != GL_TRUE )
 		{
-			//std::cout<<"Error compiling shader:\n"<<LogMessage<<std::endl;
+			std::cout<<"Error compiling shader:\n"<<LogMessage<<std::endl;
 			glDeleteShader( shaderID );
 			Handle = 0;
 			Valid = false;
-			assert(false);
 		}
 
 		Target = target;

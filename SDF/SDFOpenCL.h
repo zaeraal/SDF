@@ -25,11 +25,11 @@ namespace OpenCLForm
 		int SetupMemory(unsigned int ss_triangles, unsigned int ss_vertices, unsigned int ss_origins, unsigned int ss_rays, unsigned int ss_targets, unsigned int ss_outputs);
 		int SetupMemory2(unsigned int ss_triangles, unsigned int ss_nodes, unsigned int ss_node_tria, unsigned int ss_rays, unsigned int ss_outputs);
 		int SetupMemory3(unsigned int ss_results, unsigned int ss_weights);
-		int SetupMemory4(unsigned int ss_points, unsigned int ss_pnodes, unsigned int ss_pnode_origins);
+		int SetupMemory4(unsigned int ss_points, unsigned int ss_pnodes, unsigned int ss_pnode_origins, unsigned int ss_pnode_values, unsigned int ss_pnode_counts);
 		int LaunchKernel(cl_uint3	*c_triangles, cl_float4	*c_vertices, cl_uint *c_origins, cl_float4 *c_rays, cl_uint *c_targets, cl_float *c_outputs, cl_uint4 c_params);
 		int LaunchKernel2(cl_float4 *c_triangles, cl_uint *c_nodes, cl_uint *c_node_tria, cl_float4 o_min, cl_float4 o_max, cl_float bias, cl_float4 *c_rays, cl_uint n_rays, cl_uint n_triangles, cl_float *c_outputs);
 		int LaunchKernel3(cl_float *c_outputs, cl_float *c_results, cl_float *c_weights, cl_uint n_triangles);
-		int LaunchKernel4(cl_float4 *c_points, cl_float4 *c_pnode_origins, cl_uint *c_pnodes, cl_float *c_results, cl_uint n_points, cl_float o_size, cl_float weight);
+		int LaunchKernel4(cl_float4 *c_points, cl_float4 *c_pnode_origins, cl_uint *c_pnodes, cl_float *c_pnode_values, cl_uint *c_pnode_counts, cl_float *c_results, cl_uint n_points, cl_float o_size);
 		void WaitForFinish();
 
 		cl_uint		num_cores;				// pocet paralelnych jednotiek
@@ -75,6 +75,8 @@ namespace OpenCLForm
 		unsigned int s_points;
 		unsigned int s_pnodes;
 		unsigned int s_pnode_origins;
+		unsigned int s_pnode_values;
+		unsigned int s_pnode_counts;
 
 		// OpenCL Buffery
 		cl_mem b_triangles;
@@ -90,6 +92,8 @@ namespace OpenCLForm
 		cl_mem b_points;
 		cl_mem b_pnodes;
 		cl_mem b_pnode_origins;
+		cl_mem b_pnode_values;
+		cl_mem b_pnode_counts;
 
 		int moznost;
 	};

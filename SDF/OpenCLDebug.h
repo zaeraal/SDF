@@ -102,8 +102,9 @@ namespace OpenCLDebugger
 		void smooth(const cl_float4 *c_points,
 			const cl_float4 *c_node_origins,
 			const cl_uint *c_nodes,
+			const cl_float *c_node_values,
+			const cl_uint *c_node_counts,
 			float *c_results,
-			const float weight,
 			const cl_uint n_points,
 			const float o_size,
 			const cl_uint gid
