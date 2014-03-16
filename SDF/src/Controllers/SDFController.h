@@ -57,6 +57,7 @@ namespace SDFController
 		float GetNormalizedvalue(CSDF* quality, bool normalized);
 		void SetNormalizedvalue(CSDF* quality, float value, bool normalized);
 		void SmoothTexture(float** textur);
+		void SmoothTexture(float** textur, LinkedList<Face>* triangles);
 		void ApplyTexture(LinkedList<Face>* triangles, float** textur, bool normalized);
 		void ApplyTexture(LinkedList<Vertex>* points, float** textur, bool normalized);
 		float** GetTexture(LinkedList<Face>* triangles, bool normalized);

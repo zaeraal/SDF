@@ -1832,7 +1832,7 @@ namespace SDFController
 		err = OpenCLko->LaunchKernel2(c_triangles, c_nodes, c_node_tria, oo_min, oo_max, bias, c_rays, n_rays, n_triangles, c_outputs);
 		if(!CheckError(err)) return;
 
-		//OpenCLko->WaitForFinish();
+		OpenCLko->WaitForFinish();
 
 		int ticks6 = GetTickCount();
 
@@ -1882,42 +1882,13 @@ namespace SDFController
 		//CopySDF_Faces_to_Vertices(points);
 		//CopySDF_Vertices_to_Faces(triangles);
 
-		/*float dist = 0.0f;
-		std::vector<float> rays;
-		std::vector<float> weightsx;
-		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
-		for(unsigned int ii = 0; ii < n_triangles; ii++)
-		{
-			for(unsigned int kk = 0; kk < n_rays; kk++)
-			{
-				dist = c_outputs[(ii * n_rays) + kk];
-				//loggger->logInfo(MarshalString("triangle: "+i+ " val: " + dist));
-				if(dist >= (FLOAT_MAX - 1.0f))
-					dist = 0;
-
-				rays.push_back(dist);
-				weightsx.push_back(weights[kk]);
-			}
-			if(rays.size() > 0)
-			{
-				current_face->data->ComputeSDFValue(rays, weightsx);
-				if(current_face->data->quality->value < min)
-					min = current_face->data->quality->value;
-				if(current_face->data->quality->value > max)
-					max = current_face->data->quality->value;
-			}
-			current_face = current_face->next;
-			rays.clear();
-			weightsx.clear();
-		}*/
-
 		int ticks7 = GetTickCount();
 		int ticks8 = GetTickCount();
 		int ticks9 = GetTickCount();
 		if(Nastavenia->SDF_Smooth_Projected == true)
 		{
 			int tmp_threshold = Nastavenia->OCTREE_Threshold;
-			Nastavenia->OCTREE_Threshold = min((n_triangles / 450), 4);
+			Nastavenia->OCTREE_Threshold = max((n_triangles / 450), 4);
 			/*Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth - 2;
 			DoSmoothing2(triangles, min, max);
 			Nastavenia->OCTREE_Depth = Nastavenia->OCTREE_Depth + 2;*/
@@ -2211,7 +2182,7 @@ namespace SDFController
 			{
 				Smooth2(point_array[i], m_root, ro_list, i);
 				point_array[i]->ref->quality->smoothed = point_array[i]->diameter;
-				//point_array[i]->ref->quality->value = point_array[i]->diameter;
+				point_array[i]->ref->quality->value = point_array[i]->diameter;
 				point_array[i]->ref->quality->Normalize(min, max, 4.0);
 				ro_list->Clear();
 			}
@@ -2676,7 +2647,130 @@ namespace SDFController
 		delete BO;
 		delete FBO;
 	}
+	void CSDFController::SmoothTexture(float** textur, LinkedList<Face>* triangles)
+			{
+		GLsizei width = Nastavenia->SDF_Smoothing_Texture;
+		GLsizei height = Nastavenia->SDF_Smoothing_Texture;
+		GLfloat radius = (float)Nastavenia->SDF_Smoothing_Radius;
 
+		GLenum err = glewInit();
+		if (GLEW_OK != err)
+		{
+			/* Problem: glewInit failed, something is seriously wrong. */
+			//fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+			string str = string((char*)glewGetErrorString(err));
+			loggger->logInfo("Error: " + str);
+			assert(false);
+		}
+
+		int ticks1 = GetTickCount();
+		glDisable( GL_LIGHTING );
+		glDisable( GL_BLEND );
+		glDisable( GL_DEPTH_TEST );
+		//glEnable(GL_TEXTURE_2D);
+
+		FrameBufferObject* FBO;
+		FBO = new FrameBufferObject( width, height );
+
+		GLfloat* mojaTextura = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+		GLfloat* mojaTextura1 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+		GLfloat* mojaTextura2 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
+
+		glLoadIdentity();
+		glViewport( 0, 0, width, height );     //treba nastavi viewport
+		glClearColor(0.0, 0.0, 0.0, 0.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);      //závisí od kontextu, ale väèšinou chceme zaèa s èistými textúrami
+
+		FBO->RenderHere();
+
+		FBO->SetLayer( 0, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );    //vytvorím layer 0 a 1 (zatia¾ sú len alokované, nie sú automaticky attachnuté)
+		FBO->SetLayer( 1, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );
+
+		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura1 );
+		FBO->BindLayer( 1, FBO->LayerHandle( 1 ) );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura2 );
+
+		FBO->AssignLayer( 0, 0 );    //teraz ich attachnem do aktívneho FBO
+		FBO->AssignLayer( 1, 1 );
+
+		FBO->RenderHere();
+		glClearColor(0.0, 0.0, 0.0, 0.0);
+
+		glPushAttrib( GL_ALL_ATTRIB_BITS );
+		glMatrixMode( GL_PROJECTION );
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho( 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 );
+		glMatrixMode( GL_MODELVIEW );
+		glPushMatrix();
+		glLoadIdentity();
+		glDisable( GL_DEPTH_TEST );
+		glDepthMask( GL_FALSE );
+
+		FBO->DrawBuffers(0);
+
+		glBegin(GL_TRIANGLES);
+		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
+		while(tmp != NULL)
+		{
+			if(tmp->data == NULL)
+			{
+				tmp = tmp->next;
+				continue;
+			}
+			glColor4f(GetNormalizedvalue(tmp->data->v[0]->quality, true),0.0f,0.0f,1.0f);
+			glVertex2f(tmp->data->v[0]->texCoord_U, tmp->data->v[0]->texCoord_V);
+			glColor4f(GetNormalizedvalue(tmp->data->v[1]->quality, true),0.0f,0.0f,1.0f);
+			glVertex2f(tmp->data->v[1]->texCoord_U, tmp->data->v[1]->texCoord_V);
+			glColor4f(GetNormalizedvalue(tmp->data->v[2]->quality, true),0.0f,0.0f,1.0f);
+			glVertex2f(tmp->data->v[2]->texCoord_U, tmp->data->v[2]->texCoord_V);
+			tmp = tmp->next;
+		}
+		glEnd();
+
+		glMatrixMode( GL_MODELVIEW );
+		glPopMatrix();
+		glMatrixMode( GL_PROJECTION );
+		glPopMatrix();	
+		glPopAttrib();
+
+		BlurObject* BO = new BlurObject();
+
+		//blur 9x9 dát z 0-tej textúry framebuffera s využitím pomocnej 1-ej textúry
+		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(1.0f/float(width), 0.0f, 0.0f, 0.0f), FBO->LayerHandle( 0 ), FBO->Target( 1 ) );
+		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(0.0f, 1.0f/float(height), 0.0f, 0.0f),FBO->LayerHandle( 1 ), FBO->Target( 0 ) );
+
+		//FBO->ReadBuffer(0);
+		//glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, mojaTextura);
+		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, mojaTextura);
+
+		FBO->StopRenderingToFBO();   //výstup sa odteraz presmeruje do zvyèajného backbuffera
+
+		for(unsigned int i = 0; i < height; i++)
+		{
+			for(unsigned int j = 0; j < width; j++)
+			{
+				textur[i][j] = mojaTextura[(i * width + j)*4 + 0];
+			}
+		}
+		int ticks3 = GetTickCount();
+		loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na GPU: " + (ticks3 - ticks1)+ "ms"));
+
+		free(mojaTextura);
+		free(mojaTextura1);
+		free(mojaTextura2);
+
+		glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// Background
+		//glDisable(GL_TEXTURE_2D);
+		glEnable( GL_LIGHTING );
+		glEnable( GL_BLEND );
+		glEnable( GL_DEPTH_TEST );
+
+		delete BO;
+		delete FBO;
+	}
 	void CSDFController::CPUSmooth(float** textur, GLsizei width, GLsizei height, float SamplesCount)
 	{
 		float** textur2 = new float*[height];
