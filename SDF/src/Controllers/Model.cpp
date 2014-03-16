@@ -797,7 +797,7 @@ namespace ModelController
 		
 		int hue, lum, sat;
 		hue = int(SDF_value * 240.0);
-		lum = 120;
+		lum = 120;//int(SDF_value * 120.0);
 		sat = 240;
 
 		COLORREF rgbColor = ColorHLSToRGB( hue, lum, sat );
@@ -1231,7 +1231,9 @@ namespace ModelController
 			Nastavenia->OCTREE_Threshold = tmp_threshold;
 		}
 		else
+		{
 			SDF_control->DoSmoothing(triangles, min, max);
+		}
 
 		CopySDF_Faces_to_Vertices();
 	}
@@ -1314,9 +1316,10 @@ namespace ModelController
 
 	void CModel::SmoothTexture()
 	{
-		bool normalized = true;
+		bool normalized = false;
 		float** textur = SDF_control->GetTexture(triangles, normalized);
-		SDF_control->SmoothTexture(textur, triangles);
+		SDF_control->SmoothTexture(textur);
+		//SDF_control->SmoothTexture(textur, triangles);
 		/*SDF_control->ApplyTexture(triangles, textur, normalized);
 		CopySDF_Faces_to_Vertices();*/
 		SDF_control->ApplyTexture(points, textur, normalized);

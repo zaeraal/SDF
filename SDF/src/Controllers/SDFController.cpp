@@ -2109,6 +2109,7 @@ namespace SDFController
 
 	void CSDFController::DoSmoothing(LinkedList<Face> *triangles, float min, float max)
 	{
+		int ticks1 = GetTickCount();
 		LinkedList<Face>::Cell<Face>* current_face = triangles->start;
 		if(Nastavenia->SDF_Smoothing_Radius > 0)
 		{
@@ -2140,6 +2141,8 @@ namespace SDFController
 		}
 		Nastavenia->DEBUG_Min_SDF = min;
 		Nastavenia->DEBUG_Max_SDF = max;
+		int ticks2 = GetTickCount();
+		loggger->logInfo(MarshalString("Smoothing na meshi: " + (ticks2 - ticks1)+ "ms"));
 	}
 
 	void CSDFController::DoSmoothing2(LinkedList<Face> *triangles, float min, float max)
@@ -2550,103 +2553,12 @@ namespace SDFController
 		GLsizei width = Nastavenia->SDF_Smoothing_Texture;
 		GLsizei height = Nastavenia->SDF_Smoothing_Texture;
 		GLfloat radius = (float)Nastavenia->SDF_Smoothing_Radius;
-		//int ticksx1 = GetTickCount();
-		//CPUSmooth(textur, width, height, radius);
-		//int ticksx2 = GetTickCount();
-		//loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na CPU: " + (ticksx2 - ticksx1)+ "ms"));
-		//return;
-
-		GLenum err = glewInit();
-		if (GLEW_OK != err)
-		{
-			/* Problem: glewInit failed, something is seriously wrong. */
-			//fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-			string str = string((char*)glewGetErrorString(err));
-			loggger->logInfo("Error: " + str);
-			assert(false);
-		}
-
-		int ticks1 = GetTickCount();
-		glDisable( GL_LIGHTING );
-		glDisable( GL_BLEND );
-		glDisable( GL_DEPTH_TEST );
-		//glEnable(GL_TEXTURE_2D);
-
-		FrameBufferObject* FBO;
-		FBO = new FrameBufferObject( width, height );
-
-		GLfloat* mojaTextura = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
-		GLfloat* mojaTextura1 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
-		GLfloat* mojaTextura2 = (GLfloat*)calloc(width * height * 4, sizeof(GLfloat));
-
-		for(unsigned int i = 0; i < height; i++)
-		{
-			for(unsigned int j = 0; j < width; j++)
-			{
-				if(textur[i][j] >= 0)
-				{
-					mojaTextura1[(i * width + j)*4 + 3] = 1.0f;
-					mojaTextura1[(i * width + j)*4 + 0] = textur[i][j];
-				}
-			}
-		}
-		glLoadIdentity();
-		glViewport( 0, 0, width, height );     //treba nastavi viewport
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);      //závisí od kontextu, ale väèšinou chceme zaèa s èistými textúrami
-
-		FBO->RenderHere();
-
-		FBO->SetLayer( 0, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );    //vytvorím layer 0 a 1 (zatia¾ sú len alokované, nie sú automaticky attachnuté)
-		FBO->SetLayer( 1, FRAMEBUFFER_LAYER_TYPE_RGBA_32 );
-
-		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura1 );
-		FBO->BindLayer( 1, FBO->LayerHandle( 1 ) );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, mojaTextura2 );
-
-		FBO->AssignLayer( 0, 0 );    //teraz ich attachnem do aktívneho FBO
-		FBO->AssignLayer( 1, 1 );
-
-		FBO->RenderHere();
-		//FBO->DrawBuffers(0,1);     // bude sa renderova do vrstiev 0,1 a 2
-		
-		BlurObject* BO = new BlurObject();
-
-		//blur 9x9 dát z 0-tej textúry framebuffera s využitím pomocnej 1-ej textúry
-		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(1.0f/float(width), 0.0f, 0.0f, 0.0f), FBO->LayerHandle( 0 ), FBO->Target( 1 ) );
-		BO->Apply( radius, Vector4(1.0f, 0.0f, 0.0f, 0.0f), Vector4(0.0f, 1.0f/float(height), 0.0f, 0.0f),FBO->LayerHandle( 1 ), FBO->Target( 0 ) );
-
-		//FBO->ReadBuffer(0);
-		//glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, mojaTextura);
-		FBO->BindLayer( 0, FBO->LayerHandle( 0 ) );
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, mojaTextura);
-
-		FBO->StopRenderingToFBO();   //výstup sa odteraz presmeruje do zvyèajného backbuffera
-
-		for(unsigned int i = 0; i < height; i++)
-		{
-			for(unsigned int j = 0; j < width; j++)
-			{
-				textur[i][j] = mojaTextura[(i * width + j)*4 + 0];
-			}
-		}
-		int ticks3 = GetTickCount();
-		loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na GPU: " + (ticks3 - ticks1)+ "ms"));
-
-		free(mojaTextura);
-		free(mojaTextura1);
-		free(mojaTextura2);
-
-		glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// Background
-		//glDisable(GL_TEXTURE_2D);
-		glEnable( GL_LIGHTING );
-		glEnable( GL_BLEND );
-		glEnable( GL_DEPTH_TEST );
-
-		delete BO;
-		delete FBO;
+		int ticksx1 = GetTickCount();
+		CPUSmooth(textur, width, height, radius);
+		int ticksx2 = GetTickCount();
+		loggger->logInfo(MarshalString("Smoothing v Texture " + width + "x" + height + " na CPU: " + (ticksx2 - ticksx1)+ "ms"));
 	}
+
 	void CSDFController::SmoothTexture(float** textur, LinkedList<Face>* triangles)
 			{
 		GLsizei width = Nastavenia->SDF_Smoothing_Texture;
@@ -2883,6 +2795,8 @@ namespace SDFController
 		LinkedList<Face>::Cell<Face>* tmp = triangles->start;
 		float x0, y0, x1, y1, x2, y2;
 		int x, y;
+		float min = FLOAT_MAX;
+		float max = 0.0f;
 		while(tmp != NULL)
 		{
 			x0 = tmp->data->v[0]->texCoord_U;
@@ -2897,9 +2811,25 @@ namespace SDFController
 			float val = textur[y][x];
 			if(val < 0.0f)
 				val = 0.0f;
+			if(val < min)
+				min = val;
+			if(val > max)
+				max = val;
 			SetNormalizedvalue(tmp->data->quality, val, normalized);
 
 			tmp = tmp->next;
+		}
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
+
+		if(normalized == false)
+		{
+			tmp = triangles->start;
+			while(tmp != NULL)
+			{
+				tmp->data->quality->Normalize(min, max, 4.0f);
+				tmp = tmp->next;
+			}
 		}
 	}
 
@@ -2925,6 +2855,9 @@ namespace SDFController
 			tmp = tmp->next;
 		}
 
+		Nastavenia->DEBUG_Min_SDF = min;
+		Nastavenia->DEBUG_Max_SDF = max;
+
 		if(normalized == false)
 		{
 			tmp = points->start;
@@ -2934,8 +2867,7 @@ namespace SDFController
 				tmp = tmp->next;
 			}
 		}
-		Nastavenia->DEBUG_Min_SDF = min;
-		Nastavenia->DEBUG_Max_SDF = max;
+
 	}
 
 	float CSDFController::GetNormalizedvalue(CSDF* quality, bool normalized)

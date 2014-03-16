@@ -146,6 +146,12 @@ private: System::Windows::Forms::CheckBox^  CHB_Smooth_Projected;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Points;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_Export_bmp;
 private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
+private: System::Windows::Forms::GroupBox^  groupBox_Texture;
+private: System::Windows::Forms::Label^  LBL_Resolution;
+private: System::Windows::Forms::TextBox^  TB_Resolution;
+
+
+
 
 
 
@@ -190,6 +196,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->toolStripSeparator3 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->TSMI_Compute_Octree = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_ComputeSmoothing = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->TSMI_SmoothTexture = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->helpToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->TSMI_about = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
@@ -235,6 +242,9 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->RB_SDF_Mode_GPU = (gcnew System::Windows::Forms::RadioButton());
 			this->RB_SDF_Mode_CPU = (gcnew System::Windows::Forms::RadioButton());
 			this->tabPage_Visual = (gcnew System::Windows::Forms::TabPage());
+			this->groupBox_Texture = (gcnew System::Windows::Forms::GroupBox());
+			this->LBL_Resolution = (gcnew System::Windows::Forms::Label());
+			this->TB_Resolution = (gcnew System::Windows::Forms::TextBox());
 			this->groupBox_Octree = (gcnew System::Windows::Forms::GroupBox());
 			this->LBL_Depth = (gcnew System::Windows::Forms::Label());
 			this->TB_Depth = (gcnew System::Windows::Forms::TextBox());
@@ -254,7 +264,6 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->groupBox_Status = (gcnew System::Windows::Forms::GroupBox());
 			this->TB_Status = (gcnew System::Windows::Forms::TextBox());
 			this->progressBar = (gcnew System::Windows::Forms::ProgressBar());
-			this->TSMI_SmoothTexture = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuStrip1->SuspendLayout();
 			this->panel2->SuspendLayout();
 			this->tabControl1->SuspendLayout();
@@ -267,6 +276,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->groupBox_Params->SuspendLayout();
 			this->groupBox_Mode->SuspendLayout();
 			this->tabPage_Visual->SuspendLayout();
+			this->groupBox_Texture->SuspendLayout();
 			this->groupBox_Octree->SuspendLayout();
 			this->groupBox_Normalization->SuspendLayout();
 			this->groupBox_Mesh->SuspendLayout();
@@ -479,6 +489,14 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->TSMI_ComputeSmoothing->Size = System::Drawing::Size(242, 22);
 			this->TSMI_ComputeSmoothing->Text = L"ReCompute Smoot&hing";
 			this->TSMI_ComputeSmoothing->Click += gcnew System::EventHandler(this, &Form1::TSMI_ComputeSmoothing_Click);
+			// 
+			// TSMI_SmoothTexture
+			// 
+			this->TSMI_SmoothTexture->Name = L"TSMI_SmoothTexture";
+			this->TSMI_SmoothTexture->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::U));
+			this->TSMI_SmoothTexture->Size = System::Drawing::Size(242, 22);
+			this->TSMI_SmoothTexture->Text = L"Smooth in Text&ure";
+			this->TSMI_SmoothTexture->Click += gcnew System::EventHandler(this, &Form1::TSMI_SmoothTexture_Click);
 			// 
 			// helpToolStripMenuItem
 			// 
@@ -950,6 +968,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			// tabPage_Visual
 			// 
 			this->tabPage_Visual->BackColor = System::Drawing::Color::Silver;
+			this->tabPage_Visual->Controls->Add(this->groupBox_Texture);
 			this->tabPage_Visual->Controls->Add(this->groupBox_Octree);
 			this->tabPage_Visual->Controls->Add(this->groupBox_Normalization);
 			this->tabPage_Visual->Controls->Add(this->groupBox_Mesh);
@@ -959,6 +978,37 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->tabPage_Visual->Size = System::Drawing::Size(160, 403);
 			this->tabPage_Visual->TabIndex = 2;
 			this->tabPage_Visual->Text = L"Visual";
+			// 
+			// groupBox_Texture
+			// 
+			this->groupBox_Texture->Controls->Add(this->LBL_Resolution);
+			this->groupBox_Texture->Controls->Add(this->TB_Resolution);
+			this->groupBox_Texture->Location = System::Drawing::Point(8, 332);
+			this->groupBox_Texture->Name = L"groupBox_Texture";
+			this->groupBox_Texture->Size = System::Drawing::Size(149, 60);
+			this->groupBox_Texture->TabIndex = 22;
+			this->groupBox_Texture->TabStop = false;
+			this->groupBox_Texture->Text = L"Texture";
+			// 
+			// LBL_Resolution
+			// 
+			this->LBL_Resolution->AutoSize = true;
+			this->LBL_Resolution->Location = System::Drawing::Point(5, 16);
+			this->LBL_Resolution->Name = L"LBL_Resolution";
+			this->LBL_Resolution->Size = System::Drawing::Size(57, 13);
+			this->LBL_Resolution->TabIndex = 12;
+			this->LBL_Resolution->Text = L"Resolution";
+			// 
+			// TB_Resolution
+			// 
+			this->TB_Resolution->Location = System::Drawing::Point(8, 32);
+			this->TB_Resolution->Name = L"TB_Resolution";
+			this->TB_Resolution->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			this->TB_Resolution->Size = System::Drawing::Size(136, 20);
+			this->TB_Resolution->TabIndex = 13;
+			this->TB_Resolution->Text = L"1024";
+			this->TB_Resolution->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			this->TB_Resolution->TextChanged += gcnew System::EventHandler(this, &Form1::TB_Resolution_TextChanged);
 			// 
 			// groupBox_Octree
 			// 
@@ -1169,14 +1219,6 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->progressBar->Step = 1;
 			this->progressBar->TabIndex = 11;
 			// 
-			// TSMI_SmoothTexture
-			// 
-			this->TSMI_SmoothTexture->Name = L"TSMI_SmoothTexture";
-			this->TSMI_SmoothTexture->ShortcutKeys = static_cast<System::Windows::Forms::Keys>((System::Windows::Forms::Keys::Control | System::Windows::Forms::Keys::U));
-			this->TSMI_SmoothTexture->Size = System::Drawing::Size(242, 22);
-			this->TSMI_SmoothTexture->Text = L"Smooth in Text&ure";
-			this->TSMI_SmoothTexture->Click += gcnew System::EventHandler(this, &Form1::TSMI_SmoothTexture_Click);
-			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -1208,6 +1250,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 			this->groupBox_Mode->ResumeLayout(false);
 			this->groupBox_Mode->PerformLayout();
 			this->tabPage_Visual->ResumeLayout(false);
+			this->groupBox_Texture->ResumeLayout(false);
+			this->groupBox_Texture->PerformLayout();
 			this->groupBox_Octree->ResumeLayout(false);
 			this->groupBox_Octree->PerformLayout();
 			this->groupBox_Normalization->ResumeLayout(false);
@@ -1389,8 +1433,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 		{
 			if(value < 0)
 				value = 0;
-			if(value > 20)
-				value = 20;
+			if(value > 128)
+				value = 128;
 			Nastavenia->SDF_Smoothing_Radius = (unsigned int)value;
 		}
 		else
@@ -1535,6 +1579,22 @@ private: System::Windows::Forms::ToolStripMenuItem^  TSMI_SmoothTexture;
 		else
 		{
 			Nastavenia->OCTREE_Threshold = 4;
+		}
+	}
+    private: System::Void TB_Resolution_TextChanged(System::Object^  sender, System::EventArgs^  e)
+	{
+		Int32 value = 0;
+		if(System::Int32::TryParse(TB_Resolution->Text, value))
+		{
+			if(value < 32)
+				value = 32;
+			if(value > 2048)
+				value = 2048;
+			Nastavenia->SDF_Smoothing_Texture = (unsigned int)value;
+		}
+		else
+		{
+			Nastavenia->SDF_Smoothing_Texture = 1024;
 		}
 	}
 #pragma endregion
