@@ -333,16 +333,16 @@ namespace MeshStructures
 			{+1.0, +1.0, +1.0}
 		};
 
-		if((recursive == true) && (depth > 5))
-			return;
+		/*if((recursive == true) && (depth > 5))
+			return;*/
 		if((count == 0) && (isLeaf() == true))
 			return;
-		//if(isLeaf() == true)
+		if(isLeaf() == true)
 		{
-		/*GLubyte r = 0, g = 0, b = 0;
+		GLubyte r = 0, g = 0, b = 0;
 		float valu = log(((value) / (Nastavenia->DEBUG_Max_SDF)) * 4.0f + 1.0f) / log(4.0f + 1.0f);
 		HLSToRGB(valu, r, g, b);
-		glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);*/
+		glColor4ub(r, g, b, Nastavenia->VISUAL_Alpha);
 
 		glBegin(GL_LINES);
 			glVertex3f(origin.X + size*Table[0][0], origin.Y + size*Table[0][1], origin.Z + size*Table[0][2]);
@@ -397,7 +397,7 @@ namespace MeshStructures
 
 		int hue, lum, sat;
 		hue = int(SDF_value * 240.0);
-		lum = 120;
+		lum = 120; //int(SDF_value * 120.0);
 		sat = 240;
 
 		COLORREF rgbColor = ColorHLSToRGB( hue, lum, sat );
